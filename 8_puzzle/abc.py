@@ -112,7 +112,7 @@ class UI:
             self.buttons.append(btn)
 
         tk.Button(root, text = "Cach 1", font = ("Arial", 20, "bold"), command=lambda : self.run_algo(1)).grid(row = 3, column = 0, columnspan=3, sticky = "we")
-        tk.Button(root, text = "Cach 2", font = ("Arial", 20, "bold"), command=lambda : self.run_algo(1)).grid(row = 4, column = 0, columnspan=3, sticky = "we")
+        tk.Button(root, text = "Cach 2", font = ("Arial", 20, "bold"), command=lambda : self.run_algo(2)).grid(row = 4, column = 0, columnspan=3, sticky = "we")
 
         self.show(self.start_state)
 
