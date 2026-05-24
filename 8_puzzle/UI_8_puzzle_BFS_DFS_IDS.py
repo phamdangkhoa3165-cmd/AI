@@ -38,6 +38,26 @@ def path(node):
         node = node.parent
     return path_list[::-1]
 
+# --- HÀM HEURISTIC 1: Số ô sai vị trí (Dùng cho UCS) ---
+def uncorrect(state, goal_state):
+    count = 0
+    for i in range(9):
+        # Đã cập nhật: Đếm TẤT CẢ các ô khác nhau (tính cả ô trống 0)
+        if state[i] != goal_state[i]:
+            count += 1
+    return count
+
+# --- HÀM HEURISTIC 2: Khoảng cách Manhattan (Dùng cho Greedy) ---
+def manhattan_distance(state, goal_state):
+    distance = 0
+    for i in range(9):
+        if state[i] != 0:
+            goal_idx = goal_state.index(state[i])
+            r1, c1 = divmod(i, 3)
+            r2, c2 = divmod(goal_idx, 3)
+            distance += abs(r1 - r2) + abs(c1 - c2)
+    return distance
+
 # --- TRÌNH QUẢN LÝ GÁN NHÃN (A, B, C...) CHO CÁC TRẠNG THÁI ---
 class LabelManager:
     def __init__(self):
@@ -54,7 +74,6 @@ class LabelManager:
         self.current_depth_generated = []
 
     def generate_label(self, index):
-        """Hàm sinh nhãn A, B, C... Z, AA, AB..."""
         label = ""
         while index >= 0:
             label = chr(index % 26 + 65) + label
@@ -72,8 +91,7 @@ class LabelManager:
             self.current_depth_generated.append(lbl)
         return lbl
 
-
-# --- THUẬT TOÁN TÌM KIẾM ---
+# --- THUẬT TOÁN TÌM KIẾM CƠ BẢN ---
 def bfs_cach_1(initial_state, goal_state, callback, label_mgr):
     label_mgr.reset_all()
     node = Node(initial_state)
@@ -93,7 +111,7 @@ def bfs_cach_1(initial_state, goal_state, callback, label_mgr):
             callback(None, node, [], list(frontier), label_mgr, list(reached.keys()))
             return path(node)
         
-        reached[node.state] = True # Đánh dấu đã xét
+        reached[node.state] = True
         
         new_nodes = []
         for child_state, action in get_child(node.state):
@@ -160,7 +178,7 @@ def dfs_cach_1(initial_state, goal_state, callback, label_mgr):
             callback(None, node, [], list(frontier), label_mgr, list(reached.keys()))
             return path(node)
         
-        reached[node.state] = True # Đánh dấu đã xét (Closed)
+        reached[node.state] = True
         
         new_nodes = []
         for child_state, action in get_child(node.state):
@@ -246,6 +264,97 @@ def IDS_limited(initial_state, goal_state, limit, callback, label_mgr):
         callback(None, node, new_nodes, list(frontier), label_mgr)
     return limit
 
+# --- THUẬT TOÁN UCS (Cộng dồn chi phí cha) ---
+def UCS_search(initial_state, goal_state, callback, label_mgr):
+    label_mgr.reset_all()
+    node = Node(initial_state)
+    
+    node.f_cost = uncorrect(initial_state, goal_state)
+    label_mgr.get_label(node.state)
+    
+    reached = set()
+    frontier = [node]
+    
+    callback("START", None, [node], list(frontier), label_mgr, list(reached))
+    
+    while frontier:
+        frontier.sort(key=lambda x: getattr(x, 'f_cost', float('inf')))
+        node = frontier.pop(0)
+        
+        if node.state == goal_state:
+            callback(None, node, [], list(frontier), label_mgr, list(reached))
+            return path(node)
+            
+        if node.state in reached:
+            continue
+            
+        reached.add(node.state)
+        
+        new_nodes = []
+        for child_state, action in get_child(node.state):
+            if child_state in reached:
+                continue
+                
+            child = Node(child_state, node, action)
+            child.f_cost = node.f_cost + uncorrect(child_state, goal_state)
+            label_mgr.get_label(child.state)
+            
+            in_frontier = False
+            for i in range(len(frontier)):
+                if frontier[i].state == child_state:
+                    in_frontier = True
+                    if child.f_cost < getattr(frontier[i], 'f_cost', float('inf')):
+                        frontier[i] = child
+                        new_nodes.append(child)
+                    break
+            
+            if not in_frontier:
+                frontier.append(child)
+                new_nodes.append(child)
+                
+        callback(None, node, new_nodes, list(frontier), label_mgr, list(reached))
+        
+    return None
+
+# --- THUẬT TOÁN GREEDY SEARCH (Tham lam) - Dùng Manhattan ---
+def Greedy_Search(initial_state, goal_state, callback, label_mgr):
+    label_mgr.reset_all()
+    node = Node(initial_state)
+    
+    node.h_cost = manhattan_distance(initial_state, goal_state)
+    label_mgr.get_label(node.state)
+    
+    reached = set()
+    frontier = [node]
+    
+    callback("START", None, [node], list(frontier), label_mgr, list(reached))
+    
+    while frontier:
+        frontier.sort(key=lambda x: getattr(x, 'h_cost', float('inf')))
+        node = frontier.pop(0)
+        
+        if node.state == goal_state:
+            callback(None, node, [], list(frontier), label_mgr, list(reached))
+            return path(node)
+            
+        reached.add(node.state)
+        
+        new_nodes = []
+        for child_state, action in get_child(node.state):
+            in_frontier = any(f.state == child_state for f in frontier)
+            
+            if not in_frontier and child_state not in reached:
+                child = Node(child_state, node, action)
+                child.h_cost = manhattan_distance(child_state, goal_state)
+                label_mgr.get_label(child.state)
+                
+                frontier.append(child)
+                new_nodes.append(child)
+                
+        callback(None, node, new_nodes, list(frontier), label_mgr, list(reached))
+        
+    return None
+
 # --- GIAO DIỆN ĐỒ HỌA ---
 class SimpleUI:
     def __init__(self, root):
@@ -260,7 +369,6 @@ class SimpleUI:
         self.current_step = 0
         self.is_playing = False
 
-        # --- KHU VỰC BÊN TRÁI ---
         left_frame = tk.Frame(root)
         left_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nw")
 
@@ -271,11 +379,9 @@ class SimpleUI:
             btn.grid(row=row, column=col, padx=2, pady=2)
             self.buttons.append(btn)
 
-        # --- KHU VỰC NHẬP INPUT (START & GOAL DẠNG LƯỚI 3x3) ---
         input_frame = tk.LabelFrame(left_frame, text="Nhập trạng thái (0-8, 0 là ô trống)", font=("Arial", 9, "bold"))
         input_frame.grid(row=3, column=0, columnspan=3, sticky="we", pady=5)
         
-        # Frame chứa lưới Start
         start_frame = tk.Frame(input_frame)
         start_frame.grid(row=0, column=0, padx=5, pady=5)
         tk.Label(start_frame, text="Bắt đầu:", font=("Arial", 9, "bold"), fg="blue").grid(row=0, column=0, columnspan=3)
@@ -288,7 +394,6 @@ class SimpleUI:
             e.grid(row=(i//3)+1, column=(i%3), padx=2, pady=2)
             self.entries_start.append(e)
 
-        # Frame chứa lưới Goal
         goal_frame = tk.Frame(input_frame)
         goal_frame.grid(row=0, column=1, padx=5, pady=5)
         tk.Label(goal_frame, text="Đích:", font=("Arial", 9, "bold"), fg="red").grid(row=0, column=0, columnspan=3)
@@ -304,16 +409,19 @@ class SimpleUI:
         tk.Button(input_frame, text="Cập\nnhật", font=("Arial", 10, "bold"), bg="#5cb85c", fg="white", 
                   command=self.apply_input).grid(row=0, column=2, padx=5, pady=5, sticky="ns")
 
-        tk.Button(left_frame, text="BFS 1", font=("Arial", 12), command=lambda: self.run_algo(bfs_cach_1)).grid(row=4, column=0, columnspan=1, sticky="we")
-        tk.Button(left_frame, text="BFS 2", font=("Arial", 12), command=lambda: self.run_algo(bfs_cach_2)).grid(row=4, column=1, columnspan=2, sticky="we")
-        tk.Button(left_frame, text="DFS 1", font=("Arial", 12), command=lambda: self.run_algo(dfs_cach_1)).grid(row=5, column=0, columnspan=1, sticky="we")
-        tk.Button(left_frame, text="DFS 2", font=("Arial", 12), command=lambda: self.run_algo(dfs_cach_2)).grid(row=5, column=1, columnspan=2, sticky="we")
+        tk.Button(left_frame, text="BFS 1", font=("Arial", 11), command=lambda: self.run_algo(bfs_cach_1)).grid(row=4, column=0, sticky="we", padx=1, pady=2)
+        tk.Button(left_frame, text="BFS 2", font=("Arial", 11), command=lambda: self.run_algo(bfs_cach_2)).grid(row=4, column=1, sticky="we", padx=1, pady=2)
+        tk.Button(left_frame, text="DFS 1", font=("Arial", 11), command=lambda: self.run_algo(dfs_cach_1)).grid(row=4, column=2, sticky="we", padx=1, pady=2)
+        
+        tk.Button(left_frame, text="DFS 2", font=("Arial", 11), command=lambda: self.run_algo(dfs_cach_2)).grid(row=5, column=0, sticky="we", padx=1, pady=2)
+        tk.Button(left_frame, text="UCS / A*", font=("Arial", 11, "bold"), bg="#d1ecf1", command=lambda: self.run_algo(UCS_search)).grid(row=5, column=1, sticky="we", padx=1, pady=2)
+        tk.Button(left_frame, text="Greedy", font=("Arial", 11, "bold"), bg="#d1ecf1", command=lambda: self.run_algo(Greedy_Search)).grid(row=5, column=2, sticky="we", padx=1, pady=2)
+        
         tk.Button(left_frame, text="Giải bằng IDS", font=("Arial", 12, "bold"), bg="#fff3cd", command=lambda: self.run_algo(IDS)).grid(row=6, column=0, columnspan=3, sticky="we", pady=5)
         
         tk.Button(left_frame, text="Reset", font=("Arial", 12, "bold"), fg="white", bg="#d9534f", command=self.reset).grid(row=7, column=0, columnspan=3, sticky="we", pady=5)
         self.cancel_algo = False
         
-        # Xem từng bước
         play_frame = tk.LabelFrame(left_frame, text="Điều khiển xem bước", font=("Arial", 10, "bold"), fg="purple")
         play_frame.grid(row=8, column=0, columnspan=3, sticky="we", pady=5)
         self.btn_prev = tk.Button(play_frame, text="<", state=tk.DISABLED, width=3, command=self.prev_step)
@@ -323,13 +431,11 @@ class SimpleUI:
         self.btn_next = tk.Button(play_frame, text=">", state=tk.DISABLED, width=3, command=self.next_step)
         self.btn_next.grid(row=0, column=2, padx=2, pady=5)
 
-        # Log
         self.txt_log = scrolledtext.ScrolledText(left_frame, width=42, height=8, font=("Consolas", 10), bg="#f8f9fa")
         self.txt_log.grid(row=9, column=0, columnspan=3, pady=10, sticky="we")
 
         tk.Button(left_frame, text="Thoát", font=("Arial", 12, "bold"), fg="white", bg="red", command=self.exit).grid(row=10, column=0, columnspan=3, sticky="we")
 
-        # --- KHU VỰC BÊN PHẢI ---
         right_frame = tk.LabelFrame(root, text="BẢNG TRẠNG THÁI TIẾN TRÌNH", font=("Arial", 12, "bold"), padx=10, pady=10)
         right_frame.grid(row=0, column=1, rowspan=2, padx=10, pady=10, sticky="nsew")
 
@@ -352,17 +458,13 @@ class SimpleUI:
 
     def apply_input(self):
         try:
-            # Lấy giá trị từ 9 ô Start và 9 ô Goal
-            # Nếu người dùng để trống hoặc nhập chữ, lệnh int() sẽ văng lỗi và nhảy xuống except
             nums_start = [int(e.get().strip()) for e in self.entries_start]
             nums_goal = [int(e.get().strip()) for e in self.entries_goal]
             
-            # 1. Kiểm tra tính hợp lệ cơ bản
             if set(nums_start) != set(range(9)) or set(nums_goal) != set(range(9)):
                 messagebox.showerror("Lỗi Input", "Các số phải nằm trong khoảng từ 0 đến 8 và KHÔNG được trùng lặp ở mỗi bảng!")
                 return
                 
-            # 2. Kiểm tra tính Vô nghiệm (So sánh Inversions của Start và Goal)
             def count_inversions(state_nums):
                 inv = 0
                 lst = [x for x in state_nums if x != 0]
@@ -383,7 +485,6 @@ class SimpleUI:
                 if not answer:
                     return
             
-            # Cập nhật thành công
             self.start_state = tuple(nums_start)
             self.goal_state = tuple(nums_goal)
             self.reset() 
@@ -396,7 +497,6 @@ class SimpleUI:
         self.root.destroy()
 
     def reset(self):
-        # Bật cờ ép dừng thuật toán ngay lập tức
         self.cancel_algo = True 
         
         self.is_playing = False
@@ -410,7 +510,6 @@ class SimpleUI:
         self.txt_log.delete('1.0', tk.END)
         self.txt_trace.delete('1.0', tk.END)
 
-    # ================= LOGIC FORMAT CỘT TRACE TABLE =================
     def init_trace_table(self):
         self.txt_trace.delete('1.0', tk.END)
         
@@ -419,7 +518,6 @@ class SimpleUI:
         self.txt_trace.tag_configure("purple", foreground="#CBA6F7", font=("Consolas", 10))
         self.txt_trace.tag_configure("dash", foreground="#5C6370")
 
-        # Thu hẹp cột Frontier lại cho gọn gàng hơn
         self.w1 = 16 
         self.w2 = 62
         self.w3 = 35 
@@ -438,10 +536,8 @@ class SimpleUI:
         self.txt_trace.insert(tk.END, self.sep_line + "\n", "dash")
 
     def trace_callback(self, depth_event, current_node, new_nodes, frontier_nodes, label_mgr, reached_states=None):
-        # --- BẪY NGẮT THUẬT TOÁN ---
         if hasattr(self, 'cancel_algo') and self.cancel_algo:
             raise InterruptedError("Ép dừng thuật toán từ nút Reset")
-        # ---------------------------
 
         def pad(text, width): 
             return text[:width].ljust(width)
@@ -479,9 +575,15 @@ class SimpleUI:
                 s = ['_' if x == 0 else str(x) for x in n.state]
                 p_lbl = label_mgr.get_label(n.parent.state) if n.parent else "-"
                 
-                # In ra hẳn chữ UP, DOWN, LEFT, RIGHT thay vì 1 ký tự
                 act = n.action if n.action else "-" 
-                cost = n.depth
+                
+                if hasattr(n, 'f_cost'):
+                    cost = f"f={n.f_cost}"
+                elif hasattr(n, 'h_cost'):
+                    cost = f"h={n.h_cost}"
+                else:
+                    cost = str(n.depth)
+
                 lbl = label_mgr.get_label(n.state)
 
                 l1 = f"{{[{s[0]} {s[1]} {s[2]}]"
@@ -523,7 +625,6 @@ class SimpleUI:
         self.root.update()
         time.sleep(0.02)
 
-    # ================= ĐIỀU KHIỂN & CHẠY THUẬT TOÁN =================
     def load_solution(self, path_result):
         self.is_playing = False
         if not path_result:
@@ -555,7 +656,6 @@ class SimpleUI:
             state = self.solution_path[i][0]
             act = self.solution_path[i][1]
             
-            # Format mảng 1 chiều thành 3 dòng tạo hình ma trận
             s = ['_' if x == 0 else str(x) for x in state]
             matrix_str = (
                 f"   [{s[0]} {s[1]} {s[2]}]\n"
@@ -603,10 +703,8 @@ class SimpleUI:
             self.btn_play.config(text="Tự động")
 
     def run_algo(self, algo_func):
-        # Đặt lại cờ thành False trước khi chạy thuật toán mới
         self.cancel_algo = False 
         
-        # Dọn dẹp giao diện thủ công
         self.is_playing = False
         self.solution_path = []
         self.show(self.start_state)
@@ -620,12 +718,9 @@ class SimpleUI:
         self.root.update()
         
         try:
-            # Bọc thuật toán vào try-except
             path_res = algo_func(self.start_state, self.goal_state, self.trace_callback, self.label_mgr)
             self.load_solution(path_res)
         except InterruptedError:
-            # Nếu thuật toán bị ép dừng (từ hàm trace_callback ném ra), code sẽ rẽ vào đây
-            # Giao diện lúc này đã được hàm reset() dọn sạch
             pass
 
 if __name__ == "__main__":
