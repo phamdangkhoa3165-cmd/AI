@@ -42,12 +42,12 @@ def path(node):
 def uncorrect(state, goal_state):
     count = 0
     for i in range(9):
-        # Đã cập nhật: Đếm TẤT CẢ các ô khác nhau (tính cả ô trống 0)
+        # Đếm TẤT CẢ các ô khác nhau (tính cả ô trống 0)
         if state[i] != goal_state[i]:
             count += 1
     return count
 
-# --- HÀM HEURISTIC 2: Khoảng cách Manhattan (Dùng cho Greedy) ---
+# --- HÀM HEURISTIC 2: Khoảng cách Manhattan (Dùng cho Greedy, A*, IDA*) ---
 def manhattan_distance(state, goal_state):
     distance = 0
     for i in range(9):
@@ -91,7 +91,8 @@ class LabelManager:
             self.current_depth_generated.append(lbl)
         return lbl
 
-# --- THUẬT TOÁN TÌM KIẾM CƠ BẢN ---
+# ================= CÁC THUẬT TOÁN TÌM KIẾM =================
+
 def bfs_cach_1(initial_state, goal_state, callback, label_mgr):
     label_mgr.reset_all()
     node = Node(initial_state)
@@ -264,12 +265,12 @@ def IDS_limited(initial_state, goal_state, limit, callback, label_mgr):
         callback(None, node, new_nodes, list(frontier), label_mgr)
     return limit
 
-# --- THUẬT TOÁN UCS (Cộng dồn chi phí cha) ---
 def UCS_search(initial_state, goal_state, callback, label_mgr):
     label_mgr.reset_all()
     node = Node(initial_state)
-    
-    node.f_cost = uncorrect(initial_state, goal_state)
+    # Lưu g_cost (được tính bằng hàm uncorrect) để in ra
+    node.g_cost = uncorrect(initial_state, goal_state)
+    node.f_cost = node.g_cost 
     label_mgr.get_label(node.state)
     
     reached = set()
@@ -296,7 +297,9 @@ def UCS_search(initial_state, goal_state, callback, label_mgr):
                 continue
                 
             child = Node(child_state, node, action)
-            child.f_cost = node.f_cost + uncorrect(child_state, goal_state)
+            # Bản chất UCS trong yêu cầu của bạn là tìm đường ngắn nhất theo hàm uncorrect
+            child.g_cost = node.g_cost + uncorrect(child_state, goal_state)
+            child.f_cost = child.g_cost
             label_mgr.get_label(child.state)
             
             in_frontier = False
@@ -313,14 +316,11 @@ def UCS_search(initial_state, goal_state, callback, label_mgr):
                 new_nodes.append(child)
                 
         callback(None, node, new_nodes, list(frontier), label_mgr, list(reached))
-        
     return None
 
-# --- THUẬT TOÁN GREEDY SEARCH (Tham lam) - Dùng Manhattan ---
 def Greedy_Search(initial_state, goal_state, callback, label_mgr):
     label_mgr.reset_all()
     node = Node(initial_state)
-    
     node.h_cost = manhattan_distance(initial_state, goal_state)
     label_mgr.get_label(node.state)
     
@@ -352,10 +352,124 @@ def Greedy_Search(initial_state, goal_state, callback, label_mgr):
                 new_nodes.append(child)
                 
         callback(None, node, new_nodes, list(frontier), label_mgr, list(reached))
+    return None
+
+
+def AStar_Search(initial_state, goal_state, callback, label_mgr):
+    label_mgr.reset_all()
+    node = Node(initial_state)
+    
+    node.g_cost = manhattan_distance(initial_state, goal_state)
+    node.h_cost = manhattan_distance(initial_state, goal_state)
+    node.f_cost = node.g_cost + node.h_cost
+    
+    label_mgr.get_label(node.state)
+    
+    reached = {initial_state: node.g_cost}
+    frontier = [node]
+    
+    callback("START", None, [node], list(frontier), label_mgr, list(reached.keys()))
+    
+    while frontier:
+        frontier.sort(key=lambda x: getattr(x, 'f_cost', float('inf')))
+        node = frontier.pop(0)
+        
+        if node.state == goal_state:
+            callback(None, node, [], list(frontier), label_mgr, list(reached.keys()))
+            return path(node)
+            
+        new_nodes = []
+        for child_state, action in get_child(node.state):
+            child = Node(child_state, node, action)
+            
+            child.h_cost = manhattan_distance(child_state, goal_state)
+            child.g_cost = node.g_cost + child.h_cost
+            child.f_cost = child.g_cost + child.h_cost
+            
+            if child_state in reached and reached[child_state] <= child.g_cost:
+                continue
+                
+            label_mgr.get_label(child.state)
+            reached[child_state] = child.g_cost
+            
+            in_frontier = False
+            for i in range(len(frontier)):
+                if frontier[i].state == child_state:
+                    in_frontier = True
+                    if child.g_cost < getattr(frontier[i], 'g_cost', float('inf')):
+                        frontier[i] = child
+                        new_nodes.append(child)
+                    break
+            
+            if not in_frontier:
+                frontier.append(child)
+                new_nodes.append(child)
+                
+        callback(None, node, new_nodes, list(frontier), label_mgr, list(reached.keys()))
         
     return None
 
-# --- GIAO DIỆN ĐỒ HỌA ---
+def IDAStar_Search(initial_state, goal_state, callback, label_mgr):
+    label_mgr.reset_all()
+    threshold = manhattan_distance(initial_state, goal_state)
+
+    while True:
+        label_mgr.reset_for_depth()
+        node = Node(initial_state)
+        
+        node.g_cost = manhattan_distance(initial_state, goal_state)
+        node.h_cost = manhattan_distance(initial_state, goal_state)
+        node.f_cost = node.g_cost + node.h_cost
+        
+        label_mgr.get_label(node.state)
+
+        frontier = [node]
+        reached = {initial_state: node.g_cost} 
+        
+        callback(f"Thres = {threshold}", None, [node], list(frontier), label_mgr, list(reached.keys()))
+
+        min_exceeded = float('inf')
+        
+        while frontier:
+            node = frontier.pop() 
+
+            if node.f_cost > threshold:
+                min_exceeded = min(min_exceeded, node.f_cost)
+                continue
+
+            if node.state == goal_state:
+                callback(None, node, [], list(frontier), label_mgr, list(reached.keys()))
+                return path(node)
+
+            new_nodes = []
+            children = get_child(node.state)
+            
+            for child_state, action in reversed(children):
+                child = Node(child_state, node, action)
+                
+                child.h_cost = manhattan_distance(child_state, goal_state)
+                child.g_cost = node.g_cost + child.h_cost
+                child.f_cost = child.g_cost + child.h_cost
+
+                if child_state in reached and reached[child_state] <= child.g_cost:
+                    continue
+
+                reached[child_state] = child.g_cost
+                label_mgr.get_label(child.state)
+                frontier.append(child)
+                new_nodes.append(child)
+
+            new_nodes.reverse() 
+            if new_nodes:
+                callback(None, node, new_nodes, list(frontier), label_mgr, list(reached.keys()))
+
+        if min_exceeded == float('inf'):
+            return None
+            
+        threshold = min_exceeded
+
+
+# ================= GIAO DIỆN ĐỒ HỌA =================
 class SimpleUI:
     def __init__(self, root):
         self.root = root
@@ -414,10 +528,12 @@ class SimpleUI:
         tk.Button(left_frame, text="DFS 1", font=("Arial", 11), command=lambda: self.run_algo(dfs_cach_1)).grid(row=4, column=2, sticky="we", padx=1, pady=2)
         
         tk.Button(left_frame, text="DFS 2", font=("Arial", 11), command=lambda: self.run_algo(dfs_cach_2)).grid(row=5, column=0, sticky="we", padx=1, pady=2)
-        tk.Button(left_frame, text="UCS / A*", font=("Arial", 11, "bold"), bg="#d1ecf1", command=lambda: self.run_algo(UCS_search)).grid(row=5, column=1, sticky="we", padx=1, pady=2)
+        tk.Button(left_frame, text="UCS", font=("Arial", 11, "bold"), bg="#d1ecf1", command=lambda: self.run_algo(UCS_search)).grid(row=5, column=1, sticky="we", padx=1, pady=2)
         tk.Button(left_frame, text="Greedy", font=("Arial", 11, "bold"), bg="#d1ecf1", command=lambda: self.run_algo(Greedy_Search)).grid(row=5, column=2, sticky="we", padx=1, pady=2)
         
-        tk.Button(left_frame, text="Giải bằng IDS", font=("Arial", 12, "bold"), bg="#fff3cd", command=lambda: self.run_algo(IDS)).grid(row=6, column=0, columnspan=3, sticky="we", pady=5)
+        tk.Button(left_frame, text="IDS", font=("Arial", 11, "bold"), bg="#fff3cd", command=lambda: self.run_algo(IDS)).grid(row=6, column=0, sticky="we", padx=1, pady=2)
+        tk.Button(left_frame, text="A*", font=("Arial", 11, "bold"), bg="#fff3cd", command=lambda: self.run_algo(AStar_Search)).grid(row=6, column=1, sticky="we", padx=1, pady=2)
+        tk.Button(left_frame, text="IDA*", font=("Arial", 11, "bold"), bg="#fff3cd", command=lambda: self.run_algo(IDAStar_Search)).grid(row=6, column=2, sticky="we", padx=1, pady=2)
         
         tk.Button(left_frame, text="Reset", font=("Arial", 12, "bold"), fg="white", bg="#d9534f", command=self.reset).grid(row=7, column=0, columnspan=3, sticky="we", pady=5)
         self.cancel_algo = False
@@ -439,7 +555,8 @@ class SimpleUI:
         right_frame = tk.LabelFrame(root, text="BẢNG TRẠNG THÁI TIẾN TRÌNH", font=("Arial", 12, "bold"), padx=10, pady=10)
         right_frame.grid(row=0, column=1, rowspan=2, padx=10, pady=10, sticky="nsew")
 
-        self.txt_trace = tk.Text(right_frame, width=120, height=45, font=("Consolas", 10), wrap="none", bg="#1e1e1e", fg="#d4d4d4", borderwidth=0)
+        # Mở rộng chiều rộng bảng Text lên 135 để chứa chuỗi dài hơn
+        self.txt_trace = tk.Text(right_frame, width=135, height=45, font=("Consolas", 10), wrap="none", bg="#1e1e1e", fg="#d4d4d4", borderwidth=0)
         
         y_scroll = tk.Scrollbar(right_frame, orient=tk.VERTICAL, command=self.txt_trace.yview)
         x_scroll = tk.Scrollbar(right_frame, orient=tk.HORIZONTAL, command=self.txt_trace.xview)
@@ -518,8 +635,9 @@ class SimpleUI:
         self.txt_trace.tag_configure("purple", foreground="#CBA6F7", font=("Consolas", 10))
         self.txt_trace.tag_configure("dash", foreground="#5C6370")
 
+        # Điều chỉnh lại độ rộng cột để chứa chuỗi text dài hơn
         self.w1 = 16 
-        self.w2 = 62
+        self.w2 = 72
         self.w3 = 35 
 
         col1 = "NODE".center(self.w1)
@@ -577,22 +695,32 @@ class SimpleUI:
                 
                 act = n.action if n.action else "-" 
                 
-                if hasattr(n, 'f_cost'):
-                    cost = f"f={n.f_cost}"
+                # --- LOGIC IN CHI PHÍ THÔNG MINH ---
+                # A* và IDA* có f_cost, g_cost, và h_cost
+                if hasattr(n, 'f_cost') and hasattr(n, 'g_cost') and hasattr(n, 'h_cost'):
+                    cost = f"f={n.f_cost}(g={n.g_cost}+h={n.h_cost})"
+                # UCS có f_cost và g_cost (nhưng h_cost không có hoặc ko cần hiển thị)
+                elif hasattr(n, 'g_cost'):
+                    cost = f"g={n.g_cost}"
+                # Greedy chỉ có h_cost
                 elif hasattr(n, 'h_cost'):
                     cost = f"h={n.h_cost}"
+                # BFS/DFS
                 else:
-                    cost = str(n.depth)
+                    cost = f"depth={n.depth}"
+                # -----------------------------------
 
                 lbl = label_mgr.get_label(n.state)
 
+                # Format lại chuỗi in ra dài hơn để không bị lỗi dòng
                 l1 = f"{{[{s[0]} {s[1]} {s[2]}]"
                 l2 = f" [{s[3]} {s[4]} {s[5]}],{p_lbl},{act},{cost}}}={lbl}"
                 l3 = f" [{s[6]} {s[7]} {s[8]}]"
 
-                p_lines[0] += pad(l1, 30)
-                p_lines[1] += pad(l2, 30)
-                p_lines[2] += pad(l3, 30)
+                # Chỉnh padding lên 36 để đủ chỗ chứa text f=..(g+h)
+                p_lines[0] += pad(l1, 36)
+                p_lines[1] += pad(l2, 36)
+                p_lines[2] += pad(l3, 36)
             frontier_lines.extend(p_lines)
 
         max_lines = max(2, len(frontier_lines), len(col3_wrapped))
