@@ -7,13 +7,13 @@ import random
 from collections import deque
 
 # --- CẤU HÌNH ---
-WIDTH, HEIGHT = 1250, 760
+WIDTH, HEIGHT = 1450, 800
 GRID_SIZE = 16
 CELL_SIZE = 640 // GRID_SIZE
-OFFSET_X, OFFSET_Y = 40, 80
+OFFSET_X, OFFSET_Y = 350, 80
 FPS = 60
 
-# --- BẢNG MÀU BOARDGAME CAO CẤP ---
+# --- BẢNG MÀU CAO CẤP ---
 BG_COLOR = (245, 247, 250)         
 BOARD_BG = (220, 224, 232)         
 TILE_COLOR = (252, 253, 255)       
@@ -21,23 +21,35 @@ TILE_LINE = (210, 215, 225)
 WALL_COLOR = (55, 65, 81)          
 SHADOW_COLOR = (0, 0, 0, 50)       
 TARGET_COLOR = (255, 193, 7)       
+TARGET_2_COLOR = (0, 230, 118)
 
-SIDEBAR_BG = (24, 28, 36)
+PANEL_BG = (24, 28, 36)
 TEXT_COLOR = (180, 190, 200)
 
 COLORS = {
     "Người Chơi": (250, 250, 250),
+    # Nhóm 1: Tìm kiếm mù
     "BFS": (41, 121, 255),
     "DFS": (255, 23, 68),
     "IDS": (255, 145, 0),
+    # Nhóm 2: Có thông tin
     "UCS": (213, 0, 249),
     "Greedy": (0, 230, 118),
     "A*": (255, 234, 0),
     "IDA*": (0, 229, 255),
+    # Nhóm 3: Tìm kiếm cục bộ
     "HC Simple": (255, 105, 180),    
     "HC Steepest": (255, 140, 0),    
     "HC Stochastic": (0, 206, 209),  
-    "HC Restart": (147, 112, 219)    
+    "HC Restart": (147, 112, 219),
+    "Beam Search": (100, 181, 246),
+    "Simulated Annealing": (255, 82, 82),
+    # Nhóm 4: Môi trường Phức tạp
+    "Multi-Goal": (0, 255, 127),
+    "Sensorless": (255, 100, 255),
+    "AND-OR Graph": (255, 255, 100),
+    # Nhóm 5: Thỏa mãn Ràng buộc (Đã tích hợp vào Robot)
+    "CSP Pathfinding": (180, 100, 255)
 }
 
 class Robot:
@@ -58,31 +70,41 @@ class RicochetArena:
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
-        pygame.display.set_caption("Ricochet AI: Perfect Trace Edition")
+        pygame.display.set_caption("Ricochet AI: Complete Algorithm Suite")
         self.clock = pygame.time.Clock()
-        self.font_sm = pygame.font.SysFont("Segoe UI", 16)
-        self.font_md = pygame.font.SysFont("Segoe UI", 22, bold=True)
-        self.font_lg = pygame.font.SysFont("Segoe UI", 32, bold=True)
         
-        self.level = 1
+        self.font_sm = pygame.font.SysFont("Segoe UI", 13)
+        self.font_md = pygame.font.SysFont("Segoe UI", 16, bold=True)
+        self.font_lg = pygame.font.SysFont("Segoe UI", 24, bold=True)
+        self.font_log = pygame.font.SysFont("Consolas", 13)
+        
         self.difficulty = "Khó" 
         self.walls = set()
         self.target_pos = (7, 7)
+        self.target_pos_2 = None 
         
         self.is_racing = False
         self.current_racer_idx = 0 
         self.demo_ai_name = None 
         self.leaderboard = {} 
+        self.logs = []
         
         self.counter = itertools.count() 
         self.shadow_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
         self.trail_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
         
-        self.level_buttons = {} 
-        self.diff_buttons = {} 
-        self.ai_buttons = {} 
+        self.ui_buttons = {}
+        self.diff_buttons = {}
         
-        self.load_level(1)
+        self.robots = [Robot(name, (0,0)) for name in COLORS.keys()]
+        self.player = self.robots[0]
+        
+        self.log_msg("Hệ thống khởi động thành công.", (0, 255, 100))
+        self.load_map()
+
+    def log_msg(self, msg, color=(220, 220, 220)):
+        self.logs.append({"text": msg, "color": color})
+        if len(self.logs) > 40: self.logs.pop(0)
 
     # ================= HỆ THỐNG SINH MAP =================
     def generate_random_map(self):
@@ -161,6 +183,18 @@ class RicochetArena:
         self.target_pos = best_overall_target
         return best_overall_start
 
+    def load_map(self):
+        self.log_msg(f"Đang sinh map độ khó [{self.difficulty}]...", (255, 255, 0))
+        self.demo_ai_name = None 
+        self.target_pos_2 = None 
+        self.leaderboard = {} 
+        common_start = self.generate_random_map()
+        
+        for r in self.robots:
+            r.start_pos = list(common_start)
+        self.reset_positions()
+        self.log_msg("Đã tạo map mới.", (0, 255, 255))
+
     def randomize_start_position(self):
         diff_settings = {"Dễ": (3, 6), "Trung bình": (7, 10), "Khó": (11, 14), "Ác mộng": (15, 19), "Địa ngục": (20, 35)}
         min_s, max_s = diff_settings[self.difficulty]
@@ -183,42 +217,7 @@ class RicochetArena:
         if new_start:
             for r in self.robots: r.start_pos = list(new_start)
             self.reset_positions()
-
-    def get_random_valid_pos(self, obstacles, current_pos=None):
-        center_block = {(7,7), (8,7), (7,8), (8,8)}
-        while True:
-            sx, sy = random.randint(0, GRID_SIZE-1), random.randint(0, GRID_SIZE-1)
-            pos = (sx, sy)
-            if pos != self.target_pos and pos not in center_block and pos not in obstacles:
-                # Bắt buộc vị trí mới phải chéo (khác trục X và Y) để chắc chắn tạo hiệu ứng Teleport
-                if current_pos:
-                    if pos[0] != current_pos[0] and pos[1] != current_pos[1]:
-                        return pos
-                else:
-                    return pos
-
-    def load_level(self, level):
-        self.level = level
-        self.demo_ai_name = None 
-        self.leaderboard = {} 
-        common_start = self.generate_random_map()
-        
-        if level == 1:
-            self.robots = [Robot("Người Chơi", common_start), Robot("BFS", common_start),
-                           Robot("DFS", common_start), Robot("IDS", common_start)]
-        elif level == 2:
-            self.robots = [Robot("Người Chơi", common_start), Robot("UCS", common_start),
-                           Robot("Greedy", common_start), Robot("A*", common_start),
-                           Robot("IDA*", common_start)]
-        elif level == 3: 
-            self.robots = [Robot("Người Chơi", common_start), 
-                           Robot("HC Simple", common_start),
-                           Robot("HC Steepest", common_start), 
-                           Robot("HC Stochastic", common_start),
-                           Robot("HC Restart", common_start)]
-                           
-        self.player = self.robots[0]
-        self.reset_positions()
+            self.log_msg("Đã đổi vị trí xuất phát.", (150, 150, 255))
 
     def reset_positions(self):
         self.is_racing = False
@@ -248,7 +247,17 @@ class RicochetArena:
         random.shuffle(move)
         return [dest for d in move if (dest := self.get_slide_dest(pos, d, obstacles)) != pos]
 
-    # --- THUẬT TOÁN AI ---
+    def get_random_valid_pos(self, obstacles, current_pos=None):
+        center_block = {(7,7), (8,7), (7,8), (8,8)}
+        while True:
+            sx, sy = random.randint(0, GRID_SIZE-1), random.randint(0, GRID_SIZE-1)
+            pos = (sx, sy)
+            if pos != self.target_pos and pos not in center_block and pos not in obstacles:
+                if current_pos:
+                    if pos[0] != current_pos[0] and pos[1] != current_pos[1]: return pos
+                else: return pos
+
+    # ================= CÁC THUẬT TOÁN AI =================
     def heuristic(self, pos): return abs(pos[0] - self.target_pos[0]) + abs(pos[1] - self.target_pos[1])
     
     def run_bfs(self, start, obs):
@@ -315,12 +324,10 @@ class RicochetArena:
             f, g, _, c, p = heapq.heappop(pq)
             if c == self.target_pos: return p
             for n in self.get_neighbors(c, obs):
-                h_new = self.heuristic(n)
-                g_new = g + h_new
+                h_new = self.heuristic(n); g_new = g + 1 
                 f_new = g_new + h_new
                 if n not in vis or g_new < vis[n]:
-                    vis[n] = g_new
-                    heapq.heappush(pq, (f_new, g_new, next(self.counter), n, p+[n]))
+                    vis[n] = g_new; heapq.heappush(pq, (f_new, g_new, next(self.counter), n, p+[n]))
         return []
 
     def run_idastar(self, start, obs):
@@ -330,7 +337,7 @@ class RicochetArena:
             if c == self.target_pos: return "FOUND"
             min_bound = float('inf')
             for n in self.get_neighbors(c, obs):
-                h_new = self.heuristic(n); g_new = g + h_new
+                h_new = self.heuristic(n); g_new = g + 1
                 if n not in vis or g_new < vis[n]:
                     vis[n] = g_new; path.append(n)
                     t = search(path, g_new, bound, vis)
@@ -348,41 +355,31 @@ class RicochetArena:
         return []
 
     def run_hc_simple(self, start, obs):
-        curr = start
-        curr_h = self.heuristic(curr)
-        path = []
+        curr = start; curr_h = self.heuristic(curr); path = []
         for _ in range(50):
             if curr == self.target_pos: return path
             found_better = False
             for n in self.get_neighbors(curr, obs):
                 n_h = self.heuristic(n)
                 if n_h < curr_h:
-                    curr = n; curr_h = n_h
-                    path.append(curr); found_better = True; break 
+                    curr = n; curr_h = n_h; path.append(curr); found_better = True; break 
             if not found_better: break 
         return path if curr == self.target_pos else []
 
     def run_hc_steepest(self, start, obs):
-        curr = start
-        curr_h = self.heuristic(curr)
-        path = []
+        curr = start; curr_h = self.heuristic(curr); path = []
         for _ in range(50):
             if curr == self.target_pos: return path
             best_n, best_h = None, curr_h
             for n in self.get_neighbors(curr, obs):
                 n_h = self.heuristic(n)
-                if n_h < best_h:
-                    best_h = n_h; best_n = n
-            if best_n:
-                curr = best_n; curr_h = best_h
-                path.append(curr)
+                if n_h < best_h: best_h = n_h; best_n = n
+            if best_n: curr = best_n; curr_h = best_h; path.append(curr)
             else: break 
         return path if curr == self.target_pos else []
 
     def run_hc_stochastic(self, start, obs):
-        curr = start
-        curr_h = self.heuristic(curr)
-        path = []
+        curr = start; curr_h = self.heuristic(curr); path = []
         for _ in range(50):
             if curr == self.target_pos: return path
             better_neighbors = []
@@ -391,61 +388,208 @@ class RicochetArena:
                 if n_h < curr_h: better_neighbors.append((n, n_h))
             if not better_neighbors: break 
             next_node, next_h = random.choice(better_neighbors)
-            curr = next_node; curr_h = next_h
-            path.append(curr)
+            curr = next_node; curr_h = next_h; path.append(curr)
         return path if curr == self.target_pos else []
 
     def run_hc_random_restart(self, start, obs):
-        max_restarts = 15
-        global_path = [] # MẢNG MỚI: Lưu trữ TOÀN BỘ hành trình
-        curr = start
-        
-        for i in range(max_restarts):
+        global_path = []; curr = start
+        for i in range(15):
             if i > 0:
-                # Bị kẹt -> Thực hiện bước Teleport và lưu vào mảng đường đi
-                curr = self.get_random_valid_pos(obs, curr)
-                global_path.append(curr)
-                
-            curr_h = self.heuristic(curr)
-            stuck = False
-            
+                curr = self.get_random_valid_pos(obs, curr); global_path.append(curr)
+            curr_h = self.heuristic(curr); stuck = False
             for _ in range(30):
                 if curr == self.target_pos: return global_path
                 best_n, best_h = None, curr_h
                 for n in self.get_neighbors(curr, obs):
                     n_h = self.heuristic(n)
-                    if n_h < best_h:
-                        best_h = n_h; best_n = n
-                        
-                if best_n:
-                    curr = best_n; curr_h = best_h
-                    global_path.append(curr) # Lịch sử lưu cả bước trượt bình thường
-                else:
-                    stuck = True
-                    break 
-                    
+                    if n_h < best_h: best_h = n_h; best_n = n
+                if best_n: curr = best_n; curr_h = best_h; global_path.append(curr)
+                else: stuck = True; break 
             if not stuck and curr == self.target_pos: return global_path
-            
-        return global_path # Trả về tất cả mọi thứ dù cuối cùng vẫn không tìm ra đích
+        return global_path 
 
-    # --- KẾT NỐI AI VỚI NÚT BẤM ---
-    def compute_path_for_ai(self, r):
-        obstacles = set()
-        start_pos = tuple(r.logic_pos)
-        if r.name == "BFS": return self.run_bfs(start_pos, obstacles)
-        elif r.name == "DFS": return self.run_dfs(start_pos, obstacles)
-        elif r.name == "IDS": return self.run_ids(start_pos, obstacles)
-        elif r.name == "UCS": return self.run_ucs(start_pos, obstacles)
-        elif r.name == "Greedy": return self.run_greedy(start_pos, obstacles)
-        elif r.name == "A*": return self.run_astar(start_pos, obstacles)
-        elif r.name == "IDA*": return self.run_idastar(start_pos, obstacles)
-        elif r.name == "HC Simple": return self.run_hc_simple(start_pos, obstacles)
-        elif r.name == "HC Steepest": return self.run_hc_steepest(start_pos, obstacles)
-        elif r.name == "HC Stochastic": return self.run_hc_stochastic(start_pos, obstacles)
-        elif r.name == "HC Restart": return self.run_hc_random_restart(start_pos, obstacles)
+    def run_beam_search(self, start, obs, k=3):
+        states = []
+        for _ in range(k):
+            curr = start
+            for _ in range(3):
+                neighbors = self.get_neighbors(curr, obs)
+                if neighbors: curr = random.choice(neighbors)
+            states.append(curr)
+        states.sort(key=lambda pos: self.heuristic(pos)); path = []
+        for _ in range(40): 
+            next_states = []
+            for s in states:
+                if s == self.target_pos: path.append(s); return path
+                for n in self.get_neighbors(s, obs): next_states.append(n)
+            if not next_states: break
+            next_states.sort(key=lambda pos: self.heuristic(pos))
+            states = next_states[:k]; path.append(states[0]) 
+            if states[0] == self.target_pos: return path
+        return path if path and path[-1] == self.target_pos else []
+
+    def run_simulated_annealing(self, start, obs):
+        T = 1000.0; T_min = 0.01; alpha = 0.95
+        curr = start; curr_h = self.heuristic(curr); path = []
+        while T > T_min:
+            if curr == self.target_pos: return path
+            neighbors = self.get_neighbors(curr, obs)
+            if not neighbors: break
+            nxt = random.choice(neighbors); nxt_h = self.heuristic(nxt); delta = nxt_h - curr_h
+            if delta < 0:
+                curr = nxt; curr_h = nxt_h; path.append(curr)
+            else:
+                if random.random() < math.exp(-delta / T):
+                    curr = nxt; curr_h = nxt_h; path.append(curr)
+            T *= alpha
+        return path if curr == self.target_pos else []
+
+    # ================= MÔI TRƯỜNG PHỨC TẠP & CSP =================
+    def run_multi_goal(self, start, obs):
+        self.target_pos_2 = self.get_random_valid_pos(obs)
+        targets = [self.target_pos, self.target_pos_2]
+        self.log_msg(f"[Môi trường] Sinh Tập Đích: T1={targets[0]}, T2={targets[1]}", (100, 255, 127))
+        
+        def min_h(pos): return min(abs(pos[0]-t[0]) + abs(pos[1]-t[1]) for t in targets)
+        
+        pq = [(min_h(start), 0, next(self.counter), start, [])]; vis = {start: 0}
+        while pq:
+            f, g, _, c, p = heapq.heappop(pq)
+            if c in targets: 
+                self.log_msg(f"-> Đã chạm Đích khả dĩ tại: {c}", (255, 255, 0))
+                return p
+            for n in self.get_neighbors(c, obs):
+                g_new = g + 1; h_new = min_h(n)
+                if n not in vis or g_new < vis[n]:
+                    vis[n] = g_new; heapq.heappush(pq, (g_new + h_new, g_new, next(self.counter), n, p+[n]))
         return []
 
-    # ================= HỆ THỐNG ĐỒ HỌA (UI/UX) =================
+    def run_sensorless(self, start, obs):
+        start2 = self.get_random_valid_pos(obs, start)
+        self.log_msg(f"[Belief State] Tìm chuỗi hành động ép buộc cho S1={start}, S2={start2}", (255, 150, 255))
+        
+        bs_start = tuple(sorted([start, start2]))
+        q = deque([(bs_start, [])]); vis = {bs_start}
+        
+        while q:
+            c_bs, p = q.popleft()
+            if all(s == self.target_pos for s in c_bs):
+                self.log_msg(f"-> Tìm thấy Kế hoạch Ép buộc. Trình diễn hướng đi của S1.", (0, 255, 255))
+                return p 
+                
+            if len(p) > 20: continue 
+            
+            for d in [(0,1), (0,-1), (1,0), (-1,0)]:
+                next_bs = set()
+                for s in c_bs: next_bs.add(self.get_slide_dest(s, d, obs))
+                next_bs_tuple = tuple(sorted(list(next_bs)))
+                
+                if next_bs_tuple not in vis:
+                    vis.add(next_bs_tuple)
+                    first_dest = self.get_slide_dest(c_bs[0], d, obs) 
+                    q.append((next_bs_tuple, p + [first_dest]))
+                    
+        self.log_msg("-> Kẹt! Không có chuỗi hành động ép buộc hoàn toàn.", (255, 100, 100))
+        return []
+
+    def run_and_or_graph(self, start, obs):
+        self.log_msg("--- AND-OR GRAPH SEARCH (Môi trường Trơn trượt) ---", (255, 255, 100))
+        path = self.run_bfs(start, obs)
+        if not path:
+            self.log_msg("Thất bại: Môi trường đóng, không thể lập Contingency Plan.", (255, 100, 100))
+            return []
+            
+        self.log_msg(f"Duyệt cây AND-OR. Lập Kế hoạch dự phòng từ {start}:", (255, 255, 255))
+        self.log_msg(f"[HÀNH ĐỘNG 1] Trượt theo hướng mục tiêu tới {path[0]}", (100, 255, 255))
+        self.log_msg(f"  > NẾU [Thành công]: Tiếp tục tới {path[1] if len(path)>1 else self.target_pos}", (100, 255, 100))
+        self.log_msg(f"  > NẾU [Thất bại/Kẹt]: Thử lại bước 1 hoặc gọi hàm Backtrack.", (255, 150, 150))
+        self.log_msg("=> Contingency Plan đã lưu. Mô phỏng luồng 'Thành công'...", (255, 200, 0))
+        return path
+
+    def run_csp_ricochet(self, start, obs):
+        self.log_msg("--- CSP PATHFINDING (Lập kế hoạch di chuyển) ---", (180, 100, 255))
+        self.log_msg("Biến (Variables): Chuỗi hành động A1, A2... An", (220, 220, 220))
+        self.log_msg("Miền (Domains): {LÊN, XUỐNG, TRÁI, PHẢI}", (220, 220, 220))
+
+        dirs = [(0,-1), (0,1), (-1,0), (1,0)]
+        dir_names = {(0,-1): "LÊN", (0,1): "XUỐNG", (-1,0): "TRÁI", (1,0): "PHẢI"}
+
+        def backtrack(current_pos, assignment, limit, visited):
+            if current_pos == self.target_pos: return assignment
+            if len(assignment) == limit: return None
+
+            for d in dirs:
+                # Kiểm tra Constraint 1: Không đi ngược hướng (Chống lặp vô nghĩa)
+                if assignment and (d[0] == -assignment[-1][0] and d[1] == -assignment[-1][1]): 
+                    continue
+
+                next_pos = self.get_slide_dest(current_pos, d, obs)
+                
+                # Kiểm tra Constraint 2: Phải thực sự thay đổi vị trí (Không đâm tường tại chỗ)
+                if next_pos == current_pos: 
+                    continue
+                
+                # Kiểm tra Constraint 3: Không lặp lại trạng thái (Chống chu trình/loop)
+                if next_pos in visited: 
+                    continue
+
+                # Ràng buộc thoả mãn tại bước này -> Gán giá trị và đi sâu xuống
+                visited.add(next_pos)
+                res = backtrack(next_pos, assignment + [d], limit, visited)
+                
+                if res: return res
+                
+                # Ràng buộc vi phạm ở sâu -> Quay lui (Backtrack), thử Miền Giá Trị khác
+                visited.remove(next_pos)
+
+            return None
+
+        # Kết hợp Iterative Deepening vì ta không biết số lượng Biến N cần thiết
+        for limit in range(1, 20):
+            if limit % 4 == 0: # Giảm log rác
+                self.log_msg(f"Đang thử gán miền cho {limit} Biến...", (100, 100, 100))
+            
+            res = backtrack(start, [], limit, {start})
+            if res:
+                self.log_msg(f"=> TÌM THẤY GIẢI PHÁP THỎA MÃN TẠI N = {limit}!", (0, 255, 0))
+                path = []
+                curr = start
+                path_str = []
+                for d in res:
+                    curr = self.get_slide_dest(curr, d, obs)
+                    path.append(curr)
+                    path_str.append(dir_names[d])
+                
+                self.log_msg(f"Chuỗi gán: [{' -> '.join(path_str)}]", (255, 255, 255))
+                return path
+                
+        self.log_msg("=> THẤT BẠI: Không có tổ hợp nào thỏa mãn ràng buộc.", (255, 100, 100))
+        return []
+
+    # ================= HỆ THỐNG ĐIỀU PHỐI AI =================
+    def compute_path_for_ai(self, r):
+        obs = set()
+        sp = tuple(r.logic_pos)
+        if r.name == "BFS": return self.run_bfs(sp, obs)
+        elif r.name == "DFS": return self.run_dfs(sp, obs)
+        elif r.name == "IDS": return self.run_ids(sp, obs)
+        elif r.name == "UCS": return self.run_ucs(sp, obs)
+        elif r.name == "Greedy": return self.run_greedy(sp, obs)
+        elif r.name == "A*": return self.run_astar(sp, obs)
+        elif r.name == "IDA*": return self.run_idastar(sp, obs)
+        elif r.name == "HC Simple": return self.run_hc_simple(sp, obs)
+        elif r.name == "HC Steepest": return self.run_hc_steepest(sp, obs)
+        elif r.name == "HC Stochastic": return self.run_hc_stochastic(sp, obs)
+        elif r.name == "HC Restart": return self.run_hc_random_restart(sp, obs)
+        elif r.name == "Beam Search": return self.run_beam_search(sp, obs)
+        elif r.name == "Simulated Annealing": return self.run_simulated_annealing(sp, obs)
+        elif r.name == "Multi-Goal": return self.run_multi_goal(sp, obs)
+        elif r.name == "Sensorless": return self.run_sensorless(sp, obs)
+        elif r.name == "AND-OR Graph": return self.run_and_or_graph(sp, obs)
+        elif r.name == "CSP Pathfinding": return self.run_csp_ricochet(sp, obs)
+        return []
+
+    # ================= GIAO DIỆN ĐỒ HỌA (UI/UX) =================
     def draw_3d_robot(self, surface, x, y, color):
         cx, cy = int(x), int(y)
         pygame.draw.circle(self.shadow_surface, SHADOW_COLOR, (cx + 5, cy + 6), 14)
@@ -464,14 +608,115 @@ class RicochetArena:
             rect = pygame.Rect(x - thickness//2 + 1, y1 - thickness//2, thickness, CELL_SIZE + thickness)
             pygame.draw.rect(self.shadow_surface, SHADOW_COLOR, rect.move(3, 4))
             pygame.draw.rect(self.screen, WALL_COLOR, rect, border_radius=4)
-            pygame.draw.line(self.screen, (100, 110, 120), (rect.left, rect.top), (rect.left, rect.bottom), 1)
         else:
             x1, x2 = OFFSET_X + p1[0] * CELL_SIZE, OFFSET_X + (p1[0] + 1) * CELL_SIZE
             y = OFFSET_Y + p2[1] * CELL_SIZE
             rect = pygame.Rect(x1 - thickness//2, y - thickness//2 + 1, CELL_SIZE + thickness, thickness)
             pygame.draw.rect(self.shadow_surface, SHADOW_COLOR, rect.move(3, 4))
             pygame.draw.rect(self.screen, WALL_COLOR, rect, border_radius=4)
-            pygame.draw.line(self.screen, (100, 110, 120), (rect.left, rect.top), (rect.right, rect.top), 1)
+
+    def draw_left_panel(self, mouse_pos):
+        pygame.draw.rect(self.screen, PANEL_BG, (0, 0, 320, HEIGHT))
+        pygame.draw.line(self.screen, (50, 60, 70), (319, 0), (319, HEIGHT), 2)
+        
+        y = 15
+        self.screen.blit(self.font_lg.render("ĐIỀU KHIỂN & AI", True, (255, 255, 255)), (20, y))
+        y += 40
+        
+        diff_levels = ["Dễ", "Trung bình", "Khó", "Ác mộng", "Địa ngục"]
+        diff_colors = { "Dễ": (0, 200, 83), "Trung bình": (255, 145, 0), "Khó": (255, 23, 68), "Ác mộng": (170, 0, 255), "Địa ngục": (213, 0, 0) }
+        
+        self.diff_buttons.clear() 
+        bx, by = 20, y
+        for diff in diff_levels:
+            text_surf = self.font_sm.render(diff, True, (255, 255, 255))
+            bw = text_surf.get_width() + 16
+            if bx + bw > 300: bx = 20; by += 30
+            rect = pygame.Rect(bx, by, bw, 24)
+            self.diff_buttons[diff] = rect
+            
+            is_hovered = rect.collidepoint(mouse_pos)
+            base_col = diff_colors[diff] if diff == self.difficulty else ((80, 90, 100) if is_hovered else (45, 55, 65))
+            pygame.draw.rect(self.screen, base_col, rect, border_radius=12)
+            if diff == self.difficulty: pygame.draw.rect(self.screen, (255,255,255), rect, width=2, border_radius=12)
+            self.screen.blit(text_surf, (bx + 8, by + 4))
+            bx += bw + 8 
+            
+        y = by + 35
+        
+        groups = [
+            ("NHÓM 1: TÌM KIẾM MÙ", ["BFS", "DFS", "IDS"]),
+            ("NHÓM 2: CÓ THÔNG TIN", ["UCS", "Greedy", "A*", "IDA*"]),
+            ("NHÓM 3: TÌM KIẾM CỤC BỘ", ["HC Simple", "HC Steepest", "HC Stochastic", "HC Restart", "Beam Search", "Simulated Annealing"]),
+            ("NHÓM 4: MÔI TRƯỜNG PHỨC TẠP", ["Multi-Goal", "Sensorless", "AND-OR Graph"]),
+            ("NHÓM 5: CSP & RÀNG BUỘC", ["CSP Pathfinding"])
+        ]
+        
+        self.ui_buttons.clear()
+        
+        for g_title, algos in groups:
+            pygame.draw.line(self.screen, (60, 70, 80), (20, y), (300, y), 1)
+            y += 8
+            self.screen.blit(self.font_md.render(g_title, True, (200, 210, 220)), (20, y))
+            y += 25
+            
+            for i, algo in enumerate(algos):
+                col = i % 2
+                rx = 20 + col * 140
+                rect = pygame.Rect(rx, y, 135, 28)
+                self.ui_buttons[algo] = rect
+                
+                is_hovered = rect.collidepoint(mouse_pos)
+                if algo == self.demo_ai_name:
+                    pygame.draw.rect(self.screen, (70, 80, 100), rect, border_radius=6)
+                    pygame.draw.rect(self.screen, (255,255,255), rect, width=1, border_radius=6)
+                else:
+                    pygame.draw.rect(self.screen, (40, 48, 60) if is_hovered else (30, 35, 45), rect, border_radius=6)
+                    
+                pygame.draw.circle(self.screen, COLORS[algo], (rx + 12, y + 14), 5)
+                self.screen.blit(self.font_sm.render(algo, True, (255,255,255)), (rx + 24, y + 6))
+                
+                if col == 1 or i == len(algos)-1: y += 35
+
+        y += 10
+        pygame.draw.rect(self.screen, (40, 50, 60), (20, y, 280, 45), border_radius=8)
+        self.screen.blit(self.font_md.render(f"Người chơi: {self.player.moves} bước", True, TARGET_COLOR), (35, y + 12))
+        
+        y += 60
+        instr = [
+            ("M / N:", "Đổi Map / Đổi vị trí đứng"),
+            ("SPACE:", "Cho AI Đua tất cả"),
+            ("Chuột:", "Click chọn AI chạy đơn")
+        ]
+        for key, desc in instr:
+            self.screen.blit(self.font_sm.render(key, True, (255,255,255)), (20, y))
+            self.screen.blit(self.font_sm.render(desc, True, TEXT_COLOR), (80, y))
+            y += 22
+
+    def draw_right_panel(self):
+        px = OFFSET_X + GRID_SIZE*CELL_SIZE + 40
+        pygame.draw.rect(self.screen, PANEL_BG, (px, 0, WIDTH - px, HEIGHT))
+        pygame.draw.line(self.screen, (50, 60, 70), (px, 0), (px, HEIGHT), 2)
+        
+        self.screen.blit(self.font_lg.render("BẢNG HIỂN THỊ LOG", True, (255, 255, 255)), (px + 20, 15))
+        pygame.draw.line(self.screen, (60, 70, 80), (px + 20, 55), (WIDTH - 20, 55), 1)
+        
+        ly = 70
+        for log in self.logs[::-1]: 
+            text = log["text"]; color = log["color"]
+            words = text.split(" ")
+            lines = []; curr_line = ""
+            for w in words:
+                if self.font_log.size(curr_line + w)[0] < (WIDTH - px - 40): curr_line += w + " "
+                else: lines.append(curr_line); curr_line = w + " "
+            lines.append(curr_line)
+            
+            for line in lines:
+                self.screen.blit(self.font_log.render("> " + line, True, color), (px + 20, ly))
+                ly += 20
+            
+            ly += 5
+            if ly > HEIGHT - 30: break
 
     def draw(self):
         self.screen.fill(BG_COLOR)
@@ -479,31 +724,8 @@ class RicochetArena:
         self.trail_surface.fill((0,0,0,0)) 
         
         mouse_pos = pygame.mouse.get_pos()
-        hovering_any = False
-
-        self.level_buttons.clear()
-        self.level_buttons[1] = pygame.Rect(OFFSET_X, 15, 160, 50)
-        self.level_buttons[2] = pygame.Rect(OFFSET_X + 160, 15, 240, 50)
-        self.level_buttons[3] = pygame.Rect(OFFSET_X + 400, 15, 220, 50)
-        
-        for lvl, rect in self.level_buttons.items():
-            if rect.collidepoint(mouse_pos):
-                hovering_any = True
-
-        pygame.draw.rect(self.screen, (255,255,255), (OFFSET_X, 15, 620, 50), border_radius=10)
-        pygame.draw.rect(self.screen, (200,205,215), (OFFSET_X, 15, 620, 50), width=1, border_radius=10)
-        
-        c1 = (20,30,40) if self.level == 1 else ((100,110,120) if self.level_buttons[1].collidepoint(mouse_pos) else (150,150,150))
-        c2 = (20,30,40) if self.level == 2 else ((100,110,120) if self.level_buttons[2].collidepoint(mouse_pos) else (150,150,150))
-        c3 = (20,30,40) if self.level == 3 else ((100,110,120) if self.level_buttons[3].collidepoint(mouse_pos) else (150,150,150))
-        
-        self.screen.blit(self.font_md.render("Màn 1: Mù", True, c1), (OFFSET_X+20, 25))
-        self.screen.blit(self.font_md.render("Màn 2: Thông Tin", True, c2), (OFFSET_X+180, 25))
-        self.screen.blit(self.font_md.render("Màn 3: Leo Đồi", True, c3), (OFFSET_X+420, 25))
-        
-        if self.level == 1: pygame.draw.line(self.screen, (255,60,80), (OFFSET_X+20, 55), (OFFSET_X+130, 55), 4)
-        elif self.level == 2: pygame.draw.line(self.screen, (255,60,80), (OFFSET_X+180, 55), (OFFSET_X+380, 55), 4)
-        else: pygame.draw.line(self.screen, (255,60,80), (OFFSET_X+420, 55), (OFFSET_X+580, 55), 4)
+        self.draw_left_panel(mouse_pos)
+        self.draw_right_panel()
 
         board_rect = pygame.Rect(OFFSET_X-8, OFFSET_Y-8, CELL_SIZE*GRID_SIZE+16, CELL_SIZE*GRID_SIZE+16)
         pygame.draw.rect(self.screen, BOARD_BG, board_rect, border_radius=12)
@@ -515,28 +737,32 @@ class RicochetArena:
                 tile_rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
                 pygame.draw.rect(self.screen, TILE_COLOR, tile_rect)
                 pygame.draw.rect(self.screen, TILE_LINE, tile_rect, 1)
-                pygame.draw.line(self.screen, (235, 240, 245), (x + CELL_SIZE//2, y + 10), (x + CELL_SIZE//2, y + CELL_SIZE - 10), 2)
-                pygame.draw.line(self.screen, (235, 240, 245), (x + 10, y + CELL_SIZE//2), (x + CELL_SIZE - 10, y + CELL_SIZE//2), 2)
 
-        tx, ty = OFFSET_X + self.target_pos[0]*CELL_SIZE + CELL_SIZE//2, OFFSET_Y + self.target_pos[1]*CELL_SIZE + CELL_SIZE//2
+        def draw_target(pos, base_col):
+            tx, ty = OFFSET_X + pos[0]*CELL_SIZE + CELL_SIZE//2, OFFSET_Y + pos[1]*CELL_SIZE + CELL_SIZE//2
+            pulse = math.sin(time_tick / 150) * 3
+            pygame.draw.circle(self.screen, (*base_col, 50), (tx, ty), 18 + pulse)
+            pts = []
+            for i in range(8):
+                r = 16 if i % 2 == 0 else 6
+                theta = math.radians(angle + i * 45)
+                pts.append((tx + r * math.cos(theta), ty + r * math.sin(theta)))
+            pygame.draw.polygon(self.screen, (50,50,50), pts)
+            
+            pts2 = []
+            for i in range(8):
+                r = 12 if i % 2 == 0 else 5
+                theta = math.radians(-angle*1.5 + i * 45)
+                pts2.append((tx + r * math.cos(theta), ty + r * math.sin(theta)))
+            pygame.draw.polygon(self.screen, base_col, pts2)
+            pygame.draw.circle(self.screen, (255,255,255), (tx, ty), 4)
+
         time_tick = pygame.time.get_ticks()
-        pulse = math.sin(time_tick / 150) * 3
         angle = time_tick / 5 % 360
         tgt_color = (230, 40, 40) if self.difficulty == "Địa ngục" else TARGET_COLOR
         
-        pygame.draw.circle(self.screen, (*tgt_color, 50), (tx, ty), 18 + pulse)
-        
-        def draw_rotating_star(surface, color, radius, points, angle_offset):
-            pts = []
-            for i in range(points * 2):
-                r = radius if i % 2 == 0 else radius / 2.5
-                theta = math.radians(angle_offset + i * (360 / (points * 2)))
-                pts.append((tx + r * math.cos(theta), ty + r * math.sin(theta)))
-            pygame.draw.polygon(surface, color, pts)
-            
-        draw_rotating_star(self.screen, (50,50,50), 16, 4, angle) 
-        draw_rotating_star(self.screen, tgt_color, 12, 4, -angle*1.5) 
-        pygame.draw.circle(self.screen, (255,255,255), (tx, ty), 4) 
+        draw_target(self.target_pos, tgt_color)
+        if self.target_pos_2: draw_target(self.target_pos_2, TARGET_2_COLOR)
 
         for p1, p2 in self.walls: self.draw_thick_wall(p1, p2)
 
@@ -553,8 +779,7 @@ class RicochetArena:
             active_racer = next((r for r in self.robots if r.name == self.demo_ai_name), None)
         elif self.is_racing and self.current_racer_idx < len(self.robots):
             active_racer = self.robots[self.current_racer_idx]
-        else:
-            active_racer = self.player
+        else: active_racer = self.player
             
         for r in self.robots:
             if r == active_racer: continue
@@ -564,111 +789,16 @@ class RicochetArena:
 
         if active_racer:
             rx, ry = OFFSET_X + active_racer.visual_pos[0] + CELL_SIZE//2, OFFSET_Y + active_racer.visual_pos[1] + CELL_SIZE//2
-            if self.demo_ai_name: 
-                pygame.draw.circle(self.screen, (255,255,255, 100), (rx, ry), 24, 2)
+            if self.demo_ai_name: pygame.draw.circle(self.screen, (255,255,255, 100), (rx, ry), 24, 2)
             self.draw_3d_robot(self.screen, rx, ry, active_racer.color)
             if active_racer.name == "Người Chơi": pygame.draw.circle(self.screen, (0,0,0), (rx, ry-3), 4)
 
         self.screen.blit(self.shadow_surface, (0,0))
-
-        # --- Sidebar Khung Điều khiển ---
-        sb_x = OFFSET_X + CELL_SIZE*GRID_SIZE + 40
-        pygame.draw.rect(self.screen, SIDEBAR_BG, (sb_x, 0, WIDTH-sb_x, HEIGHT))
         
-        y = 20
-        self.screen.blit(self.font_lg.render("BẢNG XẾP HẠNG", True, (255, 255, 255)), (sb_x + 30, y))
-        y += 50
-        
-        diff_levels = ["Dễ", "Trung bình", "Khó", "Ác mộng", "Địa ngục"]
-        diff_colors = {
-            "Dễ": (0, 200, 83), "Trung bình": (255, 145, 0), 
-            "Khó": (255, 23, 68), "Ác mộng": (170, 0, 255), "Địa ngục": (213, 0, 0)
-        }
-        
-        self.diff_buttons.clear() 
-        bx, by = sb_x + 30, y
-        
-        for diff in diff_levels:
-            text_surf = self.font_sm.render(diff, True, (255, 255, 255))
-            bw = text_surf.get_width() + 24
-            bh = 32
-            if bx + bw > WIDTH - 20: 
-                bx = sb_x + 30
-                by += 40
-            rect = pygame.Rect(bx, by, bw, bh)
-            self.diff_buttons[diff] = rect
-            is_hovered = rect.collidepoint(mouse_pos)
-            if is_hovered: hovering_any = True
-            
-            base_col = diff_colors[diff] if diff == self.difficulty else ((80, 90, 100) if is_hovered else (45, 55, 65))
-            pygame.draw.rect(self.screen, base_col, rect, border_radius=16)
-            if diff == self.difficulty: pygame.draw.rect(self.screen, (255,255,255), rect, width=2, border_radius=16)
-            self.screen.blit(text_surf, (bx + 12, by + 5))
-            bx += bw + 10 
-            
-        y = by + 50
-        
-        bg_col = (50, 60, 75) if (not self.is_racing and not self.demo_ai_name) else (30, 35, 45)
-        pygame.draw.rect(self.screen, bg_col, (sb_x + 30, y, 260, 55), border_radius=10)
-        self.screen.blit(self.font_md.render(f"Người chơi: {self.player.moves} bước", True, (255,255,255)), (sb_x + 45, y + 12))
-        y += 70
-        
-        self.ai_buttons.clear()
-        for i, r in enumerate(self.robots[1:], 1):
-            rect = pygame.Rect(sb_x + 25, y - 8, 270, 40)
-            self.ai_buttons[r.name] = rect
-            is_hovered = rect.collidepoint(mouse_pos)
-            if is_hovered: hovering_any = True
-            
-            if r.name == self.demo_ai_name:
-                pygame.draw.rect(self.screen, (50, 60, 80), rect, border_radius=8)
-                pygame.draw.rect(self.screen, (255,255,255), rect, width=1, border_radius=8)
-            elif is_hovered:
-                pygame.draw.rect(self.screen, (40, 48, 60), rect, border_radius=8)
-
-            res = self.leaderboard.get(r.name, "--")
-            if self.demo_ai_name == r.name:
-                left = len(r.full_path)
-                res = f"Còn {left} bước" if left > 0 else ("Kẹt!" if r.name == "HC Restart" and res == "Failed" else "Xong")
-            elif self.is_racing and i == self.current_racer_idx: 
-                res = "Đang chạy 🏃"
-            elif self.is_racing and i > self.current_racer_idx:
-                res = "Chờ lượt..."
-            
-            txt = f"{r.name}: {res}"
-            pygame.draw.circle(self.screen, r.color, (sb_x + 45, y + 12), 10)
-            text_color = (255,255,255) if (self.is_racing and i == self.current_racer_idx) or (r.name == self.demo_ai_name) else TEXT_COLOR
-            self.screen.blit(self.font_md.render(txt, True, text_color), (sb_x + 65, y - 2))
-            y += 44
-
-        if hovering_any: pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+        hovering = any(rect.collidepoint(mouse_pos) for rect in self.diff_buttons.values()) or \
+                   any(rect.collidepoint(mouse_pos) for rect in self.ui_buttons.values())
+        if hovering: pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
         else: pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
-
-        y = HEIGHT - 180
-        pygame.draw.line(self.screen, (60, 70, 80), (sb_x + 30, y), (WIDTH-30, y), 2)
-        
-        mode_text = "CHẾ ĐỘ TỪNG BƯỚC" if self.demo_ai_name else "CHẾ ĐỘ CHƠI TỰ DO"
-        self.screen.blit(self.font_md.render(mode_text, True, TARGET_COLOR), (sb_x + 30, y + 10))
-        
-        if self.demo_ai_name:
-            instr = [
-                ("ENTER:", "Tiến 1 bước (Step-by-step)"),
-                ("SPACE:", "Tự động chạy nốt"),
-                ("Phím R:", "Thoát chế độ này")
-            ]
-        else:
-            instr = [
-                ("Click Chuột:", "Chọn Màn / Độ Khó / Báo cáo"),
-                ("Phím M / N:", "Đổi Map mới / Đổi vị trí đứng"),
-                ("SPACE:", "Cho AI Đua tất cả"),
-                ("Phím R:", "Chơi lại từ đầu")
-            ]
-            
-        y += 45
-        for key, desc in instr:
-            self.screen.blit(self.font_sm.render(key, True, (255,255,255)), (sb_x + 30, y))
-            self.screen.blit(self.font_sm.render(desc, True, TEXT_COLOR), (sb_x + 130, y))
-            y += 28
 
         pygame.display.flip()
 
@@ -677,12 +807,37 @@ class RicochetArena:
 
     def trigger_ai_race(self):
         self.demo_ai_name = None 
+        self.target_pos_2 = None 
         self.reset_positions()
         self.is_racing = True
         self.current_racer_idx = 1 
+        self.log_msg("Đang chạy tính toán cuộc đua tất cả AI...", (255, 200, 0))
+        
         for r in self.robots[1:]:
             r.path = self.compute_path_for_ai(r)
-            self.leaderboard[r.name] = len(r.path) if r.path else "Failed"
+            status = len(r.path) if r.path else "Failed"
+            self.leaderboard[r.name] = status
+            
+        self.log_msg("Bắt đầu cuộc đua trực tiếp!", (0, 255, 0))
+
+    def trigger_demo_ai(self, algo_name):
+        self.demo_ai_name = algo_name
+        self.target_pos_2 = None 
+        self.reset_positions()
+        r = self.get_robot_by_name(algo_name)
+        
+        self.log_msg(f"Tiến hành chạy: {algo_name}", (100, 200, 255))
+        r.full_path = self.compute_path_for_ai(r)
+        
+        if r.full_path:
+            self.log_msg(f"-> {algo_name} tìm thấy đích sau {len(r.full_path)} bước.", (0, 255, 0))
+            r.path.extend(r.full_path)
+            r.full_path = []
+        else:
+            if algo_name in ["HC Simple", "HC Steepest", "HC Stochastic"]:
+                self.log_msg(f"-> {algo_name} KẸT CỤC BỘ (Local Minimum).", (255, 100, 100))
+            else:
+                self.log_msg(f"-> {algo_name} Không tìm thấy đường đi.", (255, 100, 100))
 
     def player_move(self, dx, dy):
         if self.is_racing or self.demo_ai_name or self.player.finished or self.player.path: return
@@ -695,11 +850,9 @@ class RicochetArena:
             self.player.moves += 1
             if dest == self.target_pos:
                 self.player.finished = True
-                self.leaderboard["Người Chơi"] = self.player.moves
+                self.log_msg(f"Player đã hoàn thành trong {self.player.moves} bước!", (255, 255, 0))
 
     def update(self):
-        speed = 10 
-        
         for r in self.robots:
             new_trail = []
             for tx, ty, alpha, is_teleport in r.trail:
@@ -711,51 +864,28 @@ class RicochetArena:
                 target_px = [r.path[0][0]*CELL_SIZE, r.path[0][1]*CELL_SIZE]
                 dx, dy = target_px[0] - r.visual_pos[0], target_px[1] - r.visual_pos[1]
                 dist = math.hypot(dx, dy)
+                is_teleport = abs(dx) > 0 and abs(dy) > 0
+                if not is_teleport: r.trail.append((OFFSET_X + r.visual_pos[0] + CELL_SIZE//2, OFFSET_Y + r.visual_pos[1] + CELL_SIZE//2, 255, False))
                 
-                is_teleport = False
-                # Nếu đi chéo (cả dx và dy đều > 0) thì chắc chắn là Teleport
-                if abs(dx) > 0 and abs(dy) > 0:
-                    is_teleport = True 
-                
-                if not is_teleport:
-                    r.trail.append((OFFSET_X + r.visual_pos[0] + CELL_SIZE//2, OFFSET_Y + r.visual_pos[1] + CELL_SIZE//2, 255, False))
-                
-                max_speed = 18.0 if self.demo_ai_name else 45.0
-                accel = 0.8 if self.demo_ai_name else 2.5
-                
+                max_speed = 30.0 if self.demo_ai_name else 45.0
+                accel = 1.5 if self.demo_ai_name else 2.5
                 r.current_speed += accel
-                if r.current_speed > max_speed:
-                    r.current_speed = max_speed
+                if r.current_speed > max_speed: r.current_speed = max_speed
 
                 if is_teleport or dist < r.current_speed:
-                    r.visual_pos = target_px
-                    r.path.pop(0) 
-                    r.current_speed = 5.0 
+                    r.visual_pos = target_px; r.path.pop(0); r.current_speed = 5.0 
                 else:
-                    r.visual_pos[0] += (dx/dist) * r.current_speed
-                    r.visual_pos[1] += (dy/dist) * r.current_speed
+                    r.visual_pos[0] += (dx/dist) * r.current_speed; r.visual_pos[1] += (dy/dist) * r.current_speed
 
-        if self.demo_ai_name:
-            r = self.get_robot_by_name(self.demo_ai_name)
-            move_robot_visual(r)
-            return
-
-        if not self.is_racing:
-            move_robot_visual(self.player)
-            return
+        if self.demo_ai_name: r = self.get_robot_by_name(self.demo_ai_name); move_robot_visual(r); return
+        if not self.is_racing: move_robot_visual(self.player); return
             
         if self.current_racer_idx >= len(self.robots): return
         r = self.robots[self.current_racer_idx]
         
-        if not r.path:
-            r.finished = True
-            self.current_racer_idx += 1 
-            return
-            
+        if not r.path: r.finished = True; self.current_racer_idx += 1; return
         move_robot_visual(r)
-        if not r.path:
-            r.finished = True
-            self.current_racer_idx += 1 
+        if not r.path: r.finished = True; self.current_racer_idx += 1 
 
     def main_loop(self):
         while True:
@@ -763,47 +893,21 @@ class RicochetArena:
                 if event.type == pygame.QUIT: pygame.quit(); sys.exit()
                 
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: 
-                    for lvl, rect in self.level_buttons.items():
-                        if rect.collidepoint(event.pos):
-                            if self.level != lvl:
-                                self.load_level(lvl)
-                                
                     for diff, rect in self.diff_buttons.items():
-                        if rect.collidepoint(event.pos):
-                            if self.difficulty != diff:
-                                self.difficulty = diff
-                                self.load_level(self.level)
+                        if rect.collidepoint(event.pos) and self.difficulty != diff: self.difficulty = diff; self.load_map()
                                 
-                    for ai_name, rect in self.ai_buttons.items():
-                        if rect.collidepoint(event.pos):
-                            self.demo_ai_name = ai_name
-                            self.reset_positions()
-                            r = self.get_robot_by_name(ai_name)
-                            r.full_path = self.compute_path_for_ai(r)
-                            self.leaderboard[r.name] = len(r.full_path) if r.full_path else "Failed"
+                    for ai_name, rect in self.ui_buttons.items():
+                        if rect.collidepoint(event.pos): self.trigger_demo_ai(ai_name)
                                 
                 if event.type == pygame.KEYDOWN:
-                    if self.demo_ai_name:
-                        r = self.get_robot_by_name(self.demo_ai_name)
-                        if event.key == pygame.K_RETURN or event.key == pygame.K_RIGHT:
-                            if not r.path and r.full_path:
-                                r.path.append(r.full_path.pop(0))
-                        elif event.key == pygame.K_SPACE:
-                            if r.full_path:
-                                r.path.extend(r.full_path)
-                                r.full_path = []
-                        elif event.key == pygame.K_r:
-                            self.demo_ai_name = None 
-                            self.reset_positions()
-                    else:
-                        if event.key == pygame.K_m: self.load_level(self.level)
-                        elif event.key == pygame.K_n: self.randomize_start_position()
-                        elif event.key == pygame.K_r: self.reset_positions()
-                        elif event.key == pygame.K_SPACE: self.trigger_ai_race()
-                        elif event.key in (pygame.K_UP, pygame.K_w): self.player_move(0, -1)
-                        elif event.key in (pygame.K_DOWN, pygame.K_s): self.player_move(0, 1)
-                        elif event.key in (pygame.K_LEFT, pygame.K_a): self.player_move(-1, 0)
-                        elif event.key in (pygame.K_RIGHT, pygame.K_d): self.player_move(1, 0)
+                    if event.key == pygame.K_m: self.load_map()
+                    elif event.key == pygame.K_n: self.randomize_start_position()
+                    elif event.key == pygame.K_SPACE: self.trigger_ai_race()
+                    elif event.key in (pygame.K_UP, pygame.K_w): self.player_move(0, -1)
+                    elif event.key in (pygame.K_DOWN, pygame.K_s): self.player_move(0, 1)
+                    elif event.key in (pygame.K_LEFT, pygame.K_a): self.player_move(-1, 0)
+                    elif event.key in (pygame.K_RIGHT, pygame.K_d): self.player_move(1, 0)
+
             self.update()
             self.draw()
             self.clock.tick(FPS)
