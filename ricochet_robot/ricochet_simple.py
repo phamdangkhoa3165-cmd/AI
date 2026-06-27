@@ -119,9 +119,14 @@ class RicochetArena:
         self.logs.append({"text": msg, "color": color})
         if len(self.logs) > 35: self.logs.pop(0)
 
+    # Lấy đường dẫn của folder chứa file .py hiện tại
+    def get_map_path(self, filename):
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        return os.path.join(base_dir, filename)
+
     # ================= QUẢN LÝ MAP =================
     def save_custom_map(self):
-        filename = f"ricochet_map_group_{self.current_group_id}.json"
+        filename = self.get_map_path(f"ricochet_map_group_{self.current_group_id}.json")
         walls_list = [[list(p1), list(p2)] for p1, p2 in self.walls]
         data = {
             "walls": walls_list, 
@@ -131,14 +136,14 @@ class RicochetArena:
         }
         try:
             with open(filename, "w") as f: json.dump(data, f)
-            self.log_msg(f"Đã lưu thành công Map cho Nhóm {self.current_group_id}.", (0, 255, 100))
+            self.log_msg(f"Đã lưu Map tại: {os.path.basename(filename)}", (0, 255, 100))
         except Exception as e:
-            self.log_msg(f"Lỗi khi lưu map: {e}", (255, 50, 50))
+            self.log_msg(f"Lỗi lưu: {e}", (255, 50, 50))
 
     def load_map(self, group_id=None):
         if group_id is not None: self.current_group_id = group_id
         self.target_pos_2 = None 
-        filename = f"ricochet_map_group_{self.current_group_id}.json"
+        filename = self.get_map_path(f"ricochet_map_group_{self.current_group_id}.json")
         
         if os.path.exists(filename):
             try:
@@ -149,11 +154,11 @@ class RicochetArena:
                 self.target_pos_2 = tuple(t2) if t2 else None
                 st = data.get("start")
                 common_start = tuple(st) if st else self.get_random_valid_pos(set())
-                self.log_msg(f"Đã tải Map của Nhóm {self.current_group_id}.", (0, 255, 255))
+                self.log_msg(f"Đã tải Map: {os.path.basename(filename)}", (0, 255, 255))
             except Exception:
                 common_start = self.generate_random_map()
         else:
-            self.log_msg(f"Sinh map ngẫu nhiên (Nhóm {self.current_group_id} chưa có Map).", (255, 200, 0))
+            self.log_msg(f"Dùng map ngẫu nhiên (Không tìm thấy {os.path.basename(filename)}).", (255, 200, 0))
             common_start = self.generate_random_map()
             
         for r in self.robots: r.start_pos = list(common_start)
