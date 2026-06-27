@@ -257,26 +257,26 @@ class RicochetArena:
             return [] 
         
         # frontier <- a FIFO queue / reached <- {problem.INITIAL}
-        q = deque([(start, [])])
+        frontier = deque([(start, [])])
         reached = {start}
         
         # while not IS-EMPTY(frontier) do
-        while q:
+        while frontier:
             # node <- POP(frontier)
-            c, p = q.popleft()
+            current_node, path = frontier.popleft()
             
             # for each child in EXPAND(problem, node) do
-            for n in self.get_neighbors(c, obs):
+            for neighbor in self.get_neighbors(current_node, obs):
                 # if problem.IS-GOAL(s) then return child
-                if n == self.target_pos: 
-                    return p + [n] 
+                if neighbor == self.target_pos: 
+                    return path + [neighbor] 
                 
                 # if s is not in reached then
-                if n not in reached: 
+                if neighbor not in reached: 
                     # add s to reached
-                    reached.add(n)
+                    reached.add(neighbor)
                     # add child to frontier
-                    q.append((n, p+[n])) 
+                    frontier.append((neighbor, path+[neighbor])) 
                     
         # return failure
         return []
