@@ -6,12 +6,11 @@ import itertools
 import random
 import json
 import os
+import threading
 from collections import deque
 
 # --- CẤU HÌNH ---
 WIDTH, HEIGHT = 1450, 800
-GRID_SIZE = 16
-CELL_SIZE = 40 
 OFFSET_X, OFFSET_Y = 50, 90 # Đưa map sang trái
 FPS = 60
 
@@ -73,12 +72,13 @@ class Robot:
         self.name = name
         self.logic_pos = list(pos)
         self.start_pos = list(pos)
-        self.visual_pos = [pos[0]*CELL_SIZE, pos[1]*CELL_SIZE]
+        # Sửa lại dòng này: Khởi tạo mặc định bằng 0, Arena sẽ tự tính toán lại sau
+        self.visual_pos = [0, 0] 
         self.color = COLORS[name]
         self.path = []        
         self.moves = 0
         self.finished = False
-        self.current_target = None 
+        self.current_target = None
 
 class RicochetArena:
     def __init__(self):
@@ -114,6 +114,12 @@ class RicochetArena:
         self.player = self.robots[0]
         
         self.log_msg("Hệ thống khởi động thành công.", (0, 255, 100))
+        # Thêm biến quản lý kích thước động (Mặc định 16x16)
+        self.grid_size = 16
+        self.cell_size = 640 // self.grid_size
+        self.ai_is_computing = False     # Cờ báo hiệu AI đang suy nghĩ
+        self.ai_result_path = None       # Biến lưu kết quả trả về từ luồng phụ
+        self.ai_robot_computing = None   # Lưu lại robot đang chạy
 
     def log_msg(self, msg, color=(200, 220, 255)):
         self.logs.append({"text": msg, "color": color})
@@ -129,6 +135,7 @@ class RicochetArena:
         filename = self.get_map_path(f"ricochet_map_group_{self.current_group_id}.json")
         walls_list = [[list(p1), list(p2)] for p1, p2 in self.walls]
         data = {
+            "grid_size": self.grid_size, # Lưu thêm kích thước
             "walls": walls_list, 
             "target": self.target_pos,
             "target_2": self.target_pos_2,
@@ -148,17 +155,24 @@ class RicochetArena:
         if os.path.exists(filename):
             try:
                 with open(filename, "r") as f: data = json.load(f)
+                
+                # Tải kích thước map
+                self.grid_size = data.get("grid_size", 16)
+                self.cell_size = 640 // self.grid_size
+                
                 self.walls = {tuple((tuple(w[0]), tuple(w[1]))) for w in data["walls"]}
                 self.target_pos = tuple(data["target"])
                 t2 = data.get("target_2")
                 self.target_pos_2 = tuple(t2) if t2 else None
                 st = data.get("start")
                 common_start = tuple(st) if st else self.get_random_valid_pos(set())
-                self.log_msg(f"Đã tải Map: {os.path.basename(filename)}", (0, 255, 255))
+                self.log_msg(f"Đã tải Map: {os.path.basename(filename)} ({self.grid_size}x{self.grid_size})", (0, 255, 255))
             except Exception:
+                self.grid_size = 16; self.cell_size = 640 // 16
                 common_start = self.generate_random_map()
         else:
             self.log_msg(f"Dùng map ngẫu nhiên (Không tìm thấy {os.path.basename(filename)}).", (255, 200, 0))
+            self.grid_size = 16; self.cell_size = 640 // 16
             common_start = self.generate_random_map()
             
         for r in self.robots: r.start_pos = list(common_start)
@@ -168,12 +182,12 @@ class RicochetArena:
         best_walls = set(); best_target = (7, 7); best_start = (0, 0); max_steps = -1
         for attempt in range(150):
             self.walls.clear()
-            for i in range(GRID_SIZE):
-                self.walls.add(((-1, i), (0, i))); self.walls.add(((GRID_SIZE-1, i), (GRID_SIZE, i)))
-                self.walls.add(((i, -1), (i, 0))); self.walls.add(((i, GRID_SIZE-1), (i, GRID_SIZE)))
+            for i in range(self.grid_size):
+                self.walls.add(((-1, i), (0, i))); self.walls.add(((self.grid_size-1, i), (self.grid_size, i)))
+                self.walls.add(((i, -1), (i, 0))); self.walls.add(((i, self.grid_size-1), (i, self.grid_size)))
             corners = []
             for _ in range(25):
-                x, y = random.randint(1, GRID_SIZE-2), random.randint(1, GRID_SIZE-2)
+                x, y = random.randint(1, self.grid_size-2), random.randint(1, self.grid_size-2)
                 t = random.randint(1, 4) 
                 if t == 1:   edges = [((x-1, y), (x, y)), ((x, y-1), (x, y))]
                 elif t == 2: edges = [((x, y), (x+1, y)), ((x, y-1), (x, y))]
@@ -185,7 +199,7 @@ class RicochetArena:
             self.target_pos = random.choice(corners)
             valid_starts = []
             for _ in range(30):
-                start = (random.randint(0, GRID_SIZE-1), random.randint(0, GRID_SIZE-1))
+                start = (random.randint(0, self.grid_size-1), random.randint(0, self.grid_size-1))
                 if start == self.target_pos: continue
                 path = self.run_bfs(start, set())
                 if path:
@@ -200,7 +214,7 @@ class RicochetArena:
     def reset_simulation(self):
         self.sim_status = "Chờ lệnh"
         for r in self.robots:
-            r.logic_pos = list(r.start_pos); r.visual_pos = [r.start_pos[0]*CELL_SIZE, r.start_pos[1]*CELL_SIZE]
+            r.logic_pos = list(r.start_pos); r.visual_pos = [r.start_pos[0]*self.cell_size, r.start_pos[1]*self.cell_size]
             r.path = []; r.moves = 0; r.finished = False; r.current_target = None 
 
     def get_slide_dest(self, pos, direction, obstacles):
@@ -218,7 +232,7 @@ class RicochetArena:
 
     def get_random_valid_pos(self, obstacles, current_pos=None):
         while True:
-            pos = (random.randint(0, GRID_SIZE-1), random.randint(0, GRID_SIZE-1))
+            pos = (random.randint(0, self.grid_size-1), random.randint(0, self.grid_size-1))
             if pos != self.target_pos and pos not in obstacles: return pos
 
     # ================= CÁC THUẬT TOÁN AI =================
@@ -933,41 +947,52 @@ class RicochetArena:
         return []
 
     def run_min_conflicts(self, start, obs):
-        self.log_msg("Min-Conflicts: Tối thiểu hóa xung đột từ mảng gán", (255, 140, 0))
-        domain = [(0,-1), (0,1), (-1,0), (1,0)]
+        self.log_msg("--- MIN-CONFLICTS (Tối thiểu hóa xung đột) ---", (255, 140, 0))
         
-        # max_steps, the number of steps allowed before giving up
+        # inputs: csp, a constraint satisfaction problem
+        #         max_steps, the number of steps allowed before giving up
         max_steps = 100
-        length_limit = 10 
+        length_limit = 10 # Bài toán quy định CSP có 10 Biến (10 bước trượt)
+        domain = [(0,-1), (0,1), (-1,0), (1,0)] # Miền giá trị của mỗi bước
         
-        # current <- an initial complete assignment for csp
-        current = [random.choice(domain) for _ in range(length_limit)]
-        
-        def calculate_conflicts(assignment):
-            curr = start; path = []
+        # Hàm CONFLICTS(var, v, current, csp) đếm số lượng vi phạm
+        # (Ở game này: Khoảng cách Heuristic tới đích chính là số "xung đột" cần giải quyết)
+        def conflicts_func(assignment):
+            curr = start
+            path = []
             for d in assignment:
-                curr = self.get_slide_dest(curr, d, obs); path.append(curr)
-                if curr == self.target_pos: return 0, path 
+                curr = self.get_slide_dest(curr, d, obs)
+                path.append(curr)
+                # Nếu chuỗi bước đi chạm đích -> 0 xung đột (Giải pháp hoàn hảo)
+                if curr == self.target_pos: 
+                    return 0, path 
             return self.heuristic(curr), path 
             
+        # current <- an initial complete assignment for csp
+        # (Khởi tạo một mảng 10 bước đi hoàn toàn ngẫu nhiên)
+        current = [random.choice(domain) for _ in range(length_limit)]
+        
         # for i = 1 to max_steps do
         for i in range(1, max_steps + 1): 
-            conflicts, path = calculate_conflicts(current)
+            # Đánh giá mảng gán current hiện tại
+            conflicts, path = conflicts_func(current)
             
             # if current is a solution for csp then return current
-            if conflicts == 0: return path 
+            if conflicts == 0: 
+                return path 
             
-            # var <- a randomly chosen conflicted variable
+            # var <- a randomly chosen conflicted variable from csp.VARIABLES
+            # (Chọn ngẫu nhiên 1 Biến - tức là 1 bước trượt trong mảng - để sửa sai)
             var = random.randint(0, length_limit - 1)
             
-            # value <- the value v for var that minimizes CONFLICTS
+            # value <- the value v for var that minimizes CONFLICTS(var, v, current, csp)
             value = current[var]
             min_conflicts = float('inf')
             
             for v in domain:
                 temp_assignment = list(current)
                 temp_assignment[var] = v
-                c, _ = calculate_conflicts(temp_assignment)
+                c, _ = conflicts_func(temp_assignment)
                 if c < min_conflicts: 
                     min_conflicts = c
                     value = v
@@ -1030,9 +1055,9 @@ class RicochetArena:
         self.screen.blit(font.render(text, True, color), pos)
 
     def draw_wall(self, p1, p2):
-        if p1[0] < 0 or p2[0] >= GRID_SIZE or p1[1] < 0 or p2[1] >= GRID_SIZE: return
-        rect = pygame.Rect(OFFSET_X + p2[0]*CELL_SIZE - 3, OFFSET_Y + p1[1]*CELL_SIZE - 4, 8, CELL_SIZE + 8) if p1[0] != p2[0] else \
-               pygame.Rect(OFFSET_X + p1[0]*CELL_SIZE - 4, OFFSET_Y + p2[1]*CELL_SIZE - 3, CELL_SIZE + 8, 8)
+        if p1[0] < 0 or p2[0] >= self.grid_size or p1[1] < 0 or p2[1] >= self.grid_size: return
+        rect = pygame.Rect(OFFSET_X + p2[0]*self.cell_size - 3, OFFSET_Y + p1[1]*self.cell_size - 4, 8, self.cell_size + 8) if p1[0] != p2[0] else \
+               pygame.Rect(OFFSET_X + p1[0]*self.cell_size - 4, OFFSET_Y + p2[1]*self.cell_size - 3, self.cell_size + 8, 8)
         
         # Đổ bóng tường
         pygame.draw.rect(self.shadow_surface, SHADOW_COLOR, rect.move(2, 3))
@@ -1047,7 +1072,7 @@ class RicochetArena:
 
     def toggle_wall(self, mouse_pos):
         mx, my = mouse_pos
-        c, r = (mx - OFFSET_X) / CELL_SIZE, (my - OFFSET_Y) / CELL_SIZE
+        c, r = (mx - OFFSET_X) / self.cell_size, (my - OFFSET_Y) / self.cell_size
         dist_x, dist_y = min(c % 1, 1 - (c % 1)), min(r % 1, 1 - (r % 1))
         c, r = int(c), int(r)
         
@@ -1143,28 +1168,28 @@ class RicochetArena:
         pygame.draw.line(self.screen, BORDER_GLOW, (OFFSET_X, 75), (OFFSET_X + 640, 75), 2)
 
         # ---------------- KHU VỰC 1: MAP LƯỚI (BÊN TRÁI) ----------------
-        brd = pygame.Rect(OFFSET_X-8, OFFSET_Y-8, CELL_SIZE*GRID_SIZE+16, CELL_SIZE*GRID_SIZE+16)
+        brd = pygame.Rect(OFFSET_X-8, OFFSET_Y-8, self.cell_size*self.grid_size+16, self.cell_size*self.grid_size+16)
         pygame.draw.rect(self.screen, BOARD_BG, brd, border_radius=12)
         pygame.draw.rect(self.screen, BORDER_GLOW, brd, width=2, border_radius=12)
         
         # Vẽ lưới
-        for r, c in itertools.product(range(GRID_SIZE), range(GRID_SIZE)):
-            rect = (OFFSET_X + c*CELL_SIZE, OFFSET_Y + r*CELL_SIZE, CELL_SIZE, CELL_SIZE)
+        for r, c in itertools.product(range(self.grid_size), range(self.grid_size)):
+            rect = (OFFSET_X + c*self.cell_size, OFFSET_Y + r*self.cell_size, self.cell_size, self.cell_size)
             pygame.draw.rect(self.screen, TILE_COLOR, rect)
             pygame.draw.rect(self.screen, TILE_LINE, rect, 1)
 
         # Highlight ô nếu đang trong chế độ Edit
         mx, my = mouse_pos
-        if self.edit_mode > 0 and mx >= OFFSET_X and mx <= OFFSET_X + GRID_SIZE*CELL_SIZE and my >= OFFSET_Y and my <= OFFSET_Y + GRID_SIZE*CELL_SIZE:
-            hc, hr = int((mx - OFFSET_X) / CELL_SIZE), int((my - OFFSET_Y) / CELL_SIZE)
-            highlight_rect = pygame.Rect(OFFSET_X + hc*CELL_SIZE, OFFSET_Y + hr*CELL_SIZE, CELL_SIZE, CELL_SIZE)
+        if self.edit_mode > 0 and mx >= OFFSET_X and mx <= OFFSET_X + self.grid_size*self.cell_size and my >= OFFSET_Y and my <= OFFSET_Y + self.grid_size*self.cell_size:
+            hc, hr = int((mx - OFFSET_X) / self.cell_size), int((my - OFFSET_Y) / self.cell_size)
+            highlight_rect = pygame.Rect(OFFSET_X + hc*self.cell_size, OFFSET_Y + hr*self.cell_size, self.cell_size, self.cell_size)
             highlight_color = (255, 50, 50, 100) if self.edit_mode == 1 else ((50, 255, 50, 100) if self.edit_mode == 2 else (255, 255, 50, 100))
             pygame.draw.rect(self.shadow_surface, highlight_color, highlight_rect)
 
         # Vẽ đích
         for t, col in [(self.target_pos, TARGET_COLOR), (self.target_pos_2, TARGET_2_COLOR)]:
             if t: 
-                tx, ty = OFFSET_X + t[0]*CELL_SIZE + CELL_SIZE//2, OFFSET_Y + t[1]*CELL_SIZE + CELL_SIZE//2
+                tx, ty = OFFSET_X + t[0]*self.cell_size + self.cell_size//2, OFFSET_Y + t[1]*self.cell_size + self.cell_size//2
                 # Hiệu ứng lan tỏa của Đích
                 pygame.draw.circle(self.screen, (*col, 50), (tx, ty), 16)
                 pygame.draw.circle(self.screen, col, (tx, ty), 8)
@@ -1175,7 +1200,7 @@ class RicochetArena:
         # Vẽ robot (Quân cờ Ricochet thay vì Pacman)
         r_active = self.get_robot_by_name(self.current_ai) if self.current_ai else self.player
         if r_active:
-            rx, ry = int(OFFSET_X + r_active.visual_pos[0] + CELL_SIZE//2), int(OFFSET_Y + r_active.visual_pos[1] + CELL_SIZE//2)
+            rx, ry = int(OFFSET_X + r_active.visual_pos[0] + self.cell_size//2), int(OFFSET_Y + r_active.visual_pos[1] + self.cell_size//2)
             self.draw_3d_robot(self.screen, rx, ry, r_active.color)
             
             # Thêm dấu chấm đen để nhận diện Người chơi nếu cần
@@ -1216,6 +1241,7 @@ class RicochetArena:
         status_lines = [
             f"Trạng thái: {self.sim_status}",
             f"Bản đồ Nhóm: {self.current_group_id}",
+            f"Kích thước Map: {self.grid_size}x{self.grid_size} ô", # Dòng mới thêm vào
             f"Độ dài đường đi: {r_active.moves if r_active else 0}",
             f"Chế độ sửa (E): {['Đang Tắt', 'Vẽ Tường', 'Đặt Start', 'Đặt Đích'][self.edit_mode]}"
         ]
@@ -1281,28 +1307,73 @@ class RicochetArena:
 
     def trigger_run_ai(self):
         if not self.current_ai: return
+        if self.ai_is_computing:
+            self.log_msg("AI đang suy nghĩ, vui lòng đợi...", (255, 255, 0))
+            return
+            
         self.reset_simulation()
         r = self.get_robot_by_name(self.current_ai)
-        self.log_msg(f"Tiến hành chạy: {self.current_ai}", (100, 200, 255))
+        self.log_msg(f"Tiến hành chạy: {self.current_ai}...", (100, 200, 255))
+        self.sim_status = "Đang tính toán..."
         
+        # BẬT ĐA LUỒNG: Giao việc cho luồng phụ chạy ngầm
+        self.ai_is_computing = True
+        self.ai_robot_computing = r
+        threading.Thread(target=self.thread_compute_ai, args=(r,), daemon=True).start()
+
+    def thread_compute_ai(self, r):
+        # Đây là không gian luồng phụ: Mọi tính toán nặng nề sẽ nằm ở đây mà không làm đơ game
         path = self.compute_path_for_ai(r)
-        if path:
-            self.log_msg(f"-> {self.current_ai} tìm thấy đường dài {len(path)} bước.", (0, 255, 0))
-            r.path = path
-            self.sim_status = "Đang chạy"
-        else:
-            self.sim_status = "Kẹt (0 bước)"
-            self.log_msg(f"-> {self.current_ai} KẸT / KHÔNG THỂ GIẢI.", (255, 100, 100))
+        
+        # Tính xong, gán kết quả vào biến để luồng chính nhận diện
+        self.ai_result_path = path if path is not None else []
 
     def update(self):
         if self.state != "SIMULATION": return
         
+        # --- 1. LUỒNG CHÍNH NHẬN KẾT QUẢ TỪ LUỒNG PHỤ ---
+        if self.ai_is_computing and self.ai_result_path is not None:
+            path = self.ai_result_path
+            r = self.ai_robot_computing
+            
+            # Reset cờ luồng
+            self.ai_is_computing = False
+            self.ai_result_path = None
+            self.ai_robot_computing = None
+            
+            if path:
+                self.log_msg(f"-> {self.current_ai} tìm thấy đường dài {len(path)} bước.", (0, 255, 0))
+                # Dịch toạ độ ra hướng đi
+                dirs = []
+                curr = r.start_pos
+                for p in path:
+                    if p[0] < curr[0]: dirs.append("TRÁI")
+                    elif p[0] > curr[0]: dirs.append("PHẢI")
+                    elif p[1] < curr[1]: dirs.append("LÊN")
+                    elif p[1] > curr[1]: dirs.append("XUỐNG")
+                    curr = p
+                    
+                path_str = " -> ".join(dirs)
+                if len(path_str) > 110: path_str = path_str[:107] + "..."
+                self.log_msg(f"Chi tiết: {path_str}", (200, 255, 200))
+
+                r.path = path
+                self.sim_status = "Đang chạy"
+            else:
+                self.sim_status = "Kẹt (0 bước)"
+                self.log_msg(f"-> {self.current_ai} KẸT / KHÔNG THỂ GIẢI.", (255, 100, 100))
+
+        # Khóa hoạt ảnh nếu đang tính toán
+        if self.ai_is_computing: 
+            return 
+            
+        # --- 2. XỬ LÝ DI CHUYỂN TRƯỢT CỦA ROBOT ---
         r = self.get_robot_by_name(self.current_ai) if self.current_ai else self.player
         if not r: return
 
         if r.path:
             target_logic = r.path[0]
-            target_px = [target_logic[0]*CELL_SIZE, target_logic[1]*CELL_SIZE]
+            target_px = [target_logic[0]*self.cell_size, target_logic[1]*self.cell_size]
             
             if not hasattr(r, 'current_target') or r.current_target != target_logic:
                 r.current_target = target_logic
@@ -1312,7 +1383,7 @@ class RicochetArena:
             dy = target_px[1] - r.visual_pos[1]
             dist = math.hypot(dx, dy)
             
-            speed = 10.0 # Tốc độ trượt mượt mà
+            speed = 10.0 # Tốc độ trượt
             if dist < speed: 
                 r.visual_pos = target_px; r.path.pop(0)
                 if not r.path:
@@ -1346,8 +1417,11 @@ class RicochetArena:
                                 
                     elif self.state == "SIMULATION":
                         # Xử lý Map Edit
-                        if mx >= OFFSET_X and mx <= OFFSET_X + GRID_SIZE*CELL_SIZE and my >= OFFSET_Y and my <= OFFSET_Y + GRID_SIZE*CELL_SIZE:
-                            c, r = int((mx - OFFSET_X) / CELL_SIZE), int((my - OFFSET_Y) / CELL_SIZE)
+                        if mx >= OFFSET_X and mx <= OFFSET_X + self.grid_size*self.cell_size and my >= OFFSET_Y and my <= OFFSET_Y + self.grid_size*self.cell_size:
+                            if self.ai_is_computing: 
+                                self.log_msg("Đang tính toán, không thể sửa Map!", (255, 50, 50))
+                                continue
+                            c, r = int((mx - OFFSET_X) / self.cell_size), int((my - OFFSET_Y) / self.cell_size)
                             
                             if self.edit_mode == 1 and event.button == 1: self.toggle_wall(event.pos)
                             elif self.edit_mode == 2 and event.button == 1:
@@ -1366,6 +1440,9 @@ class RicochetArena:
                         if event.button == 1:
                             for btn_name, rect in self.sim_buttons.items():
                                 if rect.collidepoint(event.pos):
+                                    if self.ai_is_computing:
+                                        self.log_msg("AI đang chạy, không thể bấm nút!", (255, 50, 50))
+                                        continue
                                     if "Chạy AI" in btn_name: self.trigger_run_ai()
                                     elif "Chỉnh Map" in btn_name: self.edit_mode = (self.edit_mode + 1) % 4
                                     elif "Lưu Map" in btn_name: self.save_custom_map()
@@ -1374,11 +1451,44 @@ class RicochetArena:
                                         self.state = "MENU"; self.current_ai = None; self.log_msg("Đã về Menu Chính.")
                                 
                 if event.type == pygame.KEYDOWN and self.state == "SIMULATION":
+                    if self.ai_is_computing: 
+                        continue
                     if event.key == pygame.K_e: self.edit_mode = (self.edit_mode + 1) % 4
                     elif event.key in (pygame.K_UP, pygame.K_w): self.player_move(0, -1)
                     elif event.key in (pygame.K_DOWN, pygame.K_s): self.player_move(0, 1)
                     elif event.key in (pygame.K_LEFT, pygame.K_a): self.player_move(-1, 0)
                     elif event.key in (pygame.K_RIGHT, pygame.K_d): self.player_move(1, 0)
+                    elif event.key == pygame.K_LEFTBRACKET: # Bấm '[' để Giảm map
+                        if self.grid_size > 2: # <--- SỬA SỐ 6 THÀNH SỐ 2 Ở ĐÂY
+                            self.grid_size -= 1
+                            self.cell_size = 640 // self.grid_size
+                            self.walls.clear() # Xóa tường cũ
+                            
+                            # Xây lại tường biên (Boundary) để robot không trượt ra vô cực
+                            for i in range(self.grid_size):
+                                self.walls.add(((-1, i), (0, i))); self.walls.add(((self.grid_size-1, i), (self.grid_size, i)))
+                                self.walls.add(((i, -1), (i, 0))); self.walls.add(((i, self.grid_size-1), (i, self.grid_size)))
+                            
+                            # Ép lại toạ độ để không bị tràn khung
+                            self.target_pos = (min(self.target_pos[0], self.grid_size-1), min(self.target_pos[1], self.grid_size-1))
+                            for r in self.robots: 
+                                r.start_pos = [min(r.start_pos[0], self.grid_size-1), min(r.start_pos[1], self.grid_size-1)]
+                            self.reset_simulation()
+                            self.log_msg(f"Đã giảm kích thước Map xuống {self.grid_size}x{self.grid_size}", (255, 255, 100))
+                            
+                    elif event.key == pygame.K_RIGHTBRACKET: # Bấm ']' để Tăng map
+                        if self.grid_size < 16: # <--- SỬA SỐ 32 THÀNH SỐ 16 Ở ĐÂY
+                            self.grid_size += 1
+                            self.cell_size = 640 // self.grid_size
+                            self.walls.clear()
+                            
+                            # Xây lại tường biên (Boundary) để robot không trượt ra vô cực
+                            for i in range(self.grid_size):
+                                self.walls.add(((-1, i), (0, i))); self.walls.add(((self.grid_size-1, i), (self.grid_size, i)))
+                                self.walls.add(((i, -1), (i, 0))); self.walls.add(((i, self.grid_size-1), (i, self.grid_size)))
+                            
+                            self.reset_simulation()
+                            self.log_msg(f"Đã tăng kích thước Map lên {self.grid_size}x{self.grid_size}", (255, 255, 100))
 
             self.update()
             if self.state == "MENU": self.draw_menu()
