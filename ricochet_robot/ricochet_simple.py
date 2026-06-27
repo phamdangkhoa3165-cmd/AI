@@ -245,7 +245,7 @@ class RicochetArena:
         
         # frontier <- a FIFO queue / reached <- {problem.INITIAL}
         q = deque([(start, [])])
-        vis = {start}
+        reached = {start}
         
         # while not IS-EMPTY(frontier) do
         while q:
@@ -259,9 +259,9 @@ class RicochetArena:
                     return p + [n] 
                 
                 # if s is not in reached then
-                if n not in vis: 
+                if n not in reached: 
                     # add s to reached
-                    vis.add(n)
+                    reached.add(n)
                     # add child to frontier
                     q.append((n, p+[n])) 
                     
@@ -276,7 +276,7 @@ class RicochetArena:
         # frontier <- a LIFO queue (Stack), with node as an element
         # reached <- {problem.INITIAL}
         st = [(start, [])]
-        vis = {start}
+        reached = {start}
         
         # while not IS-EMPTY(frontier) do
         while st:
@@ -294,9 +294,9 @@ class RicochetArena:
                     return p + [n] 
                 
                 # if s is not in reached then
-                if n not in vis: 
+                if n not in reached: 
                     # add s to reached
-                    vis.add(n)
+                    reached.add(n)
                     # add child to frontier
                     st.append((n, p+[n])) 
                     
