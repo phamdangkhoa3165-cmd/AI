@@ -10,8 +10,8 @@ import threading
 from collections import deque
 
 # --- CẤU HÌNH ---
-WIDTH, HEIGHT = 1450, 800
-OFFSET_X, OFFSET_Y = 50, 90 # Đưa map sang trái
+WIDTH, HEIGHT = 1280, 720
+OFFSET_X, OFFSET_Y = 50, 75 # Đưa map sang trái
 FPS = 60
 
 # --- BẢNG MÀU PACMAN LAB THEME ---
@@ -83,7 +83,8 @@ class Robot:
 class RicochetArena:
     def __init__(self):
         pygame.init()
-        self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        # BẬT TÍNH NĂNG RESIZE: Cho phép kéo giãn/Phóng to toàn màn hình
+        self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
         pygame.display.set_caption("Ricochet Algorithm Laboratory")
         self.clock = pygame.time.Clock()
         
@@ -104,26 +105,32 @@ class RicochetArena:
         self.sim_status = "Chờ lệnh" 
         
         self.logs = []
+        self.log_scroll = 0 # BIẾN MỚI: Quản lý vị trí thanh cuộn
         self.counter = itertools.count() 
         self.shadow_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
         
         self.menu_buttons = {}
         self.sim_buttons = {}
         
+        self.grid_size = 16
+        self.grid_size = 16
+        # --- BÀN CỜ TO HẾT CỠ BÁM THEO CHIỀU CAO ---
+        self.board_size = HEIGHT - 200 
+        self.cell_size = self.board_size // self.grid_size
+        
+        self.ai_is_computing = False     
+        self.ai_result_path = None       
+        self.ai_robot_computing = None   
+        
         self.robots = [Robot(name, (0,0)) for name in COLORS.keys()]
         self.player = self.robots[0]
         
         self.log_msg("Hệ thống khởi động thành công.", (0, 255, 100))
-        # Thêm biến quản lý kích thước động (Mặc định 16x16)
-        self.grid_size = 16
-        self.cell_size = 640 // self.grid_size
-        self.ai_is_computing = False     # Cờ báo hiệu AI đang suy nghĩ
-        self.ai_result_path = None       # Biến lưu kết quả trả về từ luồng phụ
-        self.ai_robot_computing = None   # Lưu lại robot đang chạy
 
     def log_msg(self, msg, color=(200, 220, 255)):
         self.logs.append({"text": msg, "color": color})
-        if len(self.logs) > 35: self.logs.pop(0)
+        if len(self.logs) > 200: self.logs.pop(0) # Tăng lên lưu trữ 200 dòng
+        self.log_scroll = 0 # Tự động cuộn xuống dưới cùng khi có log mới
 
     # Lấy đường dẫn của folder chứa file .py hiện tại
     def get_map_path(self, filename):
@@ -152,13 +159,17 @@ class RicochetArena:
         self.target_pos_2 = None 
         filename = self.get_map_path(f"ricochet_map_group_{self.current_group_id}.json")
         
+        # --- FIX: LUÔN TỰ ĐỘNG ĐO LẠI CỬA SỔ TRƯỚC KHI TẢI MAP ---
+        self.board_size = min(HEIGHT - 100, WIDTH - 680)
+        # ---------------------------------------------------------
+        
         if os.path.exists(filename):
             try:
                 with open(filename, "r") as f: data = json.load(f)
                 
-                # Tải kích thước map
+                # Tải kích thước map và chia lại ô lưới theo board_size mới đo
                 self.grid_size = data.get("grid_size", 16)
-                self.cell_size = 640 // self.grid_size
+                self.cell_size = self.board_size // self.grid_size
                 
                 self.walls = {tuple((tuple(w[0]), tuple(w[1]))) for w in data["walls"]}
                 self.target_pos = tuple(data["target"])
@@ -168,11 +179,13 @@ class RicochetArena:
                 common_start = tuple(st) if st else self.get_random_valid_pos(set())
                 self.log_msg(f"Đã tải Map: {os.path.basename(filename)} ({self.grid_size}x{self.grid_size})", (0, 255, 255))
             except Exception:
-                self.grid_size = 16; self.cell_size = 640 // 16
+                self.grid_size = 16
+                self.cell_size = self.board_size // 16
                 common_start = self.generate_random_map()
         else:
             self.log_msg(f"Dùng map ngẫu nhiên (Không tìm thấy {os.path.basename(filename)}).", (255, 200, 0))
-            self.grid_size = 16; self.cell_size = 640 // 16
+            self.grid_size = 16
+            self.cell_size = self.board_size // 16
             common_start = self.generate_random_map()
             
         for r in self.robots: r.start_pos = list(common_start)
@@ -1162,93 +1175,92 @@ class RicochetArena:
         self.shadow_surface.fill((0,0,0,0))
         mouse_pos = pygame.mouse.get_pos()
 
+        # Tính toán kích thước thực tế
+        actual_board_size = self.cell_size * self.grid_size
+
         # Tiêu đề trên cùng
         title_str = f"MÔ PHỎNG: {self.current_ai}" if self.current_ai else "CHẾ ĐỘ TỰ DO"
         self.draw_text(title_str, self.font_title, TARGET_COLOR, (OFFSET_X, 20))
-        pygame.draw.line(self.screen, BORDER_GLOW, (OFFSET_X, 75), (OFFSET_X + 640, 75), 2)
+        pygame.draw.line(self.screen, BORDER_GLOW, (OFFSET_X, 70), (OFFSET_X + actual_board_size, 70), 2)
 
-        # ---------------- KHU VỰC 1: MAP LƯỚI (BÊN TRÁI) ----------------
-        brd = pygame.Rect(OFFSET_X-8, OFFSET_Y-8, self.cell_size*self.grid_size+16, self.cell_size*self.grid_size+16)
+        # ---------------- CỘT 1: MAP LƯỚI (BÊN TRÁI - RỘNG THOẢI MÁI) ----------------
+        brd = pygame.Rect(OFFSET_X-8, OFFSET_Y-8, actual_board_size+16, actual_board_size+16)
         pygame.draw.rect(self.screen, BOARD_BG, brd, border_radius=12)
         pygame.draw.rect(self.screen, BORDER_GLOW, brd, width=2, border_radius=12)
         
-        # Vẽ lưới
         for r, c in itertools.product(range(self.grid_size), range(self.grid_size)):
             rect = (OFFSET_X + c*self.cell_size, OFFSET_Y + r*self.cell_size, self.cell_size, self.cell_size)
             pygame.draw.rect(self.screen, TILE_COLOR, rect)
             pygame.draw.rect(self.screen, TILE_LINE, rect, 1)
 
-        # Highlight ô nếu đang trong chế độ Edit
+        # Highlight ô Edit
         mx, my = mouse_pos
-        if self.edit_mode > 0 and mx >= OFFSET_X and mx <= OFFSET_X + self.grid_size*self.cell_size and my >= OFFSET_Y and my <= OFFSET_Y + self.grid_size*self.cell_size:
+        if self.edit_mode > 0 and OFFSET_X <= mx <= OFFSET_X + actual_board_size and OFFSET_Y <= my <= OFFSET_Y + actual_board_size:
             hc, hr = int((mx - OFFSET_X) / self.cell_size), int((my - OFFSET_Y) / self.cell_size)
             highlight_rect = pygame.Rect(OFFSET_X + hc*self.cell_size, OFFSET_Y + hr*self.cell_size, self.cell_size, self.cell_size)
             highlight_color = (255, 50, 50, 100) if self.edit_mode == 1 else ((50, 255, 50, 100) if self.edit_mode == 2 else (255, 255, 50, 100))
             pygame.draw.rect(self.shadow_surface, highlight_color, highlight_rect)
 
-        # Vẽ đích
+        # Vẽ đích & Robot
         for t, col in [(self.target_pos, TARGET_COLOR), (self.target_pos_2, TARGET_2_COLOR)]:
             if t: 
                 tx, ty = OFFSET_X + t[0]*self.cell_size + self.cell_size//2, OFFSET_Y + t[1]*self.cell_size + self.cell_size//2
-                # Hiệu ứng lan tỏa của Đích
-                pygame.draw.circle(self.screen, (*col, 50), (tx, ty), 16)
-                pygame.draw.circle(self.screen, col, (tx, ty), 8)
+                pygame.draw.circle(self.screen, (*col, 50), (tx, ty), max(8, self.cell_size//2.5))
+                pygame.draw.circle(self.screen, col, (tx, ty), max(4, self.cell_size//5))
 
-        # Vẽ tường
         for p1, p2 in self.walls: self.draw_wall(p1, p2)
 
-        # Vẽ robot (Quân cờ Ricochet thay vì Pacman)
         r_active = self.get_robot_by_name(self.current_ai) if self.current_ai else self.player
         if r_active:
             rx, ry = int(OFFSET_X + r_active.visual_pos[0] + self.cell_size//2), int(OFFSET_Y + r_active.visual_pos[1] + self.cell_size//2)
             self.draw_3d_robot(self.screen, rx, ry, r_active.color)
-            
-            # Thêm dấu chấm đen để nhận diện Người chơi nếu cần
-            if r_active.name == "Người Chơi":
-                pygame.draw.circle(self.screen, (0,0,0), (rx, ry-4), 4)
+            if r_active.name == "Người Chơi": pygame.draw.circle(self.screen, (0,0,0), (rx, ry-4), 4)
 
         self.screen.blit(self.shadow_surface, (0,0))
 
-        # Khung Mô tả thuật toán ở dưới map
-        desc_rect = pygame.Rect(OFFSET_X, OFFSET_Y + 660, 640, 75)
-        pygame.draw.rect(self.screen, PANEL_BG, desc_rect, border_radius=8)
-        pygame.draw.rect(self.screen, TILE_LINE, desc_rect, width=1, border_radius=8)
+        # ---------------- CỘT 2: BẢNG ĐIỀU KHIỂN CHUNG (Ở GIỮA) ----------------
+        mid_x = OFFSET_X + actual_board_size + 30 
+        col_width = 300
         
+        # 1. KHUNG MÔ TẢ THUẬT TOÁN (Nằm trên cùng)
         desc_title = self.current_ai if self.current_ai else "Chế độ Người Chơi"
-        desc_content = ALGO_DESC.get(self.current_ai, "Dùng phím W, A, S, D hoặc Mũi tên để tự di chuyển Robot và kiểm tra Map.")
-        self.draw_text(desc_title, self.font_md, (255,255,255), (OFFSET_X + 15, OFFSET_Y + 670))
+        desc_content = ALGO_DESC.get(self.current_ai, "Dùng phím W, A, S, D hoặc Mũi tên để di chuyển. Nhấn '[' hoặc ']' để tăng giảm map.")
         
-        # Cắt dòng cho description
         words = desc_content.split(" "); lines = []; curr_line = ""
         for w in words:
-            if self.font_sm.size(curr_line + w)[0] < 600: curr_line += w + " "
+            if self.font_sm.size(curr_line + w)[0] < col_width - 30: curr_line += w + " "
             else: lines.append(curr_line); curr_line = w + " "
         lines.append(curr_line)
-        for i, line in enumerate(lines):
-            self.draw_text(line, self.font_sm, TEXT_COLOR, (OFFSET_X + 15, OFFSET_Y + 695 + i*20))
-
-        # ---------------- KHU VỰC 2: BẢNG ĐIỀU KHIỂN (Ở GIỮA) ----------------
-        mid_x = 730
         
-        # Bảng Trạng Thái
-        status_rect = pygame.Rect(mid_x, OFFSET_Y, 300, 180)
+        desc_height = max(100, 45 + len(lines)*22)
+        desc_rect = pygame.Rect(mid_x, OFFSET_Y, col_width, desc_height)
+        pygame.draw.rect(self.screen, PANEL_BG, desc_rect, border_radius=12)
+        pygame.draw.rect(self.screen, TILE_LINE, desc_rect, width=1, border_radius=12)
+        
+        self.draw_text(desc_title, self.font_md, TARGET_COLOR, (mid_x + 15, OFFSET_Y + 12))
+        for i, line in enumerate(lines):
+            self.draw_text(line, self.font_sm, TEXT_COLOR, (mid_x + 15, OFFSET_Y + 38 + i*22))
+
+        # 2. BẢNG TRẠNG THÁI (Nằm ngay dưới Mô tả)
+        status_y = OFFSET_Y + desc_height + 15
+        status_rect = pygame.Rect(mid_x, status_y, col_width, 160)
         pygame.draw.rect(self.screen, PANEL_BG, status_rect, border_radius=12)
         pygame.draw.rect(self.screen, BORDER_GLOW, status_rect, width=2, border_radius=12)
         
-        self.draw_text("TRẠNG THÁI", self.font_md, TARGET_COLOR, (mid_x + 15, OFFSET_Y + 15))
-        pygame.draw.line(self.screen, TILE_LINE, (mid_x + 15, OFFSET_Y + 45), (mid_x + 285, OFFSET_Y + 45))
+        self.draw_text("TRẠNG THÁI", self.font_md, TARGET_COLOR, (mid_x + 15, status_y + 12))
+        pygame.draw.line(self.screen, TILE_LINE, (mid_x + 15, status_y + 38), (mid_x + col_width - 15, status_y + 38))
         
         status_lines = [
             f"Trạng thái: {self.sim_status}",
             f"Bản đồ Nhóm: {self.current_group_id}",
-            f"Kích thước Map: {self.grid_size}x{self.grid_size} ô", # Dòng mới thêm vào
+            f"Kích thước Map: {self.grid_size}x{self.grid_size} ô",
             f"Độ dài đường đi: {r_active.moves if r_active else 0}",
             f"Chế độ sửa (E): {['Đang Tắt', 'Vẽ Tường', 'Đặt Start', 'Đặt Đích'][self.edit_mode]}"
         ]
         for i, line in enumerate(status_lines):
-            self.draw_text(line, self.font_sm, (200, 220, 240), (mid_x + 15, OFFSET_Y + 60 + i*28))
+            self.draw_text(line, self.font_sm, (200, 220, 240), (mid_x + 15, status_y + 48 + i*22))
 
-        # Các nút bấm lớn
+        # 3. NÚT BẤM (Nằm dưới cùng)
         btn_data = [
             ("Chạy AI", (46, 204, 113)),          
             (f"Chỉnh Map: {['TẮT', 'TƯỜNG', 'START', 'ĐÍCH'][self.edit_mode]}", (230, 126, 34)), 
@@ -1258,42 +1270,58 @@ class RicochetArena:
         ]
         
         self.sim_buttons.clear()
-        by = OFFSET_Y + 200
+        by = status_y + 160 + 15
+        remaining_h = HEIGHT - by - 10
+        # Tự động co giãn khoảng cách các nút theo chiều cao màn hình còn trống
+        btn_gap = min(50, max(38, remaining_h // 5))
+        btn_height = min(40, btn_gap - 8)
+
         for text, color in btn_data:
-            btn_rect = pygame.Rect(mid_x, by, 300, 45)
+            btn_rect = pygame.Rect(mid_x, by, col_width, btn_height)
             self.sim_buttons[text] = btn_rect
             is_hover = btn_rect.collidepoint(mouse_pos)
-            
             draw_col = (min(color[0]+30, 255), min(color[1]+30, 255), min(color[2]+30, 255)) if is_hover else color
-            pygame.draw.rect(self.screen, draw_col, btn_rect, border_radius=22)
-            pygame.draw.rect(self.screen, (255,255,255), btn_rect, width=2, border_radius=22)
-            
+            pygame.draw.rect(self.screen, draw_col, btn_rect, border_radius=20)
+            pygame.draw.rect(self.screen, (255,255,255), btn_rect, width=2, border_radius=20)
             t_surf = self.font_md.render(text, True, (255,255,255))
-            self.screen.blit(t_surf, (mid_x + 150 - t_surf.get_width()//2, by + 12))
-            by += 60
+            self.screen.blit(t_surf, (mid_x + col_width//2 - t_surf.get_width()//2, by + (btn_height//2 - t_surf.get_height()//2)))
+            by += btn_gap
 
-        # ---------------- KHU VỰC 3: BẢNG LOG (BÊN PHẢI) ----------------
-        log_x = 1060
-        log_rect = pygame.Rect(log_x, 20, WIDTH - log_x - 20, HEIGHT - 40)
+        # ---------------- CỘT 3: BẢNG LOG (HẸP LẠI VÀ CHUYỂN SANG GÓC PHẢI CÙNG) ----------------
+        log_x = mid_x + col_width + 20
+        log_width = max(250, WIDTH - log_x - 20) # Bảng log hẹp lại để nhường không gian cho bàn cờ
+        
+        log_rect = pygame.Rect(log_x, 20, log_width, HEIGHT - 40)
         pygame.draw.rect(self.screen, (15, 20, 35), log_rect, border_radius=12)
-        pygame.draw.line(self.screen, TILE_LINE, (log_x + 15, 60), (WIDTH - 35, 60))
+        pygame.draw.line(self.screen, TILE_LINE, (log_x + 15, 60), (log_x + log_width - 15, 60))
         
-        self.draw_text("NHẬT KÝ HOẠT ĐỘNG", self.font_md, (255, 255, 255), (log_x + 15, 30))
+        self.draw_text("NHẬT KÝ (Cuộn)", self.font_md, (255, 255, 255), (log_x + 15, 30))
         
+        total_logs = len(self.logs)
+        if total_logs > 15:
+            scrollbar_height = max(30, (HEIGHT - 100) * 15 / total_logs)
+            scroll_progress = self.log_scroll / max(1, total_logs - 15)
+            sb_y = 70 + scroll_progress * (HEIGHT - 100 - scrollbar_height)
+            pygame.draw.rect(self.screen, (60, 80, 120), (log_x + log_width - 15, sb_y, 6, scrollbar_height), border_radius=3)
+
         ly = 75
-        for i, log in enumerate(self.logs[::-1][:30]): 
+        reversed_logs = self.logs[::-1]
+        visible_logs = reversed_logs[self.log_scroll : self.log_scroll + 35] 
+        
+        for i, log in enumerate(visible_logs): 
             words = log['text'].split(" "); lines = []; curr_line = ""
             for w in words:
-                if self.font_log.size(curr_line + w)[0] < (WIDTH - log_x - 40): curr_line += w + " "
+                if self.font_log.size(curr_line + w)[0] < log_width - 35: curr_line += w + " "
                 else: lines.append(curr_line); curr_line = w + " "
             lines.append(curr_line)
             
             for line in lines:
+                if ly > HEIGHT - 30: break 
                 self.draw_text(f"> {line}", self.font_log, log['color'], (log_x + 15, ly))
                 ly += 22
             ly += 5
-            
-        # Con trỏ chuột
+
+        # Đổi trỏ chuột khi hover nút
         if any(r.collidepoint(mouse_pos) for r in self.menu_buttons.values()) or any(r.collidepoint(mouse_pos) for r in self.sim_buttons.values()):
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
         else: pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
@@ -1403,6 +1431,29 @@ class RicochetArena:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT: pygame.quit(); sys.exit()
                 
+                # --- XỬ LÝ PHÓNG TO / THU NHỎ CỬA SỔ ---
+                if event.type == pygame.VIDEORESIZE:
+                    global WIDTH, HEIGHT
+                    WIDTH, HEIGHT = event.w, event.h
+                    self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
+                    self.shadow_surface = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+                    
+                    # Bàn cờ sẽ nở to tối đa, nhưng luôn chừa lại đúng 680px cho 2 cột bên phải
+                    self.board_size = min(HEIGHT - 100, WIDTH - 680) 
+                    self.cell_size = self.board_size // self.grid_size
+                    
+                    # Cập nhật vị trí đồ hoạ robot để không bị lệch khung
+                    for r in self.robots:
+                        r.visual_pos = [r.logic_pos[0]*self.cell_size, r.logic_pos[1]*self.cell_size]
+                    
+                # --- XỬ LÝ LĂN CHUỘT ĐỂ CUỘN LOG ---
+                if event.type == pygame.MOUSEWHEEL:
+                    mx, my = pygame.mouse.get_pos()
+                    if mx > 1060: # Chỉ cuộn khi trỏ chuột đang nằm bên bảng Log
+                        self.log_scroll -= event.y * 2 # Lăn 1 nấc cuộn 2 dòng
+                        max_scroll = max(0, len(self.logs) - 15)
+                        self.log_scroll = max(0, min(self.log_scroll, max_scroll))
+                
                 if event.type == pygame.MOUSEBUTTONDOWN: 
                     mx, my = event.pos
                     
@@ -1440,6 +1491,7 @@ class RicochetArena:
                         if event.button == 1:
                             for btn_name, rect in self.sim_buttons.items():
                                 if rect.collidepoint(event.pos):
+
                                     if self.ai_is_computing:
                                         self.log_msg("AI đang chạy, không thể bấm nút!", (255, 50, 50))
                                         continue
@@ -1459,9 +1511,9 @@ class RicochetArena:
                     elif event.key in (pygame.K_LEFT, pygame.K_a): self.player_move(-1, 0)
                     elif event.key in (pygame.K_RIGHT, pygame.K_d): self.player_move(1, 0)
                     elif event.key == pygame.K_LEFTBRACKET: # Bấm '[' để Giảm map
-                        if self.grid_size > 2: # <--- SỬA SỐ 6 THÀNH SỐ 2 Ở ĐÂY
+                        if self.grid_size > 2:
                             self.grid_size -= 1
-                            self.cell_size = 640 // self.grid_size
+                            self.cell_size = self.board_size // self.grid_size
                             self.walls.clear() # Xóa tường cũ
                             
                             # Xây lại tường biên (Boundary) để robot không trượt ra vô cực
@@ -1479,7 +1531,7 @@ class RicochetArena:
                     elif event.key == pygame.K_RIGHTBRACKET: # Bấm ']' để Tăng map
                         if self.grid_size < 16: # <--- SỬA SỐ 32 THÀNH SỐ 16 Ở ĐÂY
                             self.grid_size += 1
-                            self.cell_size = 640 // self.grid_size
+                            self.cell_size = self.board_size // self.grid_size
                             self.walls.clear()
                             
                             # Xây lại tường biên (Boundary) để robot không trượt ra vô cực
@@ -1491,7 +1543,9 @@ class RicochetArena:
                             self.log_msg(f"Đã tăng kích thước Map lên {self.grid_size}x{self.grid_size}", (255, 255, 100))
 
             self.update()
-            if self.state == "MENU": self.draw_menu()
+            if self.state == "MENU": 
+                self.logs.clear()
+                self.draw_menu()
             else: self.draw_simulation()
             self.clock.tick(FPS)
 
