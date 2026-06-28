@@ -35,7 +35,7 @@ COLORS = {
     "Partial-Observable": (0, 255, 127), "Sensorless": (255, 100, 255), "AND-OR Graph": (255, 255, 100),
     "Backtracking": (180, 100, 255), "AC-3": (147, 112, 219), "Min-Conflicts": (255, 140, 0),
     "Minimax": (255, 60, 60), "Alpha-Beta": (60, 255, 60), "Expectimax": (60, 60, 255),
-    "Địch": (255, 50, 50)
+    "Địch": (40, 40, 40)
 }
 
 ALGO_GROUPS = {
@@ -146,11 +146,12 @@ class RicochetArena:
         filename = self.get_map_path(f"ricochet_map_group_{self.current_group_id}.json")
         walls_list = [[list(p1), list(p2)] for p1, p2 in self.walls]
         data = {
-            "grid_size": self.grid_size, # Lưu thêm kích thước
+            "grid_size": self.grid_size,
             "walls": walls_list, 
             "target": self.target_pos,
             "target_2": self.target_pos_2,
-            "start": self.player.start_pos
+            "start": self.player.start_pos,
+            "enemy_start": self.enemy.start_pos if hasattr(self, 'enemy') else [2,1]
         }
         try:
             with open(filename, "w") as f: json.dump(data, f)
@@ -171,7 +172,6 @@ class RicochetArena:
             try:
                 with open(filename, "r") as f: data = json.load(f)
                 
-                # Tải kích thước map và chia lại ô lưới theo board_size mới đo
                 self.grid_size = data.get("grid_size", 16)
                 self.cell_size = self.board_size // self.grid_size
                 
@@ -181,16 +181,26 @@ class RicochetArena:
                 self.target_pos_2 = tuple(t2) if t2 else None
                 st = data.get("start")
                 common_start = tuple(st) if st else self.get_random_valid_pos(set())
+                
+                # Nạp vị trí Địch từ File, nếu không có thì lấy ngẫu nhiên 1 ô trống
+                est = data.get("enemy_start")
+                if hasattr(self, 'enemy'): 
+                    self.enemy.start_pos = list(est) if est else list(self.get_random_valid_pos(set()))
+                    
                 self.log_msg(f"Đã tải Map: {os.path.basename(filename)} ({self.grid_size}x{self.grid_size})", (0, 255, 255))
             except Exception:
                 self.grid_size = 16
                 self.cell_size = self.board_size // 16
                 common_start = self.generate_random_map()
+                # Khởi tạo ngẫu nhiên vị trí Địch
+                if hasattr(self, 'enemy'): self.enemy.start_pos = list(self.get_random_valid_pos(set()))
         else:
             self.log_msg(f"Dùng map ngẫu nhiên (Không tìm thấy {os.path.basename(filename)}).", (255, 200, 0))
             self.grid_size = 16
             self.cell_size = self.board_size // 16
             common_start = self.generate_random_map()
+            # Khởi tạo ngẫu nhiên vị trí Địch
+            if hasattr(self, 'enemy'): self.enemy.start_pos = list(self.get_random_valid_pos(set()))
             
         for r in self.robots: r.start_pos = list(common_start)
         self.reset_simulation()
@@ -227,28 +237,6 @@ class RicochetArena:
         if max_steps > 0:
             self.walls = best_walls; self.target_pos = best_target; return best_start
         return self.get_random_valid_pos(set())
-
-    def setup_adversarial_map(self):
-        self.grid_size = 4
-        self.board_size = min(HEIGHT - 100, WIDTH - 680)
-        self.cell_size = self.board_size // self.grid_size
-        self.walls.clear()
-        
-        # Xây tường bao biên 4x4
-        for i in range(self.grid_size):
-            self.walls.add(((-1, i), (0, i))); self.walls.add(((self.grid_size-1, i), (self.grid_size, i)))
-            self.walls.add(((i, -1), (i, 0))); self.walls.add(((i, self.grid_size-1), (i, self.grid_size)))
-            
-        # Vài vách ngăn bên trong để Ta có chỗ nấp né Địch
-        self.walls.add(((1,1), (2,1)))
-        self.walls.add(((2,2), (2,3)))
-        
-        self.target_pos = (3, 0) # Đích ở góc trên phải
-        self.target_pos_2 = None
-        for r in self.robots: 
-            r.start_pos = [0, 3] # Ta xuất phát ở góc dưới trái
-        self.enemy.start_pos = [2, 1] # Địch xuất phát ở giữa chừng để chặn đường
-        self.reset_simulation()
 
     def reset_simulation(self):
         self.sim_status = "Chờ lệnh"
@@ -1245,20 +1233,24 @@ class RicochetArena:
         pygame.display.flip()
 
     # --- HÀM VẼ QUÂN CỜ RICOCHET 3D ---
+    # --- HÀM VẼ QUÂN CỜ RICOCHET 3D ---
     def draw_3d_robot(self, surface, x, y, color):
         cx, cy = int(x), int(y)
+        # Bán kính tự động co giãn theo kích thước ô lưới (tỉ lệ 35%)
+        R = max(10, int(self.cell_size * 0.35)) 
+        
         # Đổ bóng
-        pygame.draw.circle(self.shadow_surface, SHADOW_COLOR, (cx + 3, cy + 4), 14)
+        pygame.draw.circle(self.shadow_surface, SHADOW_COLOR, (cx + int(R*0.2), cy + int(R*0.25)), int(R*0.9))
         
         # Thân quân cờ (Màu tối hơn)
         base_color = (max(color[0]-60, 0), max(color[1]-60, 0), max(color[2]-60, 0))
-        pygame.draw.circle(surface, base_color, (cx, cy), 16) 
+        pygame.draw.circle(surface, base_color, (cx, cy), R) 
         
         # Đỉnh quân cờ (Màu sáng)
-        pygame.draw.circle(surface, color, (cx, cy - 3), 15)  
+        pygame.draw.circle(surface, color, (cx, cy - int(R*0.2)), int(R*0.9))  
         
         # Hiệu ứng bóng bẩy (Glossy)
-        glow_rect = pygame.Rect(cx - 8, cy - 13, 16, 8)
+        glow_rect = pygame.Rect(cx - int(R*0.5), cy - int(R*0.8), R, int(R*0.5))
         pygame.draw.ellipse(surface, (255, 255, 255, 150), glow_rect)
 
     def draw_simulation(self):
@@ -1289,15 +1281,17 @@ class RicochetArena:
         if self.edit_mode > 0 and OFFSET_X <= mx <= OFFSET_X + actual_board_size and OFFSET_Y <= my <= OFFSET_Y + actual_board_size:
             hc, hr = int((mx - OFFSET_X) / self.cell_size), int((my - OFFSET_Y) / self.cell_size)
             highlight_rect = pygame.Rect(OFFSET_X + hc*self.cell_size, OFFSET_Y + hr*self.cell_size, self.cell_size, self.cell_size)
-            highlight_color = (255, 50, 50, 100) if self.edit_mode == 1 else ((50, 255, 50, 100) if self.edit_mode == 2 else (255, 255, 50, 100))
-            pygame.draw.rect(self.shadow_surface, highlight_color, highlight_rect)
+            # --- CHÉP ĐỀ ĐOẠN MÀU NÀY (Hỗ trợ 4 chế độ) ---
+            color_map = {1: (255, 50, 50, 100), 2: (50, 255, 50, 100), 3: (255, 255, 50, 100), 4: (255, 100, 255, 100)}
+            pygame.draw.rect(self.shadow_surface, color_map.get(self.edit_mode, (255,255,255,50)), highlight_rect)
 
         # Vẽ đích & Robot
         for t, col in [(self.target_pos, TARGET_COLOR), (self.target_pos_2, TARGET_2_COLOR)]:
             if t: 
                 tx, ty = OFFSET_X + t[0]*self.cell_size + self.cell_size//2, OFFSET_Y + t[1]*self.cell_size + self.cell_size//2
-                pygame.draw.circle(self.screen, (*col, 50), (tx, ty), max(8, self.cell_size//2.5))
-                pygame.draw.circle(self.screen, col, (tx, ty), max(4, self.cell_size//5))
+                R_target = int(self.cell_size * 0.4)
+                pygame.draw.circle(self.screen, (*col, 50), (tx, ty), R_target)
+                pygame.draw.circle(self.screen, col, (tx, ty), int(R_target * 0.5))
 
         for p1, p2 in self.walls: self.draw_wall(p1, p2)
 
@@ -1305,15 +1299,19 @@ class RicochetArena:
         if r_active:
             rx, ry = int(OFFSET_X + r_active.visual_pos[0] + self.cell_size//2), int(OFFSET_Y + r_active.visual_pos[1] + self.cell_size//2)
             self.draw_3d_robot(self.screen, rx, ry, r_active.color)
-            if r_active.name == "Người Chơi": pygame.draw.circle(self.screen, (0,0,0), (rx, ry-4), 4)
+            if r_active.name == "Người Chơi": pygame.draw.circle(self.screen, (0,0,0), (rx, ry-4), int(self.cell_size*0.1))
 
         # Vẽ thêm Robot Địch nếu đang ở nhóm 6
-        if self.current_group_id == 6:
+        if self.current_group_id == 6 and hasattr(self, 'enemy'):
             ex, ey = int(OFFSET_X + self.enemy.visual_pos[0] + self.cell_size//2), int(OFFSET_Y + self.enemy.visual_pos[1] + self.cell_size//2)
             self.draw_3d_robot(self.screen, ex, ey, self.enemy.color)
-            # Vẽ 2 con mắt đen bặm trợn cho Địch
-            pygame.draw.circle(self.screen, (0,0,0), (ex-5, ey-5), 3)
-            pygame.draw.circle(self.screen, (0,0,0), (ex+5, ey-5), 3)
+            
+            # Mắt tự động co giãn và đổi sang màu Đỏ dạ quang cho ác chiến
+            R_eye = max(10, int(self.cell_size * 0.35))
+            eye_offset = int(R_eye * 0.35)
+            eye_radius = max(2, int(R_eye * 0.15))
+            pygame.draw.circle(self.screen, (255, 50, 50), (ex - eye_offset, ey - eye_offset), eye_radius)
+            pygame.draw.circle(self.screen, (255, 50, 50), (ex + eye_offset, ey - eye_offset), eye_radius)
 
         self.screen.blit(self.shadow_surface, (0,0))
 
@@ -1354,7 +1352,7 @@ class RicochetArena:
             f"Bản đồ Nhóm: {self.current_group_id}",
             f"Kích thước Map: {self.grid_size}x{self.grid_size} ô",
             f"Độ dài đường đi: {r_active.moves if r_active else 0}",
-            f"Chế độ sửa (E): {['Đang Tắt', 'Vẽ Tường', 'Đặt Start', 'Đặt Đích'][self.edit_mode]}"
+            f"Chế độ sửa (E): {['Đang Tắt', 'Vẽ Tường', 'Start Ta', 'Đặt Đích', 'Start Địch'][self.edit_mode]}"
         ]
         for i, line in enumerate(status_lines):
             self.draw_text(line, self.font_sm, (200, 220, 240), (mid_x + 15, status_y + 48 + i*22))
@@ -1364,7 +1362,7 @@ class RicochetArena:
             ("Chạy AI", (46, 204, 113)),          
             (f"Chế độ: {'Từng bước' if getattr(self, 'step_mode', False) else 'Tự động'}", (155, 89, 182)),
             ("Bước tiếp (N)", (241, 196, 15)),
-            (f"Chỉnh Map: {['TẮT', 'TƯỜNG', 'START', 'ĐÍCH'][self.edit_mode]}", (230, 126, 34)), 
+            (f"Chỉnh Map: {['TẮT', 'TƯỜNG', 'START TA', 'ĐÍCH', 'ĐỊCH'][self.edit_mode]}", (230, 126, 34)), 
             ("Lưu Map Nhóm", (52, 152, 219)),     
             ("Đặt Lại (Reset)", (52, 73, 94)),    
             ("Trở Lại Menu", (231, 76, 60))       
@@ -1606,13 +1604,8 @@ class RicochetArena:
 
                                 self.current_ai = ai_name
                                 self.current_group_id = ALGO_GROUPS[ai_name]
-
-                                # --- TỰ ĐỘNG CHUYỂN MAP 4x4 NẾU LÀ ĐỐI KHÁNG ---
-                                if self.current_group_id == 6:
-                                    self.setup_adversarial_map()
-                                else:
-                                    self.load_map(group_id=self.current_group_id)
-                                # -----------------------------------------------
+                                
+                                self.load_map(group_id=self.current_group_id)
                                 
                                 self.state = "SIMULATION"
                                 self.log_msg(f"Đã mở mô phỏng: {ai_name}", TARGET_COLOR)
@@ -1637,6 +1630,14 @@ class RicochetArena:
                                     self.target_pos_2 = (c, r) if self.target_pos_2 != (c, r) else None
                                     self.log_msg(f"Đã đặt Đích 2 tại {(c, r)}", TARGET_2_COLOR)
                                 self.reset_simulation()
+
+                            elif self.edit_mode == 4 and event.button == 1:
+                                if self.current_group_id == 6 and hasattr(self, 'enemy'):
+                                    self.enemy.start_pos = [c, r]
+                                    self.reset_simulation()
+                                    self.log_msg(f"Đã đặt Địch tại tọa độ {(c, r)}", (255, 50, 50))
+                                else:
+                                    self.log_msg("Chỉ có thể đặt Địch ở Nhóm Đối kháng!", (255, 150, 0))
                                 
                         # Xử lý Nút bấm
                         if event.button == 1:
@@ -1659,17 +1660,21 @@ class RicochetArena:
                                         self.trigger_next_step()
                                     # ----------------------------
                                     
-                                    elif "Chỉnh Map" in btn_name: self.edit_mode = (self.edit_mode + 1) % 4
+                                    elif "Chỉnh Map" in btn_name: self.edit_mode = (self.edit_mode + 1) % 5
                                     elif "Lưu Map" in btn_name: self.save_custom_map()
                                     elif "Đặt Lại" in btn_name: self.reset_simulation()
                                     elif "Trở Lại" in btn_name: 
                                         self.state = "MENU"; self.current_ai = None; self.log_msg("Đã về Menu Chính.")
                                 
                 if event.type == pygame.KEYDOWN and self.state == "SIMULATION":
+                    # --- XỬ LÝ PHÍM TẮT MỚI ---
+                    if event.key == pygame.K_ESCAPE: 
+                        self.state = "MENU"; self.current_ai = None; self.log_msg("Đã về Menu Chính.")
+                    elif event.key == pygame.K_n: self.trigger_next_step()
+
                     if self.ai_is_computing: 
                         continue
 
-                    # --- XỬ LÝ PHÍM TẮT MỚI ---
                     if event.key == pygame.K_n: self.trigger_next_step()
                     elif event.key == pygame.K_m: 
                         self.step_mode = not getattr(self, 'step_mode', False)
@@ -1679,7 +1684,7 @@ class RicochetArena:
                             self.step_queue = []; self.sim_status = "Đang chạy"
                     # --------------------------
 
-                    if event.key == pygame.K_e: self.edit_mode = (self.edit_mode + 1) % 4
+                    if event.key == pygame.K_e: self.edit_mode = (self.edit_mode + 1) % 5
                     elif event.key in (pygame.K_UP, pygame.K_w): self.player_move(0, -1)
                     elif event.key in (pygame.K_DOWN, pygame.K_s): self.player_move(0, 1)
                     elif event.key in (pygame.K_LEFT, pygame.K_a): self.player_move(-1, 0)
@@ -1697,7 +1702,10 @@ class RicochetArena:
                             
                             # Ép lại toạ độ để không bị tràn khung
                             self.target_pos = (min(self.target_pos[0], self.grid_size-1), min(self.target_pos[1], self.grid_size-1))
-                            for r in self.robots: 
+                            
+                            # Cập nhật cho cả phe Ta lẫn phe Địch
+                            active_robots = self.robots + ([self.enemy] if hasattr(self, 'enemy') else [])
+                            for r in active_robots: 
                                 r.start_pos = [min(r.start_pos[0], self.grid_size-1), min(r.start_pos[1], self.grid_size-1)]
                             self.reset_simulation()
                             self.log_msg(f"Đã giảm kích thước Map xuống {self.grid_size}x{self.grid_size}", (255, 255, 100))
