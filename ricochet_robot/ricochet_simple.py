@@ -249,18 +249,20 @@ class RicochetArena:
             r.path = []; r.moves = 0; r.finished = False; r.current_target = None 
             r.computed_path = [] # Bộ nhớ tạm chứa lộ trình
 
-    def get_slide_dest(self, pos, direction, obstacles):
+    def get_slide_dest(self, pos, direction, obstacles, stop_on=None):
         dx, dy = direction; x, y = pos
         while True:
             nx, ny = x + dx, y + dy
             edge = ((x, y), (nx, ny)) if (x, y) < (nx, ny) else ((nx, ny), (x, y))
             if edge in self.walls or (nx, ny) in obstacles: break
             x, y = nx, ny
+            # Nếu truyền vào tham số con mồi, Địch sẽ dừng lại ngay khi nuốt trọn Ta
+            if stop_on and (x, y) == stop_on: break 
         return (x, y)
 
-    def get_neighbors(self, pos, obstacles):
+    def get_neighbors(self, pos, obstacles, stop_on=None):
         move = [(0,1), (0,-1), (1,0), (-1,0)]; random.shuffle(move)
-        return [dest for d in move if (dest := self.get_slide_dest(pos, d, obstacles)) != pos]
+        return [dest for d in move if (dest := self.get_slide_dest(pos, d, obstacles, stop_on)) != pos]
 
     def get_random_valid_pos(self, obstacles, current_pos=None):
         while True:
@@ -1054,8 +1056,11 @@ class RicochetArena:
             return best_val, best_path
 
     def is_caught(self, p_pos, e_pos):
-        # Ta bị bắt nếu khoảng cách tới địch <= 1 (đứng sát nhau) và ta chưa kịp chạm đích
-        return (abs(p_pos[0]-e_pos[0]) + abs(p_pos[1]-e_pos[1]) <= 1) and (p_pos != self.target_pos)
+        # An toàn nếu đã vào đích
+        if tuple(p_pos) == self.target_pos: 
+            return False
+        # Bị bắt nếu trùng chính xác 100% toạ độ (Khoảng cách = 0)
+        return tuple(p_pos) == tuple(e_pos)
 
     def heuristic_adv(self, p_pos, e_pos):
         if self.is_caught(p_pos, e_pos): return -9999 # Chết là điểm âm vô cực
@@ -1071,7 +1076,8 @@ class RicochetArena:
 
         if is_max: # NÚT MAX (Lượt của Ta)
             best_val = float('-inf'); best_move = None
-            # Ta di chuyển, coi Địch như là 1 tảng đá (obstacles) cản đường
+            
+            # --- Ta coi Địch là Bức tường cứng (obstacles={e_pos}) ---
             valid_moves = self.get_neighbors(p_pos, obstacles={e_pos})
             if not valid_moves: return self.heuristic_adv(p_pos, e_pos), None
             
@@ -1084,12 +1090,14 @@ class RicochetArena:
             return best_val, best_move
             
         else: # NÚT MIN (Lượt của Địch)
-            valid_moves = self.get_neighbors(e_pos, obstacles={p_pos})
+            
+            # --- Địch coi Ta là Mục tiêu (Dừng lại khi đè lên Ta: stop_on=p_pos) ---
+            valid_moves = self.get_neighbors(e_pos, obstacles=set(), stop_on=p_pos)
             if not valid_moves: return self.heuristic_adv(p_pos, e_pos), None
             
-            if algo == "expectimax": # Nút Chance (Môi trường ngẫu nhiên)
+            if algo == "expectimax": 
                 avg_val = sum(self.get_best_adv_move(p_pos, nxt_e, depth-1, True, alpha, beta, algo)[0] for nxt_e in valid_moves) / len(valid_moves)
-                return avg_val, random.choice(valid_moves) # Địch đi ngẫu nhiên
+                return avg_val, random.choice(valid_moves)
             else:
                 best_val = float('inf'); best_move = None
                 for nxt_e in valid_moves:
@@ -1099,15 +1107,19 @@ class RicochetArena:
                         beta = min(beta, best_val)
                         if beta <= alpha: break
                 return best_val, best_move
-
+            
     def run_adversarial(self, start, obs, algo):
-        self.log_msg(f"--- {algo.upper()} (4x4 ĐỐI KHÁNG) ---", (255, 100, 100))
+        self.log_msg(f"--- {algo.upper()} (ĐỐI KHÁNG) ---", (255, 100, 100))
         p_curr = start; e_curr = tuple(self.enemy.start_pos)
         p_path = []; e_path = []
         
+        # --- FIX: Tăng tầm nhìn Depth lên 7 để AI thấy được đường xa hơn (4 nước của Ta) ---
+        search_depth = 7 if algo != "expectimax" else 5
+        # ------------------------------------------------------------------------------------
+        
         for step in range(1, 15): 
             # 1. Lượt MAX (Ta)
-            _, nxt_p = self.get_best_adv_move(p_curr, e_curr, depth=5, is_max=True, alpha=float('-inf'), beta=float('inf'), algo=algo)
+            _, nxt_p = self.get_best_adv_move(p_curr, e_curr, depth=search_depth, is_max=True, alpha=float('-inf'), beta=float('inf'), algo=algo)
             if nxt_p is None: nxt_p = p_curr 
             p_curr = nxt_p
             p_path.append(p_curr)
@@ -1115,14 +1127,14 @@ class RicochetArena:
             if p_curr == self.target_pos or self.is_caught(p_curr, e_curr): break
                 
             # 2. Lượt MIN (Địch)
-            _, nxt_e = self.get_best_adv_move(p_curr, e_curr, depth=4, is_max=False, alpha=float('-inf'), beta=float('inf'), algo=algo)
+            _, nxt_e = self.get_best_adv_move(p_curr, e_curr, depth=search_depth-1, is_max=False, alpha=float('-inf'), beta=float('inf'), algo=algo)
             if nxt_e is None: nxt_e = e_curr
             e_curr = nxt_e
             e_path.append(e_curr)
             
             if self.is_caught(p_curr, e_curr): break
 
-        self.enemy.computed_path = e_path # Chỉ lưu vào bộ nhớ tạm, không bắt nó trượt ngay
+        self.enemy.computed_path = e_path 
         return p_path
 
     # Ghi đè 3 hàm gọi bằng Wrapper này
@@ -1428,8 +1440,13 @@ class RicochetArena:
 
     def player_move(self, dx, dy):
         if self.sim_status == "Đang chạy" or self.player.finished or self.player.path: return
-        dest = self.get_slide_dest(tuple(self.player.logic_pos), (dx, dy), set())
-        if dest != tuple(self.player.logic_pos): self.player.path.append(dest); self.player.logic_pos = list(dest)
+        
+        # Nếu ở nhóm Đối kháng, người chơi phải coi Địch là Bức tường cứng
+        obs = {tuple(self.enemy.logic_pos)} if self.current_group_id == 6 and hasattr(self, 'enemy') else set()
+        
+        dest = self.get_slide_dest(tuple(self.player.logic_pos), (dx, dy), obs)
+        if dest != tuple(self.player.logic_pos): 
+            self.player.path.append(dest); self.player.logic_pos = list(dest)
 
     def trigger_run_ai(self):
         if not self.current_ai: return
@@ -1541,13 +1558,14 @@ class RicochetArena:
                     if self.sim_status in ["Đang chạy"] or self.sim_status.startswith("Chờ bước tiếp"):
                         self.log_msg("ĐÃ TỚI ĐÍCH!", (0, 255, 0))
                         self.sim_status = "Ta Thắng!"
-                elif self.current_group_id == 6 and hasattr(self, 'enemy') and (abs(r.logic_pos[0]-self.enemy.logic_pos[0]) + abs(r.logic_pos[1]-self.enemy.logic_pos[1]) <= 1):
-                     if self.sim_status in ["Đang chạy"] or self.sim_status.startswith("Chờ bước tiếp"):
-                         self.log_msg("BỊ ĐỊCH TÓM GỌN!", (255, 50, 50))
-                         self.sim_status = "Địch Thắng!"
+                # --- FIX: Đổi điều kiện thua thành trùng ô (0) ---
+                elif self.current_group_id == 6 and hasattr(self, 'enemy') and tuple(r.logic_pos) == tuple(self.enemy.logic_pos):
+                        if self.sim_status in ["Đang chạy"] or self.sim_status.startswith("Chờ bước tiếp"):
+                            self.log_msg("BỊ ĐỊCH TÓM GỌN!", (255, 50, 50))
+                            self.sim_status = "Địch Thắng!"
                 else:
-                     if self.sim_status == "Đang chạy" or self.sim_status.startswith("Chờ bước tiếp"): 
-                         self.sim_status = "Dừng lại"
+                        if self.sim_status == "Đang chạy" or self.sim_status.startswith("Chờ bước tiếp"): 
+                            self.sim_status = "Dừng lại"
 
     def trigger_next_step(self):
         # Nếu bất kỳ robot nào đang trượt dở dang -> Khóa nút bấm
