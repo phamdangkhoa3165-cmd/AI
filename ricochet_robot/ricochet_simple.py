@@ -129,6 +129,10 @@ class RicochetArena:
         # Khởi tạo Robot Địch riêng biệt
         self.enemy = Robot("Địch", (0, 0))
 
+        # --- THÊM: Robot Bóng ma cho nhóm Sensorless ---
+        self.sensorless_ghost = Robot("Bóng ma", (0, 0))
+        self.sensorless_ghost.color = (120, 120, 120)
+
         # --- THÊM KHỞI TẠO 3 TRỢ THỦ CHO NHÓM CSP Ở ĐÂY ---
         self.aux_robots = [
             Robot("Trợ thủ 1", (0, 0)),
@@ -144,7 +148,7 @@ class RicochetArena:
 
     def log_msg(self, msg, color=(200, 220, 255)):
         self.logs.append({"text": msg, "color": color})
-        if len(self.logs) > 200: self.logs.pop(0) # Tăng lên lưu trữ 200 dòng
+        if len(self.logs) > 1000: self.logs.pop(0) # Tăng lên lưu trữ 200 dòng
         self.log_scroll = 0 # Tự động cuộn xuống dưới cùng khi có log mới
 
     # Lấy đường dẫn của folder chứa file .py hiện tại
@@ -261,15 +265,20 @@ class RicochetArena:
     def reset_simulation(self):
         self.sim_status = "Chờ lệnh"
         if not hasattr(self, 'step_mode'): self.step_mode = False
-        self.step_queue = [] # Hàng đợi lưu các bước đi
+        self.step_queue = [] 
+        self.csp_domains = None # Dọn dẹp bóng ma AC-3
         
+        # --- FIX: Nạp thêm 3 Trợ thủ vào danh sách Reset ---
         enemy_list = [self.enemy] if hasattr(self, 'enemy') else []
-        aux_list = getattr(self, 'aux_robots', []) # Lấy danh sách 3 trợ thủ
+        aux_list = getattr(self, 'aux_robots', []) 
         
-        # Reset toàn bộ Ta, Địch và Trợ thủ
         for r in self.robots + enemy_list + aux_list:
-            r.logic_pos = list(r.start_pos); r.visual_pos = [r.start_pos[0]*self.cell_size, r.start_pos[1]*self.cell_size]
-            r.path = []; r.moves = 0; r.finished = False; r.current_target = None 
+            r.logic_pos = list(r.start_pos)
+            r.visual_pos = [r.start_pos[0]*self.cell_size, r.start_pos[1]*self.cell_size]
+            r.path = []
+            r.moves = 0
+            r.finished = False
+            r.current_target = None 
             r.computed_path = []
 
     def get_slide_dest(self, pos, direction, obstacles, stop_on=None):
@@ -296,6 +305,7 @@ class RicochetArena:
     def heuristic(self, pos): return abs(pos[0] - self.target_pos[0]) + abs(pos[1] - self.target_pos[1])
     
     def run_bfs(self, start, obs):
+        self.log_msg("--- BẮT ĐẦU BFS (Duyệt theo chiều rộng) ---", COLORS["BFS"])
         # if problem.IS-GOAL(node.STATE) then return node
         if start == self.target_pos: 
             return [] 
@@ -303,16 +313,24 @@ class RicochetArena:
         # frontier <- a FIFO queue / reached <- {problem.INITIAL}
         frontier = deque([(start, [])])
         reached = {start}
-        
+
+        steps = 0
         # while not IS-EMPTY(frontier) do
         while frontier:
             # node <- POP(frontier)
             current_node, path = frontier.popleft()
-            
+
+            steps += 1
+            # Chỉ in chi tiết 15 bước đầu, hoặc mỗi 50 bước để chống giật lag
+            if steps <= 15 or steps % 50 == 0: 
+                self.log_msg(f"[{steps}] BFS mở rộng: {current_node}, Hàng đợi còn: {len(frontier)}", (150, 180, 255))
+
             # for each child in EXPAND(problem, node) do
             for neighbor in self.get_neighbors(current_node, obs):
                 # if problem.IS-GOAL(s) then return child
                 if neighbor == self.target_pos: 
+                    self.log_msg(f"-> TÌM THẤY ĐÍCH! Tổng số nút đã duyệt: {steps}", (0, 255, 0))
+
                     return path + [neighbor] 
                 
                 # if s is not in reached then
@@ -321,7 +339,8 @@ class RicochetArena:
                     reached.add(neighbor)
                     # add child to frontier
                     frontier.append((neighbor, path+[neighbor])) 
-                    
+
+        self.log_msg("-> Bế tắc, không tìm thấy đường!", (255, 50, 50))            
         # return failure
         return []
     
@@ -498,6 +517,7 @@ class RicochetArena:
         return []
 
     def run_astar(self, start, obs):
+        self.log_msg("--- BẮT ĐẦU A* (f = g + h) ---", COLORS["A*"])
         # 1. Khởi tạo tập FRONTIER = {Start} với f(Start) = g(Start) + h(Start)
         g_costs = {start: 0}
         f_start = 0 + self.heuristic(start)
@@ -506,7 +526,7 @@ class RicochetArena:
         
         # 2. Khởi tạo tập REACHED = {}
         reached = set()
-
+        steps = 0
         # 3. TRONG KHI (FRONTIER không rỗng):
         while frontier:
             # a. Chọn trạng thái n từ FRONTIER có f(n) nhỏ nhất
@@ -516,8 +536,12 @@ class RicochetArena:
             else: 
                 continue
 
+            steps += 1
+            if steps <= 15 or steps % 20 == 0:
+                self.log_msg(f"[{steps}] A* xét nút {n} | g={g_costs[n]}, h={self.heuristic(n)} -> f={f_n}", (255, 255, 150))
             # b. NẾU n == Goal:
             if n == self.target_pos:
+                self.log_msg(f"-> TỐI ƯU! Đã tới đích sau khi duyệt {steps} nút.", (0, 255, 0))
                 return p
 
             # c. Loại bỏ n khỏi FRONTIER và thêm n vào REACHED
@@ -539,6 +563,7 @@ class RicochetArena:
                         f_m = g_new + self.heuristic(m)
                         heapq.heappush(frontier, (f_m, next(self.counter), m, p + [m]))
                         frontier_set.add(m)
+                        self.log_msg(f"   [!] Tìm thấy đường đi ngắn hơn tới {m} (Cập nhật f={f_m})", (200, 255, 200))
                         
                 # iii. NẾU m đã nằm trong FRONTIER:
                 elif m in frontier_set:
@@ -560,14 +585,18 @@ class RicochetArena:
     
     # ================= Nhóm LOCAL SEARCH =================
     def run_simple_hc(self, start, obs):
+        self.log_msg("--- BẮT ĐẦU LEO ĐỒI (Simple HC) ---", COLORS["Simple HC"])
         # 1. Khởi tạo trạng thái hiện tại Current_State = Start.
         current_state = start
         # Tính giá trị đánh giá của Current_State. (Dùng hàm Heuristic h)
         current_value = self.heuristic(current_state)
         path = []
+        steps = 0
 
         # 2. TRONG KHI (đúng):
         while True:
+            steps += 1
+            self.log_msg(f"[Bước {steps}] Đang đứng tại {current_state} (Cách đích h={current_value})", (255, 180, 220))
             if current_state == self.target_pos: return path
             found_better = False
             
@@ -580,6 +609,7 @@ class RicochetArena:
                 # ii. NẾU Value(Next_State) > Value(Current_State):
                 # (Lưu ý: Khoảng cách ngắn hơn tức là tốt hơn, nên dùng dấu <)
                 if next_value < current_value:
+                    self.log_msg(f"-> Tìm thấy lân cận tốt hơn: {next_state} (h={next_value}). Di chuyển!", (150, 255, 150))
                     current_state = next_state
                     current_value = next_value
                     path.append(current_state)
@@ -590,7 +620,8 @@ class RicochetArena:
             # c. NẾU không tồn tại trạng thái lân cận nào tốt hơn:
             if not found_better:
                 # Dừng vì đã đạt cực đại cục bộ.
-                break 
+                self.log_msg(f"-> Bế tắc! Cực đại cục bộ (Xung quanh không ô nào tốt hơn {current_value}).", (255, 100, 100))
+                break
 
         # 3. TRẢ VỀ Current_State.
         return path if current_state == self.target_pos else []
@@ -702,55 +733,38 @@ class RicochetArena:
 
     # ================= MÔI TRƯỜNG PHỨC TẠP & CSP =================
     def run_sensorless(self, start, obs):
-        # 1. Khởi tạo Trạng thái Niềm tin Ban đầu (Belief_Start)
-        # Giả sử robot bị "mù", nó biết nó đang ở trong map nhưng không rõ tọa độ.
-        # Để demo trực quan, ta giả định nó lúng túng giữa vị trí thật (start) và 1 vị trí ảo (start2).
-        start2 = self.get_random_valid_pos(obs, start)
-        self.log_msg(f"[Belief State] Khởi tạo Belief_Start = {{S1:{start}, S2:{start2}}}", (255, 150, 255))
+        start_real = tuple(start)
+        start_ghost = tuple(self.sensorless_ghost.start_pos)
         
-        # Chuyển thành tuple (đã sắp xếp) để làm key Hash trong tập hợp
-        belief_start = tuple(sorted([start, start2]))
+        self.log_msg(f"[Belief State] Khởi tạo: Thực {start_real} | Ảo {start_ghost}", (255, 150, 255))
+        belief_start = tuple(sorted([start_real, start_ghost]))
         
-        # 2. Khởi tạo Frontier (Hàng đợi FIFO) và tập Reached
-        # Mỗi phần tử trong Frontier chứa: (Belief_State_Hiện_Tại, Vị_Trí_S1_Thực_Tế, Mảng_Vết_Đường_Đi_S1)
-        frontier = deque([(belief_start, start, [])])
+        # Hàng đợi: (Tập Belief, Pos Thực, Đường đi Thực, Pos Ảo, Đường đi Ảo)
+        frontier = deque([(belief_start, start_real, [], start_ghost, [])])
         reached = {belief_start}
         
-        # 3. TRONG KHI (Frontier không rỗng):
         while frontier:
-            # a. Lấy Belief_Current ra
-            current_belief, current_s1, path_s1 = frontier.popleft()
+            current_belief, current_real, path_real, current_ghost, path_ghost = frontier.popleft()
             
-            # (Chống treo game nếu môi trường quá phức tạp không có kế hoạch ép buộc)
-            if len(path_s1) > 20: 
-                continue
+            if len(path_real) > 20: continue
                 
-            # b. NẾU Belief_Current thỏa mãn Belief_Goal:
-            # (Định nghĩa Belief_Goal: Mọi trạng thái có thể có lúc này ĐỀU PHẢI NẰM TẠI ĐÍCH)
             if all(s == self.target_pos for s in current_belief):
-                self.log_msg(f"-> Đạt Belief_Goal! (Kế hoạch ép buộc dài {len(path_s1)} bước).", (0, 255, 255))
-                return path_s1
+                self.log_msg(f"-> Đạt Belief_Goal! Cả 2 đều bị ép vào Đích sau {len(path_real)} bước.", (0, 255, 255))
+                self.sensorless_ghost.computed_path = path_ghost 
+                return path_real
                 
-            # c. VỚI MỖI hành động a trong tập Hành động:
             for action in [(0,-1), (0,1), (-1,0), (1,0)]:
-                # i. Tính toán Belief_Next = Tập hợp kết quả của hành động a lên MỌI trạng thái s trong Belief_Current
                 next_belief_set = set()
                 for s in current_belief:
                     next_belief_set.add(self.get_slide_dest(s, action, obs))
-                    
                 next_belief = tuple(sorted(list(next_belief_set)))
                 
-                # ii. NẾU Belief_Next chưa được duyệt:
                 if next_belief not in reached:
                     reached.add(next_belief)
+                    next_real = self.get_slide_dest(current_real, action, obs)
+                    next_ghost = self.get_slide_dest(current_ghost, action, obs)
+                    frontier.append((next_belief, next_real, path_real + [next_real], next_ghost, path_ghost + [next_ghost]))
                     
-                    # Tính toán đường đi thật của S1 để vẽ đồ họa mô phỏng
-                    next_s1 = self.get_slide_dest(current_s1, action, obs)
-                    
-                    # Thêm vào Frontier
-                    frontier.append((next_belief, next_s1, path_s1 + [next_s1]))
-                    
-        # 4. TRẢ VỀ Thất bại
         self.log_msg("-> Kẹt! Không tồn tại Kế hoạch ép buộc hoàn toàn.", (255, 100, 100))
         return []
 
@@ -900,143 +914,232 @@ class RicochetArena:
             self.walls.add(((i, -1), (i, 0)))
             self.walls.add(((i, self.grid_size - 1), (i, self.grid_size)))
 
-        # --- SETUP VỊ TRÍ THEO Ý KHOA ---
-        self.target_pos = (2, 3) # Đích Vàng nằm ở cột 2, hàng 3
+        # --- SETUP ĐÚNG TỌA ĐỘ NHƯ KHOA MUỐN ---
+        self.target_pos = (2, 3) 
         self.target_pos_2 = None
-        
-        # Đưa robot Ta lên Start ở Hàng 0, Cột 2
-        for r in self.robots: 
-            r.start_pos = [2, 0] 
+        for r in self.robots: r.start_pos = [2, 0] # Ta ở trên cùng
             
-        # 3 Trợ thủ tạm thời đứng xếp hàng ngang ở dưới đáy (hàng 4) để nhường chỗ
+        # 3 Trợ thủ đứng dàn hàng ngang ở hàng số 1 (Y=1), cột 1, 2, 3
         if hasattr(self, 'aux_robots'):
-            self.aux_robots[0].start_pos = [1, 4] 
-            self.aux_robots[1].start_pos = [2, 4] 
-            self.aux_robots[2].start_pos = [3, 4] 
+            self.aux_robots[0].start_pos = [1, 1] 
+            self.aux_robots[1].start_pos = [2, 1] 
+            self.aux_robots[2].start_pos = [3, 1] 
             
         self.reset_simulation()
 
-    # Hàm đếm số lỗi vi phạm Ràng buộc
-    def calculate_csp_conflicts(self, assignment):
-        # assignment là mảng chứa tọa độ Y của các Trợ thủ. VD: [0, 4, 0]
+    def reset_simulation(self):
+        self.sim_status = "Chờ lệnh"
+        if not hasattr(self, 'step_mode'): self.step_mode = False
+        self.step_queue = [] 
+        self.csp_domains = None # Dọn dẹp bóng ma AC-3
+        
+        # Nạp thêm 3 Trợ thủ vào danh sách Reset
+        enemy_list = [self.enemy] if hasattr(self, 'enemy') else []
+        aux_list = getattr(self, 'aux_robots', []) 
+        
+        for r in self.robots + enemy_list + aux_list:
+            r.logic_pos = list(r.start_pos)
+            r.visual_pos = [r.start_pos[0]*self.cell_size, r.start_pos[1]*self.cell_size]
+            r.path = []
+            r.moves = 0
+            r.finished = False
+            r.current_target = None 
+            r.computed_path = [] 
+
+    def get_valid_y_domain(self, col_x, start):
+        # Trả về các hàng (Y) hợp lệ cho một cột (X)
+        domain = []
+        for y in range(self.grid_size):
+            pos = (col_x, y)
+            # Nghiêm cấm Robot Trợ thủ đứng đè lên Start hoặc Target
+            if pos != self.target_pos and pos != tuple(start):
+                domain.append(y)
+        return domain
+
+    def calculate_csp_conflicts(self, assignment, start=None):
         conflicts = 0
         if len(assignment) >= 3:
             y1, y2, y3 = assignment[0], assignment[1], assignment[2]
-            # Ràng buộc 1: Trợ thủ 1 và 3 phải cùng hàng
+            # Ràng buộc 1: 1 và 3 cùng hàng
             if y1 != y3: conflicts += 1
-            # Ràng buộc 2: Trợ thủ 2 phải cách trợ thủ 1 đúng 4 ô
+            # Ràng buộc 2: 2 cách 1 đúng 4 ô
             if abs(y2 - y1) != 4: conflicts += 1
         return conflicts
 
     def run_backtracking(self, start, obs):
-        self.log_msg("--- BACKTRACKING (Tìm đáy chữ U) ---", (180, 100, 255))
-        domain = [0, 1, 2, 3, 4] # Miền giá trị Y (Từ hàng 0 đến hàng 4)
+        self.log_msg("--- BACKTRACKING (Xếp đáy chữ U) ---", (180, 100, 255))
+        # Cấp cho mỗi cột một Miền giá trị độc lập (Đã lọc sạch ô cấm)
+        domains = [
+            self.get_valid_y_domain(1, start),
+            self.get_valid_y_domain(2, start),
+            self.get_valid_y_domain(3, start)
+        ]
         
         def backtrack(assignment):
-            # Cập nhật UI để thầy cô thấy AI đang "thử" từng vị trí
             if self.current_group_id == 5 and len(assignment) > 0:
+                self.log_msg(f"[Backtrack] Đang thử gán Y = {assignment}", (180, 100, 255))
                 for i, y_val in enumerate(assignment):
                     self.aux_robots[i].visual_pos = [(i+1) * self.cell_size, y_val * self.cell_size]
-                self.draw_simulation(); pygame.display.flip(); pygame.time.delay(100)
+                
+                # CƠ CHẾ DỪNG KHI BACKTRACK
+                if getattr(self, 'step_mode', False):
+                    self.sim_status = f"Chờ bước tiếp (Đang thử Y={assignment[-1]})..."
+                    self.csp_waiting = True
+                    while getattr(self, 'csp_waiting', False) and self.state == "SIMULATION":
+                        pygame.time.delay(20)
+                else:
+                    self.draw_simulation(); pygame.display.flip(); pygame.time.delay(50)
             
-            # Nếu đã gán đủ 3 biến
-            if len(assignment) == 3:
-                if self.calculate_csp_conflicts(assignment) == 0: return assignment
+            col_idx = len(assignment)
+            if col_idx == 3:
+                if self.calculate_csp_conflicts(assignment, start) == 0:
+                    return assignment
                 return "failure"
                 
-            # Duyệt miền giá trị cho biến tiếp theo
-            for value in domain:
+            for value in domains[col_idx]:
                 res = backtrack(assignment + [value])
                 if res != "failure": return res
             return "failure"
             
         res = backtrack([])
         if res != "failure":
-            self.log_msg(f"-> Nghiệm tìm được: Y = {res}", (0, 255, 0))
+            self.log_msg(f"-> TÌM THẤY NGHIỆM: Y = {res}", (0, 255, 0))
             for i, aux in enumerate(self.aux_robots):
                 aux.logic_pos = [i+1, res[i]]; aux.start_pos = [i+1, res[i]]
             return [self.target_pos]
+        self.log_msg("-> Bế tắc, không tìm thấy nghiệm!", (255, 50, 50))
         return []
 
     def run_ac3(self, start, obs):
-        self.log_msg("--- AC-3 (Cắt tỉa miền giá trị trước khi tìm) ---", (147, 112, 219))
+        self.log_msg("--- AC-3 (Lọc miền giá trị) ---", (147, 112, 219))
         
-        # AC-3 Phân tích: Vì ràng buộc abs(Y2 - Y1) == 4, mà Y chỉ từ 0->4.
-        # Nên Y bắt buộc chỉ có thể là 0 hoặc 4. Các giá trị 1, 2, 3 là vô dụng!
-        # AC-3 sẽ cắt tỉa miền giá trị từ [0,1,2,3,4] xuống chỉ còn [0,4].
-        domain_start = [0, 1, 2, 3, 4]
-        filtered_domain = []
-        for y in domain_start:
-            # Mô phỏng AC-3 check constraint
-            can_satisfy = False
-            for y_other in domain_start:
-                if abs(y - y_other) == 4: can_satisfy = True
-            if can_satisfy: filtered_domain.append(y)
+        domains = [
+            self.get_valid_y_domain(1, start),
+            self.get_valid_y_domain(2, start),
+            self.get_valid_y_domain(3, start)
+        ]
+        
+        # 1. KHỞI TẠO BÓNG MA TỪ MIỀN SẠCH
+        self.csp_domains = [
+            [(1, y) for y in domains[0]],
+            [(2, y) for y in domains[1]],
+            [(3, y) for y in domains[2]]
+        ]
+        self.log_msg("1. Điền Bóng ma (Đã tự động né ô Start và Target).", (255, 255, 100))
+        self.draw_simulation(); pygame.display.flip(); pygame.time.delay(1000)
+        
+        # 2. CẮT TỈA
+        self.log_msg("2. Đang cắt tỉa các ô vi phạm ràng buộc...", (255, 200, 100))
+        for i in range(3):
+            new_d = []
+            for y in domains[i]:
+                valid = False
+                if i == 0:   valid = any(abs(y2-y)==4 for y2 in domains[1]) and any(y3==y for y3 in domains[2])
+                elif i == 1: valid = any(abs(y-y1)==4 for y1 in domains[0])
+                elif i == 2: valid = any(y==y1 for y1 in domains[0])
+                
+                if valid: 
+                    new_d.append(y)
+                else:
+                    self.csp_domains[i].remove((i+1, y))
+                    if getattr(self, 'step_mode', False):
+                        self.sim_status = f"Chờ bước tiếp (Đang tỉa Cột {i+1}, Y={y})..."
+                        self.csp_waiting = True
+                        while getattr(self, 'csp_waiting', False) and self.state == "SIMULATION":
+                            pygame.time.delay(20)
+                    else:
+                        self.draw_simulation(); pygame.display.flip(); pygame.time.delay(150)
+            domains[i] = new_d
+                    
+        self.log_msg(f"-> AC-3 đã tỉa miền giá trị thành: {domains}", (0, 255, 255))
+        self.csp_domains = None 
+        self.log_msg("3. Bắt đầu Backtracking trên miền đã rút gọn...", (180, 100, 255))
             
-        self.log_msg(f"-> AC-3 đã rút gọn miền từ {domain_start} xuống {filtered_domain}", (255, 255, 100))
-        
-        # Chạy Backtracking trên miền đã rút gọn (Tốc độ ánh sáng)
-        def backtrack_ac3(assignment):
+        def backtrack(assignment):
             if self.current_group_id == 5 and len(assignment) > 0:
+                self.log_msg(f"[AC-3] Đang thử gán Y = {assignment}", (180, 100, 255))
                 for i, y_val in enumerate(assignment):
                     self.aux_robots[i].visual_pos = [(i+1) * self.cell_size, y_val * self.cell_size]
-                self.draw_simulation(); pygame.display.flip(); pygame.time.delay(100)
+                
+                if getattr(self, 'step_mode', False):
+                    self.sim_status = f"Chờ bước tiếp (Đang gán Y={assignment[-1]})..."
+                    self.csp_waiting = True
+                    while getattr(self, 'csp_waiting', False) and self.state == "SIMULATION":
+                        pygame.time.delay(20)
+                else:
+                    self.draw_simulation(); pygame.display.flip(); pygame.time.delay(50)
             
-            if len(assignment) == 3:
-                if self.calculate_csp_conflicts(assignment) == 0: return assignment
+            col_idx = len(assignment)
+            if col_idx == 3:
+                if self.calculate_csp_conflicts(assignment, start) == 0:
+                    return assignment
                 return "failure"
                 
-            for value in filtered_domain:
-                res = backtrack_ac3(assignment + [value])
+            for value in domains[col_idx]:
+                res = backtrack(assignment + [value])
                 if res != "failure": return res
             return "failure"
             
-        res = backtrack_ac3([])
+        res = backtrack([])
         if res != "failure":
+            self.log_msg(f"-> TÌM THẤY NGHIỆM: Y = {res}", (0, 255, 0))
             for i, aux in enumerate(self.aux_robots):
                 aux.logic_pos = [i+1, res[i]]; aux.start_pos = [i+1, res[i]]
             return [self.target_pos]
+        self.log_msg("-> Bế tắc, không tìm thấy nghiệm!", (255, 50, 50))
         return []
 
     def run_min_conflicts(self, start, obs):
         self.log_msg("--- MIN-CONFLICTS (Sửa sai ngẫu nhiên) ---", (255, 140, 0))
-        domain = [0, 1, 2, 3, 4]
+        domains = [
+            self.get_valid_y_domain(1, start),
+            self.get_valid_y_domain(2, start),
+            self.get_valid_y_domain(3, start)
+        ]
         
-        # Khởi tạo 3 vị trí ngẫu nhiên
-        current = [random.choice(domain) for _ in range(3)]
+        # Kiểm tra an toàn: Nếu miền bị rỗng (do start/target chiếm hết), thoát ngay
+        if not domains[0] or not domains[1] or not domains[2]:
+            self.log_msg("-> Bế tắc: Miền giá trị bị chặn bởi Start/Target.", (255, 50, 50))
+            return []
+            
+        current = [random.choice(domains[i]) for i in range(3)]
         
         for step in range(50):
-            # Cập nhật UI
+            conflicts = self.calculate_csp_conflicts(current, start)
+            
             if self.current_group_id == 5:
+                self.log_msg(f"[Lặp {step}] Tọa độ Y: {current} | Lỗi: {conflicts}", (255, 165, 0))
                 for i, y_val in enumerate(current):
                     self.aux_robots[i].visual_pos = [(i+1) * self.cell_size, y_val * self.cell_size]
-                self.draw_simulation(); pygame.display.flip(); pygame.time.delay(100)
-            
-            # Đếm xung đột
-            conflicts = self.calculate_csp_conflicts(current)
+                
+                if getattr(self, 'step_mode', False):
+                    self.sim_status = f"Chờ bước tiếp (Đang sửa lỗi)..."
+                    self.csp_waiting = True
+                    while getattr(self, 'csp_waiting', False) and self.state == "SIMULATION":
+                        pygame.time.delay(20)
+                else:
+                    self.draw_simulation(); pygame.display.flip(); pygame.time.delay(50)
+                    
             if conflicts == 0:
-                self.log_msg(f"-> Hội tụ sau {step} bước sửa! Y = {current}", (0, 255, 0))
+                self.log_msg(f"-> HỘI TỤ THÀNH CÔNG SAU {step} BƯỚC! Tọa độ Y: {current}", (0, 255, 0))
                 for i, aux in enumerate(self.aux_robots):
                     aux.logic_pos = [i+1, current[i]]; aux.start_pos = [i+1, current[i]]
                 return [self.target_pos]
                 
-            # Chọn ngẫu nhiên 1 cột đang bị lỗi để sửa
-            var_to_fix = random.randint(0, 2)
-            
-            # Tìm giá trị Y mới giúp giảm thiểu xung đột nhất
+            var = random.randint(0, 2)
             min_c = float('inf')
-            best_y_vals = []
-            for y in domain:
-                temp_assignment = list(current)
-                temp_assignment[var_to_fix] = y
-                c = self.calculate_csp_conflicts(temp_assignment)
+            best_vals = []
+            for v in domains[var]:
+                temp = list(current)
+                temp[var] = v
+                c = self.calculate_csp_conflicts(temp, start)
                 if c < min_c:
-                    min_c = c; best_y_vals = [y]
+                    min_c = c
+                    best_vals = [v]
                 elif c == min_c:
-                    best_y_vals.append(y)
+                    best_vals.append(v)
                     
-            # Gán giá trị tốt nhất (Nếu có nhiều cái tốt bằng nhau thì chọn random)
-            current[var_to_fix] = random.choice(best_y_vals)
+            current[var] = random.choice(best_vals)
             
         self.log_msg("-> Quá giới hạn bước. Không tìm thấy nghiệm.", (255, 100, 100))
         return []
@@ -1104,17 +1207,23 @@ class RicochetArena:
         # ------------------------------------------------------------------------------------
         
         for step in range(1, 15): 
+            self.log_msg(f"\n--- LƯỢT {step} ---", (255, 255, 0))
+            self.log_msg(f"1. Lượt của TA (Đang tính toán trước {search_depth} bước)...", (100, 255, 100))
             # 1. Lượt MAX (Ta)
             _, nxt_p = self.get_best_adv_move(p_curr, e_curr, depth=search_depth, is_max=True, alpha=float('-inf'), beta=float('inf'), algo=algo)
             if nxt_p is None: nxt_p = p_curr 
+            self.log_msg(f"-> TA quyết định di chuyển tới: {nxt_p}", (100, 255, 100))
             p_curr = nxt_p
             p_path.append(p_curr)
             
             if p_curr == self.target_pos or self.is_caught(p_curr, e_curr): break
                 
+            self.log_msg(f"2. Lượt của ĐỊCH (Đang tìm cách chặn đường)...", (255, 100, 100))
+
             # 2. Lượt MIN (Địch)
             _, nxt_e = self.get_best_adv_move(p_curr, e_curr, depth=search_depth-1, is_max=False, alpha=float('-inf'), beta=float('inf'), algo=algo)
             if nxt_e is None: nxt_e = e_curr
+            self.log_msg(f"-> ĐỊCH quyết định chặn tại: {nxt_e}", (255, 100, 100))
             e_curr = nxt_e
             e_path.append(e_curr)
             
@@ -1160,9 +1269,13 @@ class RicochetArena:
         glow_rect = rect.inflate(4, 4)
         pygame.draw.rect(self.shadow_surface, (*wall_color, 40), glow_rect, border_radius=4)
 
-    def toggle_wall(self, mouse_pos):
+    def toggle_wall(self, mouse_pos, offset_x=None, offset_y=None, c_size=None):
+        if offset_x is None: offset_x = OFFSET_X
+        if offset_y is None: offset_y = OFFSET_Y
+        if c_size is None: c_size = self.cell_size
+        
         mx, my = mouse_pos
-        c, r = (mx - OFFSET_X) / self.cell_size, (my - OFFSET_Y) / self.cell_size
+        c, r = (mx - offset_x) / c_size, (my - offset_y) / c_size
         dist_x, dist_y = min(c % 1, 1 - (c % 1)), min(r % 1, 1 - (r % 1))
         c, r = int(c), int(r)
         
@@ -1251,6 +1364,53 @@ class RicochetArena:
         glow_rect = pygame.Rect(cx - int(R*0.5), cy - int(R*0.8), R, int(R*0.5))
         pygame.draw.ellipse(surface, (255, 255, 255, 150), glow_rect)
 
+    def draw_mini_board(self, ox, oy, b_size, robot_obj, title_text):
+        c_size = b_size // self.grid_size
+        
+        # Vẽ Tiêu đề
+        self.draw_text(title_text, self.font_md, (200, 255, 200), (ox, oy - 30))
+        
+        # Vẽ Khung Nền
+        brd = pygame.Rect(ox-4, oy-4, b_size+8, b_size+8)
+        pygame.draw.rect(self.screen, BOARD_BG, brd, border_radius=8)
+        pygame.draw.rect(self.screen, BORDER_GLOW, brd, width=2, border_radius=8)
+        
+        # Vẽ Lưới
+        for r in range(self.grid_size):
+            for c in range(self.grid_size):
+                rect = (ox + c*c_size, oy + r*c_size, c_size, c_size)
+                pygame.draw.rect(self.screen, TILE_COLOR, rect)
+                pygame.draw.rect(self.screen, TILE_LINE, rect, 1)
+                
+        # Vẽ Đích
+        tx, ty = ox + self.target_pos[0]*c_size + c_size//2, oy + self.target_pos[1]*c_size + c_size//2
+        pygame.draw.circle(self.screen, (*TARGET_COLOR, 50), (tx, ty), int(c_size * 0.4))
+        pygame.draw.circle(self.screen, TARGET_COLOR, (tx, ty), int(c_size * 0.2))
+        
+        # Vẽ Tường
+        for p1, p2 in self.walls:
+            if p1[0] < 0 or p2[0] >= self.grid_size or p1[1] < 0 or p2[1] >= self.grid_size: continue
+            if p1[0] != p2[0]: 
+                w_rect = pygame.Rect(ox + p2[0]*c_size - 2, oy + p1[1]*c_size - 2, 4, c_size + 4)
+            else:
+                w_rect = pygame.Rect(ox + p1[0]*c_size - 2, oy + p2[1]*c_size - 2, c_size + 4, 4)
+            pygame.draw.rect(self.screen, WALL_COLOR, w_rect)
+            
+        # Vẽ Robot với tỷ lệ thu nhỏ chuẩn xác (Giữ nguyên Animation trượt mượt mà)
+        if robot_obj:
+            ratio = c_size / self.cell_size
+            rx = ox + robot_obj.visual_pos[0] * ratio + c_size//2
+            ry = oy + robot_obj.visual_pos[1] * ratio + c_size//2
+            R = max(6, int(c_size * 0.35))
+            
+            pygame.draw.circle(self.shadow_surface, SHADOW_COLOR, (int(rx)+2, int(ry)+3), R)
+            pygame.draw.circle(self.screen, robot_obj.color, (int(rx), int(ry)), R)
+            
+            # Gắn chữ chỉ thị
+            char = "?" if robot_obj.name == "Bóng ma" else "Ta"
+            t_surf = self.font_sm.render(char, True, (255,255,255))
+            self.screen.blit(t_surf, (int(rx) - t_surf.get_width()//2, int(ry) - t_surf.get_height()//2))
+
     def draw_simulation(self):
         self.screen.fill(BG_COLOR)
         self.shadow_surface.fill((0,0,0,0))
@@ -1264,64 +1424,107 @@ class RicochetArena:
         self.draw_text(title_str, self.font_title, TARGET_COLOR, (OFFSET_X, 20))
         pygame.draw.line(self.screen, BORDER_GLOW, (OFFSET_X, 70), (OFFSET_X + actual_board_size, 70), 2)
 
-        # ---------------- CỘT 1: MAP LƯỚI (BÊN TRÁI - RỘNG THOẢI MÁI) ----------------
-        brd = pygame.Rect(OFFSET_X-8, OFFSET_Y-8, actual_board_size+16, actual_board_size+16)
-        pygame.draw.rect(self.screen, BOARD_BG, brd, border_radius=12)
-        pygame.draw.rect(self.screen, BORDER_GLOW, brd, width=2, border_radius=12)
-        
-        for r, c in itertools.product(range(self.grid_size), range(self.grid_size)):
-            rect = (OFFSET_X + c*self.cell_size, OFFSET_Y + r*self.cell_size, self.cell_size, self.cell_size)
-            pygame.draw.rect(self.screen, TILE_COLOR, rect)
-            pygame.draw.rect(self.screen, TILE_LINE, rect, 1)
-
-        # Highlight ô Edit
-        mx, my = mouse_pos
-        if self.edit_mode > 0 and OFFSET_X <= mx <= OFFSET_X + actual_board_size and OFFSET_Y <= my <= OFFSET_Y + actual_board_size:
-            hc, hr = int((mx - OFFSET_X) / self.cell_size), int((my - OFFSET_Y) / self.cell_size)
-            highlight_rect = pygame.Rect(OFFSET_X + hc*self.cell_size, OFFSET_Y + hr*self.cell_size, self.cell_size, self.cell_size)
-            # --- CHÉP ĐỀ ĐOẠN MÀU NÀY (Hỗ trợ 4 chế độ) ---
-            color_map = {1: (255, 50, 50, 100), 2: (50, 255, 50, 100), 3: (255, 255, 50, 100), 4: (255, 100, 255, 100)}
-            pygame.draw.rect(self.shadow_surface, color_map.get(self.edit_mode, (255,255,255,50)), highlight_rect)
-
-        # Vẽ đích & Robot
-        for t, col in [(self.target_pos, TARGET_COLOR), (self.target_pos_2, TARGET_2_COLOR)]:
-            if t: 
-                tx, ty = OFFSET_X + t[0]*self.cell_size + self.cell_size//2, OFFSET_Y + t[1]*self.cell_size + self.cell_size//2
-                R_target = int(self.cell_size * 0.4)
-                pygame.draw.circle(self.screen, (*col, 50), (tx, ty), R_target)
-                pygame.draw.circle(self.screen, col, (tx, ty), int(R_target * 0.5))
-
-        for p1, p2 in self.walls: self.draw_wall(p1, p2)
-
+        # --- FIX LỖI: Dời r_active lên đầu để tất cả các giao diện đều gọi được ---
         r_active = self.get_robot_by_name(self.current_ai) if self.current_ai else self.player
-        if r_active:
-            rx, ry = int(OFFSET_X + r_active.visual_pos[0] + self.cell_size//2), int(OFFSET_Y + r_active.visual_pos[1] + self.cell_size//2)
-            self.draw_3d_robot(self.screen, rx, ry, r_active.color)
-            if r_active.name == "Người Chơi": pygame.draw.circle(self.screen, (0,0,0), (rx, ry-4), int(self.cell_size*0.1))
+        # --------------------------------------------------------------------------
 
-        # Vẽ thêm Robot Địch nếu đang ở nhóm 6
-        if self.current_group_id == 6 and hasattr(self, 'enemy'):
-            ex, ey = int(OFFSET_X + self.enemy.visual_pos[0] + self.cell_size//2), int(OFFSET_Y + self.enemy.visual_pos[1] + self.cell_size//2)
-            self.draw_3d_robot(self.screen, ex, ey, self.enemy.color)
+        # ---------------- CỘT 1: MAP LƯỚI (BÊN TRÁI - RỘNG THOẢI MÁI) ----------------
+        if self.current_ai == "Sensorless":
+            # Giao diện Tách Đôi (Split-Screen)
+            mini_size = (actual_board_size // 2) - 20
             
-            # Mắt tự động co giãn và đổi sang màu Đỏ dạ quang cho ác chiến
-            R_eye = max(10, int(self.cell_size * 0.35))
-            eye_offset = int(R_eye * 0.35)
-            eye_radius = max(2, int(R_eye * 0.15))
-            pygame.draw.circle(self.screen, (255, 50, 50), (ex - eye_offset, ey - eye_offset), eye_radius)
-            pygame.draw.circle(self.screen, (255, 50, 50), (ex + eye_offset, ey - eye_offset), eye_radius)
+            # Map 1: Vị trí Thực (Player)
+            self.draw_mini_board(OFFSET_X, OFFSET_Y + 50, mini_size, self.player, "BELIEF START 1 (Thực)")
+            
+            # Map 2: Vị trí Ảo (Ghost)
+            if hasattr(self, 'sensorless_ghost'):
+                self.draw_mini_board(OFFSET_X + mini_size + 40, OFFSET_Y + 50, mini_size, self.sensorless_ghost, "BELIEF START 2 (Ảo)")
+                
+            # --- FIX TEXT: Chữ nhỏ gọn, không bị tràn ---
+            self.draw_text("Chế độ Split-Screen: Đa Vũ Trụ Belief State", self.font_md, (255, 150, 255), (OFFSET_X, OFFSET_Y + mini_size + 70))
+            self.draw_text("Bật chế độ sửa (Phím E) để nhấp vào từng map và đặt lại Vị trí Thực/Ảo.", self.font_sm, (150, 150, 150), (OFFSET_X, OFFSET_Y + mini_size + 95))
+            
+            # Highlight ô Edit cho Mini-map
+            if self.edit_mode > 0:
+                mx, my = mouse_pos
+                m1_rect = pygame.Rect(OFFSET_X, OFFSET_Y + 50, mini_size, mini_size)
+                m2_rect = pygame.Rect(OFFSET_X + mini_size + 40, OFFSET_Y + 50, mini_size, mini_size)
+                c_size = mini_size / self.grid_size
+                color_map = {1: (255, 50, 50, 100), 2: (50, 255, 50, 100), 3: (255, 255, 50, 100), 4: (255, 100, 255, 100)}
+                hl_color = color_map.get(self.edit_mode, (255,255,255,50))
+                
+                for r_rect in [m1_rect, m2_rect]:
+                    if r_rect.collidepoint(mx, my):
+                        hc, hr = int((mx - r_rect.x) / c_size), int((my - r_rect.y) / c_size)
+                        if 0 <= hc < self.grid_size and 0 <= hr < self.grid_size:
+                            hl_rect = pygame.Rect(r_rect.x + hc*c_size, r_rect.y + hr*c_size, c_size, c_size)
+                            pygame.draw.rect(self.shadow_surface, hl_color, hl_rect)
+            self.screen.blit(self.shadow_surface, (0,0))
+            
+        else:
+            # Giao diện Full Map (Cho các thuật toán bình thường)
+            brd = pygame.Rect(OFFSET_X-8, OFFSET_Y-8, actual_board_size+16, actual_board_size+16)
+            pygame.draw.rect(self.screen, BOARD_BG, brd, border_radius=12)
+            pygame.draw.rect(self.screen, BORDER_GLOW, brd, width=2, border_radius=12)
+            
+            for r, c in itertools.product(range(self.grid_size), range(self.grid_size)):
+                rect = (OFFSET_X + c*self.cell_size, OFFSET_Y + r*self.cell_size, self.cell_size, self.cell_size)
+                pygame.draw.rect(self.screen, TILE_COLOR, rect)
+                pygame.draw.rect(self.screen, TILE_LINE, rect, 1)
+    
+            # Highlight ô Edit
+            mx, my = mouse_pos
+            if self.edit_mode > 0 and OFFSET_X <= mx <= OFFSET_X + actual_board_size and OFFSET_Y <= my <= OFFSET_Y + actual_board_size:
+                hc, hr = int((mx - OFFSET_X) / self.cell_size), int((my - OFFSET_Y) / self.cell_size)
+                highlight_rect = pygame.Rect(OFFSET_X + hc*self.cell_size, OFFSET_Y + hr*self.cell_size, self.cell_size, self.cell_size)
+                color_map = {1: (255, 50, 50, 100), 2: (50, 255, 50, 100), 3: (255, 255, 50, 100), 4: (255, 100, 255, 100)}
+                pygame.draw.rect(self.shadow_surface, color_map.get(self.edit_mode, (255,255,255,50)), highlight_rect)
+    
+            # Vẽ đích & Robot
+            for t, col in [(self.target_pos, TARGET_COLOR), (self.target_pos_2, TARGET_2_COLOR)]:
+                if t: 
+                    tx, ty = OFFSET_X + t[0]*self.cell_size + self.cell_size//2, OFFSET_Y + t[1]*self.cell_size + self.cell_size//2
+                    R_target = int(self.cell_size * 0.4)
+                    pygame.draw.circle(self.screen, (*col, 50), (tx, ty), R_target)
+                    pygame.draw.circle(self.screen, col, (tx, ty), int(R_target * 0.5))
+    
+            for p1, p2 in self.walls: self.draw_wall(p1, p2)
+    
+            r_active = self.get_robot_by_name(self.current_ai) if self.current_ai else self.player
+            if r_active:
+                rx, ry = int(OFFSET_X + r_active.visual_pos[0] + self.cell_size//2), int(OFFSET_Y + r_active.visual_pos[1] + self.cell_size//2)
+                self.draw_3d_robot(self.screen, rx, ry, r_active.color)
+                if r_active.name == "Người Chơi": pygame.draw.circle(self.screen, (0,0,0), (rx, ry-4), int(self.cell_size*0.1))
+    
+            # Vẽ thêm Robot Địch nếu đang ở nhóm 6
+            if self.current_group_id == 6 and hasattr(self, 'enemy'):
+                ex, ey = int(OFFSET_X + self.enemy.visual_pos[0] + self.cell_size//2), int(OFFSET_Y + self.enemy.visual_pos[1] + self.cell_size//2)
+                self.draw_3d_robot(self.screen, ex, ey, self.enemy.color)
+                R_eye = max(10, int(self.cell_size * 0.35))
+                eye_offset = int(R_eye * 0.35)
+                eye_radius = max(2, int(R_eye * 0.15))
+                pygame.draw.circle(self.screen, (255, 50, 50), (ex - eye_offset, ey - eye_offset), eye_radius)
+                pygame.draw.circle(self.screen, (255, 50, 50), (ex + eye_offset, ey - eye_offset), eye_radius)
+    
+            # Vẽ Bóng ma cho AC-3
+            if self.current_group_id == 5 and getattr(self, 'csp_domains', None):
+                for i, domain in enumerate(self.csp_domains):
+                    color = self.aux_robots[i].color
+                    for (x, y) in domain:
+                        offset_x = (i - 1) * 8 
+                        cx = int(OFFSET_X + x * self.cell_size + self.cell_size//2) + offset_x
+                        cy = int(OFFSET_Y + y * self.cell_size + self.cell_size//2)
+                        pygame.draw.circle(self.shadow_surface, (*color, 120), (cx, cy), max(5, int(self.cell_size*0.15)))
 
-        # --- THÊM PHẦN VẼ 3 TRỢ THỦ CHO NHÓM CSP Ở ĐÂY ---
-        if self.current_group_id == 5 and hasattr(self, 'aux_robots'):
-            for aux in self.aux_robots:
-                ax, ay = int(OFFSET_X + aux.visual_pos[0] + self.cell_size // 2), int(OFFSET_Y + aux.visual_pos[1] + self.cell_size // 2)
-                self.draw_3d_robot(self.screen, ax, ay, aux.color)
-                # Vẽ dấu Thập (Crosshair) lên đầu trợ thủ để dễ phân biệt
-                pygame.draw.line(self.screen, (0, 0, 0), (ax - 4, ay), (ax + 4, ay), 2)
-                pygame.draw.line(self.screen, (0, 0, 0), (ax, ay - 4), (ax, ay + 4), 2)
-        # -------------------------------------------------
-
-        self.screen.blit(self.shadow_surface, (0,0))
+            # Vẽ 3 Trợ thủ CSP
+            if self.current_group_id == 5:
+                for aux in getattr(self, 'aux_robots', []):
+                    ax, ay = int(OFFSET_X + aux.visual_pos[0] + self.cell_size // 2), int(OFFSET_Y + aux.visual_pos[1] + self.cell_size // 2)
+                    self.draw_3d_robot(self.screen, ax, ay, aux.color)
+                    pygame.draw.line(self.screen, (0, 0, 0), (ax - 3, ay), (ax + 3, ay), 2)
+                    pygame.draw.line(self.screen, (0, 0, 0), (ax, ay - 3), (ax, ay + 3), 2)
+    
+            self.screen.blit(self.shadow_surface, (0,0))
 
         # ---------------- CỘT 2: BẢNG ĐIỀU KHIỂN CHUNG (Ở GIỮA) ----------------
         mid_x = OFFSET_X + actual_board_size + 30 
@@ -1369,17 +1572,24 @@ class RicochetArena:
         btn_data = [
             ("Chạy AI", (46, 204, 113)),          
             (f"Chế độ: {'Từng bước' if getattr(self, 'step_mode', False) else 'Tự động'}", (155, 89, 182)),
-            ("Bước tiếp (N)", (241, 196, 15)),
-            (f"Chỉnh Map: {['TẮT', 'TƯỜNG', 'START TA', 'ĐÍCH', 'ĐỊCH'][self.edit_mode]}", (230, 126, 34)), 
+            ("Bước tiếp (N)", (241, 196, 15))
+        ]
+        
+        if self.current_ai == "Sensorless":
+            btn_data.append(("Đổi Vị trí Thật", (255, 105, 180)))
+            btn_data.append(("Random Vị Trí", (155, 89, 182))) # --- THÊM NÚT MỚI ---
+            
+        btn_data.extend([
+            (f"Chỉnh Map: {['TẮT', 'TƯỜNG', 'START TA', 'ĐÍCH', 'ĐỊCH'][self.edit_mode]}", (230, 126, 34)),
             ("Lưu Map Nhóm", (52, 152, 219)),     
             ("Đặt Lại (Reset)", (52, 73, 94)),    
             ("Trở Lại Menu", (231, 76, 60))       
-        ]
+        ])
         
         self.sim_buttons.clear()
         by = status_y + 160 + 15
         remaining_h = HEIGHT - by - 10
-        btn_gap = min(50, max(30, remaining_h // len(btn_data))) # Chia đều cho 7 nút
+        btn_gap = min(50, max(30, remaining_h // len(btn_data)))
         btn_height = min(40, btn_gap - 8)
 
         for text, color in btn_data:
@@ -1395,7 +1605,7 @@ class RicochetArena:
 
         # ---------------- CỘT 3: BẢNG LOG (HẸP LẠI VÀ CHUYỂN SANG GÓC PHẢI CÙNG) ----------------
         log_x = mid_x + col_width + 20
-        log_width = max(250, WIDTH - log_x - 20) # Bảng log hẹp lại để nhường không gian cho bàn cờ
+        log_width = max(250, WIDTH - log_x - 20)
         
         log_rect = pygame.Rect(log_x, 20, log_width, HEIGHT - 40)
         pygame.draw.rect(self.screen, (15, 20, 35), log_rect, border_radius=12)
@@ -1428,7 +1638,7 @@ class RicochetArena:
             ly += 5
 
         # Đổi trỏ chuột khi hover nút
-        if any(r.collidepoint(mouse_pos) for r in self.menu_buttons.values()) or any(r.collidepoint(mouse_pos) for r in list(self.sim_buttons.values())):
+        if any(r.collidepoint(mouse_pos) for r in self.menu_buttons.values()) or any(r.collidepoint(mouse_pos) for r in self.sim_buttons.values()):
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
         else: pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
@@ -1494,23 +1704,25 @@ class RicochetArena:
                 self.log_msg(f"Chi tiết (Ta): {path_str}", (200, 255, 200))
 
                 e_path = getattr(self.enemy, 'computed_path', []) if self.current_group_id == 6 and hasattr(self, 'enemy') else []
+                ghost_path = getattr(self.sensorless_ghost, 'computed_path', []) if self.current_ai == "Sensorless" and hasattr(self, 'sensorless_ghost') else []
                 
-                # NẾU BẬT CHẾ ĐỘ TỪNG BƯỚC:
                 if getattr(self, 'step_mode', False):
                     self.step_queue = []
                     if self.current_group_id == 6:
-                        # Ghép cặp luân phiên: Ta đi -> Địch đi -> Ta đi ...
                         for idx in range(max(len(path), len(e_path))):
                             if idx < len(path): self.step_queue.append((r, path[idx]))
                             if idx < len(e_path): self.step_queue.append((self.enemy, e_path[idx]))
+                    elif self.current_ai == "Sensorless":
+                        for idx in range(len(path)):
+                            self.step_queue.append((r, path[idx]))
+                            self.step_queue.append((self.sensorless_ghost, ghost_path[idx]))
                     else:
                         for p in path: self.step_queue.append((r, p))
                     self.sim_status = f"Chờ bước tiếp (Còn {len(self.step_queue)} bước)"
-                # NẾU BẬT TỰ ĐỘNG
                 else:
                     r.path = path
-                    if self.current_group_id == 6 and hasattr(self, 'enemy'):
-                        self.enemy.path = e_path
+                    if self.current_group_id == 6 and hasattr(self, 'enemy'): self.enemy.path = e_path
+                    elif self.current_ai == "Sensorless" and hasattr(self, 'sensorless_ghost'): self.sensorless_ghost.path = ghost_path
                     self.sim_status = "Đang chạy"
             else:
                 self.sim_status = "Kẹt (0 bước)"
@@ -1522,6 +1734,7 @@ class RicochetArena:
         r = self.get_robot_by_name(self.current_ai) if self.current_ai else self.player
         active_robots = [r] if r else []
         if self.current_group_id == 6 and hasattr(self, 'enemy'): active_robots.append(self.enemy)
+        if self.current_ai == "Sensorless" and hasattr(self, 'sensorless_ghost'): active_robots.append(self.sensorless_ghost)
             
         is_sliding = False
         for rb in active_robots:
@@ -1564,6 +1777,13 @@ class RicochetArena:
                             self.sim_status = "Dừng lại"
 
     def trigger_next_step(self):
+        # --- FIX: MỞ KHÓA CHO NHÓM CSP NẾU ĐANG NGỦ ĐÔNG CHỜ LỆNH ---
+        if getattr(self, 'csp_waiting', False):
+            self.csp_waiting = False
+            self.sim_status = "Đang tính toán..."
+            return
+        # -----------------------------------------------------------
+        
         # Nếu bất kỳ robot nào đang trượt dở dang -> Khóa nút bấm
         active_robots = self.robots + ([self.enemy] if hasattr(self, 'enemy') else [])
         if any(rb.path for rb in active_robots): 
@@ -1571,7 +1791,7 @@ class RicochetArena:
             
         if getattr(self, 'step_queue', []):
             next_rb, next_pos = self.step_queue.pop(0)
-            next_rb.path.append(next_pos) # Ép robot trượt đúng 1 ô
+            next_rb.path.append(next_pos) 
             self.sim_status = "Đang chạy"
             self.log_msg(f"{'Ta' if next_rb.name != 'Địch' else 'Địch'} trượt 1 bước...", (255, 255, 150))
         elif self.sim_status.startswith("Chờ bước tiếp"):
@@ -1625,60 +1845,125 @@ class RicochetArena:
                                 self.log_msg(f"Đã mở mô phỏng: {ai_name}", TARGET_COLOR)
                                 
                     elif self.state == "SIMULATION":
-                        # Xử lý Map Edit
-                        if mx >= OFFSET_X and mx <= OFFSET_X + self.grid_size*self.cell_size and my >= OFFSET_Y and my <= OFFSET_Y + self.grid_size*self.cell_size:
-                            if self.ai_is_computing: 
-                                self.log_msg("Đang tính toán, không thể sửa Map!", (255, 50, 50))
-                                continue
-                            c, r = int((mx - OFFSET_X) / self.cell_size), int((my - OFFSET_Y) / self.cell_size)
-                            
-                            if self.edit_mode == 1 and event.button == 1: self.toggle_wall(event.pos)
-                            elif self.edit_mode == 2 and event.button == 1:
-                                for rb in self.robots: rb.start_pos = [c, r]
-                                self.reset_simulation()
-                                self.log_msg(f"Đã đặt Start mới tại {(c, r)}", (100, 255, 100))
-                            elif self.edit_mode == 3:
-                                if event.button == 1: 
-                                    self.target_pos = (c, r); self.log_msg(f"Đã đặt Đích 1 tại {(c, r)}", TARGET_COLOR)
-                                elif event.button == 3: 
-                                    self.target_pos_2 = (c, r) if self.target_pos_2 != (c, r) else None
-                                    self.log_msg(f"Đã đặt Đích 2 tại {(c, r)}", TARGET_2_COLOR)
-                                self.reset_simulation()
-
-                            elif self.edit_mode == 4 and event.button == 1:
-                                if self.current_group_id == 6 and hasattr(self, 'enemy'):
-                                    self.enemy.start_pos = [c, r]
-                                    self.reset_simulation()
-                                    self.log_msg(f"Đã đặt Địch tại tọa độ {(c, r)}", (255, 50, 50))
-                                else:
-                                    self.log_msg("Chỉ có thể đặt Địch ở Nhóm Đối kháng!", (255, 150, 0))
-                                
-                        # Xử lý Nút bấm
+                        # 1. XỬ LÝ NÚT BẤM (Gộp chung tất cả các nút vào 1 vòng lặp duy nhất)
+                        button_clicked = False
                         if event.button == 1:
                             for btn_name, rect in list(self.sim_buttons.items()):
                                 if rect.collidepoint(event.pos):
+                                    button_clicked = True
                                     
-                                    if self.ai_is_computing:
-                                        self.log_msg("AI đang chạy, không thể bấm nút!", (255, 50, 50))
+                                    # CHỈ CHO PHÉP BẤM "BƯỚC TIẾP" VÀ "CHẾ ĐỘ" KHI AI ĐANG CHẠY
+                                    if self.ai_is_computing and "Bước tiếp" not in btn_name and "Chế độ" not in btn_name:
+                                        self.log_msg("AI đang chạy, vui lòng chờ hoặc bấm Bước tiếp!", (255, 100, 100))
                                         continue
+                                        
                                     if "Chạy AI" in btn_name: self.trigger_run_ai()
-                                    # --- XỬ LÝ 2 NÚT BẤM MỚI ---
                                     elif "Chế độ" in btn_name: 
                                         self.step_mode = not getattr(self, 'step_mode', False)
                                         self.log_msg(f"Chuyển sang chế độ: {'Từng bước' if self.step_mode else 'Tự động'}", (200, 255, 200))
+                                        
+                                        # TỪNG BƯỚC -> TỰ ĐỘNG
                                         if not self.step_mode and getattr(self, 'step_queue', []):
-                                            # Nếu lỡ xả chế độ tự động giữa chừng -> Ép các queue chạy ngay
                                             for rb, pos in self.step_queue: rb.path.append(pos)
                                             self.step_queue = []; self.sim_status = "Đang chạy"
-                                    elif "Bước tiếp" in btn_name: 
-                                        self.trigger_next_step()
-                                    # ----------------------------
+                                            
+                                        # TỰ ĐỘNG -> TỪNG BƯỚC
+                                        elif self.step_mode:
+                                            active_robots = []
+                                            for r in self.robots + [getattr(self, 'enemy', None), getattr(self, 'sensorless_ghost', None)]:
+                                                if r and r.path: active_robots.append(r)
+                                                
+                                            if active_robots:
+                                                self.step_queue = []
+                                                max_len = max(len(rb.path) for rb in active_robots)
+                                                for i in range(1, max_len):
+                                                    for rb in active_robots:
+                                                        if i < len(rb.path): self.step_queue.append((rb, rb.path[i]))
+                                                for rb in active_robots: rb.path = [rb.path[0]]
+                                                self.sim_status = f"Chờ bước tiếp (Còn {len(self.step_queue)} bước)"
+                                                
+                                    elif "Bước tiếp" in btn_name: self.trigger_next_step()
                                     
+                                    # CÁC NÚT RIÊNG CỦA NHÓM SENSORLESS
+                                    elif "Đổi Vị trí" in btn_name:
+                                        temp = self.player.start_pos
+                                        self.player.start_pos = self.sensorless_ghost.start_pos
+                                        self.sensorless_ghost.start_pos = temp
+                                        self.reset_simulation()
+                                        self.log_msg("Đã hoán đổi Vị trí Thực - Ảo!", (255, 150, 255))
+                                    elif "Random Vị Trí" in btn_name:
+                                        self.player.start_pos = list(self.get_random_valid_pos(set()))
+                                        self.sensorless_ghost.start_pos = list(self.get_random_valid_pos(set(), tuple(self.player.start_pos)))
+                                        self.reset_simulation()
+                                        self.log_msg("Đã random vị trí Thực và Ảo!", (0, 255, 255))
+                                        
                                     elif "Chỉnh Map" in btn_name: self.edit_mode = (self.edit_mode + 1) % 5
                                     elif "Lưu Map" in btn_name: self.save_custom_map()
                                     elif "Đặt Lại" in btn_name: self.reset_simulation()
                                     elif "Trở Lại" in btn_name: 
                                         self.state = "MENU"; self.current_ai = None; self.log_msg("Đã về Menu Chính.")
+                        
+                        # 2. XỬ LÝ CLICK SỬA MAP (CHỈ KHI CHƯA BẤM VÀO BẤT KỲ NÚT NÀO)
+                        if not button_clicked:
+                            actual_board_size = self.cell_size * self.grid_size
+                            mini_size = (actual_board_size // 2) - 20
+                            
+                            map_clicked = 0
+                            c, r = 0, 0
+                            map_ox, map_oy, map_csize = OFFSET_X, OFFSET_Y, self.cell_size
+                            
+                            if self.current_ai == "Sensorless":
+                                m1 = pygame.Rect(OFFSET_X, OFFSET_Y + 50, mini_size, mini_size)
+                                m2 = pygame.Rect(OFFSET_X + mini_size + 40, OFFSET_Y + 50, mini_size, mini_size)
+                                c_size = mini_size / self.grid_size
+                                
+                                if m1.collidepoint(mx, my):
+                                    map_clicked, map_ox, map_oy, map_csize = 1, m1.x, m1.y, c_size
+                                elif m2.collidepoint(mx, my):
+                                    map_clicked, map_ox, map_oy, map_csize = 2, m2.x, m2.y, c_size
+                            else:
+                                full = pygame.Rect(OFFSET_X, OFFSET_Y, actual_board_size, actual_board_size)
+                                if full.collidepoint(mx, my):
+                                    map_clicked = 1
+                            
+                            if map_clicked > 0:
+                                if self.ai_is_computing: 
+                                    self.log_msg("Đang tính toán, không thể sửa Map!", (255, 50, 50))
+                                    continue
+                                
+                                c = int((mx - map_ox) / map_csize)
+                                r = int((my - map_oy) / map_csize)
+                                c = max(0, min(c, self.grid_size - 1))
+                                r = max(0, min(r, self.grid_size - 1))
+                                
+                                if self.edit_mode == 1 and event.button == 1:
+                                    self.toggle_wall((mx, my), map_ox, map_oy, map_csize)
+                                elif self.edit_mode == 2 and event.button == 1:
+                                    if self.current_ai == "Sensorless":
+                                        if map_clicked == 1:
+                                            self.player.start_pos = [c, r]
+                                            self.log_msg(f"Đã đặt Start Thực tại {(c, r)}", (100, 255, 100))
+                                        elif map_clicked == 2:
+                                            self.sensorless_ghost.start_pos = [c, r]
+                                            self.log_msg(f"Đã đặt Start Ảo tại {(c, r)}", (100, 255, 100))
+                                    else:
+                                        for rb in self.robots: rb.start_pos = [c, r]
+                                        self.log_msg(f"Đã đặt Start mới tại {(c, r)}", (100, 255, 100))
+                                    self.reset_simulation()
+                                elif self.edit_mode == 3:
+                                    if event.button == 1: 
+                                        self.target_pos = (c, r); self.log_msg(f"Đã đặt Đích 1 tại {(c, r)}", TARGET_COLOR)
+                                    elif event.button == 3: 
+                                        self.target_pos_2 = (c, r) if self.target_pos_2 != (c, r) else None
+                                        self.log_msg(f"Đã đặt Đích 2 tại {(c, r)}", TARGET_2_COLOR)
+                                    self.reset_simulation()
+                                elif self.edit_mode == 4 and event.button == 1:
+                                    if self.current_group_id == 6 and hasattr(self, 'enemy'):
+                                        self.enemy.start_pos = [c, r]
+                                        self.reset_simulation()
+                                        self.log_msg(f"Đã đặt Địch tại tọa độ {(c, r)}", (255, 50, 50))
+                                    else:
+                                        self.log_msg("Chỉ có thể đặt Địch ở Nhóm Đối kháng!", (255, 150, 0))
                                 
                 if event.type == pygame.KEYDOWN and self.state == "SIMULATION":
                     # --- XỬ LÝ PHÍM TẮT MỚI ---
@@ -1693,9 +1978,23 @@ class RicochetArena:
                     elif event.key == pygame.K_m: 
                         self.step_mode = not getattr(self, 'step_mode', False)
                         self.log_msg(f"Chuyển sang chế độ: {'Từng bước' if self.step_mode else 'Tự động'}", (200, 255, 200))
+                        
                         if not self.step_mode and getattr(self, 'step_queue', []):
                             for rb, pos in self.step_queue: rb.path.append(pos)
                             self.step_queue = []; self.sim_status = "Đang chạy"
+                        elif self.step_mode:
+                            active_robots = []
+                            for r in self.robots + [getattr(self, 'enemy', None), getattr(self, 'sensorless_ghost', None)]:
+                                if r and r.path: active_robots.append(r)
+                                
+                            if active_robots:
+                                self.step_queue = []
+                                max_len = max(len(rb.path) for rb in active_robots)
+                                for i in range(1, max_len):
+                                    for rb in active_robots:
+                                        if i < len(rb.path): self.step_queue.append((rb, rb.path[i]))
+                                for rb in active_robots: rb.path = [rb.path[0]]
+                                self.sim_status = f"Chờ bước tiếp (Còn {len(self.step_queue)} bước)"
                     # --------------------------
 
                     if event.key == pygame.K_e: self.edit_mode = (self.edit_mode + 1) % 5
