@@ -477,8 +477,6 @@ class RicochetArena:
 
     def run_ids(self, start, obs):
         self.log_msg("--- BẮT ĐẦU IDS (Duyệt sâu lặp lại) ---", COLORS["IDS"])
-        report_lines = ["=== BÁO CÁO CHI TIẾT THUẬT TOÁN IDS ===", f"Trạng thái xuất phát: {start}",
-                        f"Mục tiêu (Goal): {self.target_pos}", ""]
 
         # [MÃ GIẢ]: function DEPTH-LIMITED-SEARCH(problem, l)
         def depth_limited_search(limit):
@@ -487,64 +485,38 @@ class RicochetArena:
             # [MÃ GIẢ]: result <- failure
             result = "failure"
 
-            nodes_expanded = 0
-
-            # Từ điển lưu trữ độ sâu nhỏ nhất từng đi qua để chống trùng lặp nhánh
-            reached = {start: 0}
-
             # [MÃ GIẢ]: while not IS-EMPTY(frontier) do
             while st:
                 # [MÃ GIẢ]: node <- POP(frontier)
                 c, p = st.pop()
-                nodes_expanded += 1
 
                 # [MÃ GIẢ]: if problem.IS-GOAL(node.STATE) then return node
-                if c == self.target_pos: return p, nodes_expanded
+                if c == self.target_pos: return p
 
                 # [MÃ GIẢ]: if DEPTH(node) >= l then result <- cutoff
                 if len(p) >= limit:
                     result = "cutoff"
                 # [MÃ GIẢ]: else if not IS-CYCLE(node) do (Chống chu trình)
-                else:
+                elif c not in p:
                     # [MÃ GIẢ]: for each child in EXPAND(problem, node) do
                     for n in self.get_neighbors(c, obs):
-                        # [CẮT TỈA]: Chỉ đẩy lân cận vào ngăn xếp nếu ta tìm được đường ngắn hơn đến nó
-                        # (Điều này cũng tự động loại bỏ chu trình mà không cần dùng c not in p)
-                        new_depth = len(p) + 1
                         # [MÃ GIẢ]: add child to frontier
                         st.append((n, p + [n]))
             # [MÃ GIẢ]: return result
-            return result, nodes_expanded
+            return result
 
         # [MÃ GIẢ]: function ITERATIVE-DEEPENING-SEARCH(problem)
         # [MÃ GIẢ]: for depth = 0 to infinity do
-        total_nodes = 0
         for depth in range(0, 45):  # Giới hạn 45 bước để tránh treo máy
             self.log_msg(f"-> Đang chạy DFS với Limit = {depth}", (200, 200, 200))
-            report_lines.append(f"--- Đang duyệt với độ sâu giới hạn Limit = {depth} ---")
             # [MÃ GIẢ]: result <- DEPTH-LIMITED-SEARCH(problem, depth)
-            res, expanded = depth_limited_search(depth)
-            total_nodes += expanded
-            report_lines.append(f"  + Số nút duyệt ở Limit {depth}: {expanded}. Tổng nút từ đầu: {total_nodes}")
+            res = depth_limited_search(depth)
 
             # [MÃ GIẢ]: if result != cutoff then return result
             if res != "cutoff" and res != "failure":
                 self.log_msg(f"-> TÌM THẤY ĐÍCH tại độ sâu (Depth) = {depth}", (0, 255, 0))
-                report_lines.append(
-                    f"\n=> [THÀNH CÔNG] Đã đạt đích ở độ sâu Limit = {depth}. Tổng nút đã duyệt (cộng dồn các lần): {total_nodes}")
-                try:
-                    with open(self.get_map_path("BaoCao_IDS.txt"), "w", encoding="utf-8") as f:
-                        f.write("\n".join(report_lines))
-                except:
-                    pass
                 return res
 
-        report_lines.append("\n=> [THẤT BẠI] Vượt quá giới hạn độ sâu tối đa (45) hoặc không có đường đi.")
-        try:
-            with open(self.get_map_path("BaoCao_IDS.txt"), "w", encoding="utf-8") as f:
-                f.write("\n".join(report_lines))
-        except:
-            pass
         return []
 
     # ================= NHÓM 2: CÓ THÔNG TIN (HEURISTIC SEARCH) =================
@@ -1290,19 +1262,10 @@ class RicochetArena:
 
     def auto_calculate_aux_cols(self, start, target):
         """
-        THẢ CỬA HOÀN TOÀN: Bốc ngẫu nhiên 3 cột bất kỳ trong map,
-        không quan tâm start hay target nằm ở đâu.
+        BỎ ÉP CỘT: Trả về 3 cột cố định 0, 1, 3 để đảm bảo luôn luôn
+        có trợ lý đứng được ở cột 1 hoặc cột 3 nhằm chặn đường trượt.
         """
-        import random
-
-        # Lấy toàn bộ danh sách các cột từ 0 đến grid_size - 1
-        all_cols = list(range(self.grid_size))
-
-        # Bốc đại 3 cột không trùng nhau từ danh sách đó
-        chosen_cols = random.sample(all_cols, k=3)
-        chosen_cols.sort()  # Sắp xếp từ trái qua phải cho đẹp đội hình
-
-        return chosen_cols
+        return [0, 1, 3]
 
     def calculate_csp_conflicts(self, assignment, start, cols):
         """
@@ -1329,195 +1292,144 @@ class RicochetArena:
         return conflicts
 
     def run_backtracking(self, start, obs):
-        self.log_msg("--- BACKTRACKING ---", (255, 140, 0))
+        self.log_msg("--- BACKTRACKING (Raycast) ---", (180, 100, 255))
+        cols = self.auto_calculate_aux_cols(start, self.target_pos)
+        domains = [self.get_valid_y_domain(cols[0], start),
+                   self.get_valid_y_domain(cols[1], start),
+                   self.get_valid_y_domain(cols[2], start)]
 
-        # 1. Sinh toàn bộ tổ hợp 3 cột và trộn ngẫu nhiên
-        all_col_combinations = list(itertools.combinations(range(self.grid_size), 3))
-        random.shuffle(all_col_combinations)
-
-        # 2. Duyệt qua từng bộ 3 cột
-        for cols in all_col_combinations:
-            domains = [self.get_valid_y_domain(cols[0], start),
-                       self.get_valid_y_domain(cols[1], start),
-                       self.get_valid_y_domain(cols[2], start)]
-            if not all(domains):
-                continue
-
-            # Hàm đệ quy Backtrack nội bộ cho bộ cột hiện tại
-            def backtrack(assignment):
-                if len(assignment) == 3:
-                    # Kiểm tra xem đáp án có thỏa mãn không (conflicts == 0)
-                    if self.calculate_csp_conflicts(assignment, start, cols) == 0:
-                        return assignment
-                    return None
-
-                var_idx = len(assignment)
-                for val in domains[var_idx]:
-                    new_assignment = assignment + [val]
-
-                    # Cập nhật trực quan quá trình thử sai lên màn hình
-                    for i in range(len(new_assignment)):
-                        self.aux_robots[i].visual_pos = [float(cols[i]), float(new_assignment[i])]
-                    self.draw_simulation()
-                    pygame.display.flip()
-                    pygame.time.delay(5)  # Delay nhỏ để quét nhanh
-
-                    result = backtrack(new_assignment)
-                    if result:
-                        return result
-                return None
-
-            # Chạy thử backtrack cho bộ cột này
-            res = backtrack([])
-
-            # NẾU THÀNH CÔNG -> Đóng băng và Thắng luôn
-            if res:
-                self.log_msg(f"-> ĐÁP ÁN BACKTRACKING TẠI CỘT {cols}: Y = {res}", (0, 255, 0))
-                self.sim_status = "Thành công"
-                self.ai_is_computing = False
-
-                for i, aux in enumerate(self.aux_robots):
-                    aux.logic_pos = [cols[i], res[i]]
-                    aux.start_pos = [cols[i], res[i]]
-                    aux.visual_pos = [float(cols[i]), float(res[i])]
-                return []
-
-        # Nếu duyệt sạch sành sanh mọi tổ hợp cột mà không giải được
-        self.log_msg("-> ĐÃ XÉT HẾT TẤT CẢ CÁC TRƯỜNG HỢP CỘT: KHÔNG CÓ LỜI GIẢI!", (255, 50, 50))
-        self.sim_status = "Kẹt (0 bước)"
-        return []
-
-    def run_ac3(self, start, obs):
-        self.log_msg("--- AC-3 + BACKTRACKING ---", (255, 140, 0))
-
-        # 1. Sinh toàn bộ tổ hợp 3 cột và trộn ngẫu nhiên
-        all_col_combinations = list(itertools.combinations(range(self.grid_size), 3))
-        random.shuffle(all_col_combinations)
-
-        # 2. Duyệt qua từng bộ 3 cột
-        for cols in all_col_combinations:
-            # Tạo bản sao domain để AC-3 cắt tỉa không ảnh hưởng tổ hợp sau
-            domains = [list(self.get_valid_y_domain(cols[0], start)),
-                       list(self.get_valid_y_domain(cols[1], start)),
-                       list(self.get_valid_y_domain(cols[2], start))]
-            if not all(domains):
-                continue
-
-            # Giả lập cung (Arcs) giữa các biến để tỉa bằng AC-3 (nếu hàm ac3_reduction của bạn có hỗ trợ)
-            if hasattr(self, 'ac3_reduction'):
-                domains = self.ac3_reduction(domains, start, cols)
-                if not all(domains):
-                    continue  # Bị rỗng miền giá trị -> Tổ hợp cột này không khả thi
-
-            # Tìm kiếm đáp án bằng Backtrack sau khi đã tỉa Domain bằng AC-3
-            def backtrack_ac3(assignment):
-                if len(assignment) == 3:
-                    if self.calculate_csp_conflicts(assignment, start, cols) == 0:
-                        return assignment
-                    return None
-
-                var_idx = len(assignment)
-                for val in domains[var_idx]:
-                    new_assignment = assignment + [val]
-
-                    # Vẽ diễn biến quét cột/hàng
-                    for i in range(len(new_assignment)):
-                        self.aux_robots[i].visual_pos = [float(cols[i]), float(new_assignment[i])]
-                    self.draw_simulation()
-                    pygame.display.flip()
-                    pygame.time.delay(5)
-
-                    result = backtrack_ac3(new_assignment)
-                    if result:
-                        return result
-                return None
-
-            res = backtrack_ac3([])
-
-            # NẾU THÀNH CÔNG -> Xuất kết quả rực rỡ
-            if res:
-                self.log_msg(f"-> ĐÁP ÁN AC-3 TẠI CỘT {cols}: Y = {res}", (0, 255, 0))
-                self.sim_status = "Thành công"
-                self.ai_is_computing = False
-
-                for i, aux in enumerate(self.aux_robots):
-                    aux.logic_pos = [cols[i], res[i]]
-                    aux.start_pos = [cols[i], res[i]]
-                    aux.visual_pos = [float(cols[i]), float(res[i])]
-                return []
-
-        # Nếu không bộ cột nào thỏa mãn
-        self.log_msg("-> ĐÃ XÉT HẾT TẤT CẢ CÁC TRƯỜNG HỢP CỘT: KHÔNG CÓ LỜI GIẢI!", (255, 50, 50))
-        self.sim_status = "Kẹt (0 bước)"
-        return []
-
-    def run_min_conflicts(self, start, obs):
-        self.log_msg("--- MIN-CONFLICTS ---", (255, 140, 0))
-
-        # 1. Sinh ra TẤT CẢ các tổ hợp 3 cột khả dĩ từ grid_size
-        # Ví dụ grid_size = 10, sẽ có tổ hợp (0, 1, 2), (0, 1, 3), ..., (7, 8, 9)
-        all_col_combinations = list(itertools.combinations(range(self.grid_size), 3))
-        # Trộn ngẫu nhiên danh sách tổ hợp để tăng tính đa dạng khi tìm kiếm
-        random.shuffle(all_col_combinations)
-
-        # 2. VÒNG LẶP LỚN: Duyệt qua từng tổ hợp bộ 3 cột
-        for cols in all_col_combinations:
-            cols = list(cols)  # Chuyển tuple thành list để dùng
-
-            # Lấy miền giá trị Y cho 3 cột hiện tại
-            domains = [self.get_valid_y_domain(cols[0], start),
-                       self.get_valid_y_domain(cols[1], start),
-                       self.get_valid_y_domain(cols[2], start)]
-
-            # Nếu một trong 3 cột không có ô Y nào hợp lệ, bỏ qua tổ hợp cột này
-            if not all(domains):
-                continue
-
-            # Khởi tạo trạng thái ngẫu nhiên ban đầu cho bộ 3 cột này
-            current = [random.choice(domains[i]) for i in range(3)]
-
-            # Chạy Min-Conflicts (ở đây hạ xuống 30-50 bước/tổ hợp để quét được nhiều bộ cột nhanh hơn)
-            for step in range(40):
-                conflicts = self.calculate_csp_conflicts(current, start, cols)
-
-                # Cập nhật trực quan lên màn hình
-                for i, y_val in enumerate(current):
+        def backtrack(assignment):
+            if len(assignment) > 0:
+                # ĐỒNG BỘ UI: Dùng hệ Float ô lưới chuẩn, cấm nhân cell_size gây đi chéo
+                for i, y_val in enumerate(assignment):
                     self.aux_robots[i].visual_pos = [float(cols[i]), float(y_val)]
                 self.draw_simulation()
                 pygame.display.flip()
-                pygame.time.delay(5)  # Giảm delay xuống để AI quét các trường hợp mượt mà, nhanh chóng
+                pygame.time.delay(30)
 
-                # NẾU TÌM THẤY ĐÁP ÁN (Xung đột bằng 0) -> DỪNG VÀ THẮNG LUÔN
-                if conflicts == 0:
-                    self.log_msg(f"-> ĐÁP ÁN THÀNH CÔNG TẠI CỘT {cols}: Y = {current}", (0, 255, 0))
+            if len(assignment) == 3:
+                if self.calculate_csp_conflicts(assignment, start, cols) == 0:
+                    return assignment
+                return "failure"
 
-                    self.sim_status = "Thành công"
-                    self.ai_is_computing = False
+            col_idx = len(assignment)
+            for value in domains[col_idx]:
+                res = backtrack(assignment + [value])
+                if res != "failure": return res
+            return "failure"
 
-                    for i, aux in enumerate(self.aux_robots):
-                        aux.logic_pos = [cols[i], current[i]]
-                        aux.start_pos = [cols[i], current[i]]
-                        aux.visual_pos = [float(cols[i]), float(current[i])]
-                    return []
+        res = backtrack([])
+        if res != "failure":
+            self.log_msg(f"-> ĐÁP ÁN BACKTRACKING: Y = {res}", (0, 255, 0))
 
-                # Logic chọn biến có xung đột và cập nhật giá trị tốt nhất của Min-Conflicts
-                var = random.randint(0, 2)
-                min_c = float('inf')
-                best_vals = []
-                for v in domains[var]:
-                    temp = list(current)
-                    temp[var] = v
-                    c = self.calculate_csp_conflicts(temp, start, cols)
-                    if c < min_c:
-                        min_c = c;
-                        best_vals = [v]
-                    elif c == min_c:
-                        best_vals.append(v)
-                current[var] = random.choice(best_vals)
+            # 1. Khóa vị trí chuẩn xác cho 3 trợ lý
+            for i, aux in enumerate(self.aux_robots):
+                aux.logic_pos = [cols[i], res[i]]
+                aux.start_pos = [cols[i], res[i]]
+                aux.visual_pos = [float(cols[i]), float(res[i])]
 
-        # Nếu đã vét cạn toàn bộ tất cả các tổ hợp cột mà không cách nào chặn được
-        self.log_msg("-> ĐÃ XÉT HẾT TẤT CẢ CÁC TRƯỜNG HỢP CỘT: KHÔNG CÓ LỜI GIẢI!", (255, 50, 50))
-        self.sim_status = "Kẹt (0 bước)"
+            return [self.target_pos]
+
+        self.log_msg("-> KẸT / KHÔNG THỂ GIẢI VỚI GÓC NÀY.", (255, 50, 50))
+        return []
+
+    def run_ac3(self, start, obs):
+        self.log_msg("--- AC-3 (Raycast) ---", (147, 112, 219))
+        cols = self.auto_calculate_aux_cols(start, self.target_pos)
+        domains = {
+            0: self.get_valid_y_domain(cols[0], start),
+            1: self.get_valid_y_domain(cols[1], start),
+            2: self.get_valid_y_domain(cols[2], start)
+        }
+
+        self.csp_domains = [[(cols[i], y) for y in domains[i]] for i in range(3)]
+        self.draw_simulation();
+        pygame.display.flip();
+        pygame.time.delay(300)
+
+        def satisfy(i, x, j, y):
+            if x == y and cols[i] == cols[j]: return False
+            return True
+
+        def rm_inconsistent_values(xi, xj):
+            removed = False
+            for x in list(domains[xi]):
+                if not any(satisfy(xi, x, xj, y) for y in domains[xj]):
+                    domains[xi].remove(x)
+                    removed = True
+                    if (cols[xi], x) in self.csp_domains[xi]:
+                        self.csp_domains[xi].remove((cols[xi], x))
+                    self.draw_simulation();
+                    pygame.display.flip();
+                    pygame.time.delay(40)
+            return removed
+
+        queue = deque([(0, 1), (1, 0), (0, 2), (2, 0), (1, 2), (2, 1)])
+        while queue:
+            xi, xj = queue.popleft()
+            if rm_inconsistent_values(xi, xj):
+                neighbors = [k for k in range(3) if k != xi and k != xj]
+                for xk in neighbors: queue.append((xk, xi))
+
+        self.csp_domains = None
+
+        def backtrack(assignment):
+            col_idx = len(assignment)
+            if col_idx == 3:
+                return assignment if self.calculate_csp_conflicts(assignment, start, cols) == 0 else "failure"
+            for value in domains[col_idx]:
+                res = backtrack(assignment + [value])
+                if res != "failure": return res
+            return "failure"
+
+        res = backtrack([])
+        if res != "failure":
+            self.log_msg(f"-> ĐÁP ÁN AC-3: Y = {res}", (0, 255, 0))
+            for i, aux in enumerate(self.aux_robots):
+                aux.logic_pos = [cols[i], res[i]]
+                aux.start_pos = [cols[i], res[i]]
+                aux.visual_pos = [float(cols[i]), float(res[i])]
+            return [self.target_pos]
+        return []
+
+    def run_min_conflicts(self, start, obs):
+        self.log_msg("--- MIN-CONFLICTS (Raycast) ---", (255, 140, 0))
+        cols = self.auto_calculate_aux_cols(start, self.target_pos)
+        domains = [self.get_valid_y_domain(cols[0], start),
+                   self.get_valid_y_domain(cols[1], start),
+                   self.get_valid_y_domain(cols[2], start)]
+        if not all(domains): return []
+
+        current = [random.choice(domains[i]) for i in range(3)]
+        for step in range(100):
+            conflicts = self.calculate_csp_conflicts(current, start, cols)
+            for i, y_val in enumerate(current):
+                self.aux_robots[i].visual_pos = [float(cols[i]), float(y_val)]
+            self.draw_simulation();
+            pygame.display.flip();
+            pygame.time.delay(30)
+
+            if conflicts == 0:
+                self.log_msg(f"-> ĐÁP ÁN MIN-CONFLICTS: Y = {current}", (0, 255, 0))
+                for i, aux in enumerate(self.aux_robots):
+                    aux.logic_pos = [cols[i], current[i]]
+                    aux.start_pos = [cols[i], current[i]]
+                    aux.visual_pos = [float(cols[i]), float(current[i])]
+                return [self.target_pos]
+
+            var = random.randint(0, 2)
+            min_c = float('inf');
+            best_vals = []
+            for v in domains[var]:
+                temp = list(current);
+                temp[var] = v
+                c = self.calculate_csp_conflicts(temp, start, cols)
+                if c < min_c:
+                    min_c = c;
+                    best_vals = [v]
+                elif c == min_c:
+                    best_vals.append(v)
+            current[var] = random.choice(best_vals)
         return []
 
     # ================= NHÓM 6: ĐỐI KHÁNG (ADVERSARIAL SEARCH) =================
@@ -2246,24 +2158,17 @@ class RicochetArena:
 
         # --- ĐỒNG BỘ LOGIC CHO NHÓM 5 (CSP): KHÔNG DI CHUYỂN START ---
         if self.current_group_id == 5:
-            # VÌ CÁC HÀM CSP ĐÃ TỰ XỬ LÝ SIM_STATUS VÀ PHẦN VISUAL RỒI,
-            # KHÚC NÀY CHỈ CẦN KIỂM TRA ĐỂ RE-CONFIRM HOẶC CẬP NHẬT GIAO DIỆN CUỐI CÙNG.
-            if self.sim_status == "Thành công":
+            if path:  # Trả về [self.target_pos] là có path
+                self.sim_status = "Thành công"  # Chữ "Thành công" chuẩn hóa
                 self.log_msg("-> CSP đã xếp xong vị trí các trợ thủ thành công!", (0, 255, 0))
 
-                # Cập nhật lại visual_pos một lần cuối cho chắc chắn chắn
                 for aux in getattr(self, 'aux_robots', []):
-                    if aux.logic_pos != [-1, -1]:  # Chỉ hiện các robot có vị trí hợp lệ
-                        aux.visual_pos = [float(aux.logic_pos[0]), float(aux.logic_pos[1])]
-            else:
-                # Nếu chạy hết tất cả tổ hợp cột mà sim_status không chuyển sang "Thành công"
-                self.sim_status = "Kẹt (0 bước)"
-                self.log_msg("-> CSP KẸT / KHÔNG THỂ GIẢI THEO TỔ HỢP CỘT.", (255, 100, 100))
+                    aux.visual_pos = [float(aux.logic_pos[0]), float(aux.logic_pos[1])]
 
-                # Ẩn các trợ thủ đi nếu thất bại
-                for aux in getattr(self, 'aux_robots', []):
-                    aux.logic_pos = [-1, -1]
-                    aux.visual_pos = [-1.0, -1.0]
+            else:
+                # CSP báo thất bại / Kẹt không tìm được thế trận
+                self.sim_status = "Kẹt (0 bước)"
+                self.log_msg("-> CSP KẸT / KHÔNG THỂ GIẢI.", (255, 100, 100))
 
             # Khóa cờ tính toán để vô hiệu hóa luồng update() không can thiệp vào Nhóm 5 nữa
             self.ai_is_computing = False

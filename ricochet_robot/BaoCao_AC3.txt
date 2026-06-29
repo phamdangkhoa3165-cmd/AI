@@ -1,27 +1,14 @@
 === BÁO CÁO RÚT GỌN MIỀN GIÁ TRỊ (AC-3) ===
-Mục tiêu: Đảm bảo tính nhất quán cung (Arc Consistency) trước khi chạy Backtracking để tiết kiệm thời gian.
+Mục tiêu: Đảm bảo tính nhất quán cung (Arc Consistency) trước khi chạy Backtracking.
+Lưu ý: Các Trợ thủ đang tàng hình, chỉ xuất hiện khi thuật toán thành công.
 
-Miền giá trị ban đầu: {0: [0, 1, 2, 3, 4], 1: [1, 2, 4], 2: [0, 1, 2, 3, 4]}
+Luật Hình Vẽ: Tạo điểm tựa dọc. Ép Trợ thủ cột 3 đứng tại Y=4 để chặn Robot rẽ ngang.
 
-Kiểm tra cung (Trợ thủ 1, Trợ thủ 2):
-  [-] Loại bỏ giá trị Y=1 khỏi Trợ thủ 1 vì không có giá trị nào của Trợ thủ 2 khớp ràng buộc.
-  [-] Loại bỏ giá trị Y=2 khỏi Trợ thủ 1 vì không có giá trị nào của Trợ thủ 2 khớp ràng buộc.
-  [-] Loại bỏ giá trị Y=3 khỏi Trợ thủ 1 vì không có giá trị nào của Trợ thủ 2 khớp ràng buộc.
-  [-] Loại bỏ giá trị Y=4 khỏi Trợ thủ 1 vì không có giá trị nào của Trợ thủ 2 khớp ràng buộc.
-  => Miền giá trị của Trợ thủ 1 đã thay đổi. Cập nhật lại các cung liên quan vào hàng đợi.
-Kiểm tra cung (Trợ thủ 2, Trợ thủ 1):
-  [-] Loại bỏ giá trị Y=1 khỏi Trợ thủ 2 vì không có giá trị nào của Trợ thủ 1 khớp ràng buộc.
-  [-] Loại bỏ giá trị Y=2 khỏi Trợ thủ 2 vì không có giá trị nào của Trợ thủ 1 khớp ràng buộc.
-  => Miền giá trị của Trợ thủ 2 đã thay đổi. Cập nhật lại các cung liên quan vào hàng đợi.
-Kiểm tra cung (Trợ thủ 1, Trợ thủ 3):
-  => Đã nhất quán. Không có giá trị nào bị loại.
-Kiểm tra cung (Trợ thủ 3, Trợ thủ 1):
-  [-] Loại bỏ giá trị Y=1 khỏi Trợ thủ 3 vì không có giá trị nào của Trợ thủ 1 khớp ràng buộc.
-  [-] Loại bỏ giá trị Y=2 khỏi Trợ thủ 3 vì không có giá trị nào của Trợ thủ 1 khớp ràng buộc.
-  [-] Loại bỏ giá trị Y=3 khỏi Trợ thủ 3 vì không có giá trị nào của Trợ thủ 1 khớp ràng buộc.
-  [-] Loại bỏ giá trị Y=4 khỏi Trợ thủ 3 vì không có giá trị nào của Trợ thủ 1 khớp ràng buộc.
-  => Miền giá trị của Trợ thủ 3 đã thay đổi. Cập nhật lại các cung liên quan vào hàng đợi.
-Kiểm tra cung (Trợ thủ 3, Trợ thủ 1):
-  => Đã nhất quán. Không có giá trị nào bị loại.
+Miền giá trị sau khi áp dụng Luật Phễu: {0: [0, 1, 2, 3, 4], 1: [0, 1, 2, 3, 4], 2: [4], 3: [0, 1, 2, 3, 4], 4: [0, 1, 2, 4]}
 
-=> [KẾT LUẬN] Miền giá trị sau khi cắt tỉa AC-3: {0: [0], 1: [4], 2: [0]}
+  [-] AC-3 Cắt tỉa: Xóa Y=4 khỏi Trợ thủ 1 do bị trùng hàng với Trợ thủ 3.
+  [-] AC-3 Cắt tỉa: Xóa Y=4 khỏi Trợ thủ 2 do bị trùng hàng với Trợ thủ 3.
+  [-] AC-3 Cắt tỉa: Xóa Y=4 khỏi Trợ thủ 4 do bị trùng hàng với Trợ thủ 3.
+  [-] AC-3 Cắt tỉa: Xóa Y=4 khỏi Trợ thủ 5 do bị trùng hàng với Trợ thủ 3.
+
+=> [KẾT LUẬN] Miền giá trị sau khi cắt tỉa AC-3: {0: [0, 1, 2, 3], 1: [0, 1, 2, 3], 2: [4], 3: [0, 1, 2, 3], 4: [0, 1, 2]}
