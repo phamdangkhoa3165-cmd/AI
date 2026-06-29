@@ -1,0 +1,26 @@
+=== BÁO CÁO QUÁ TRÌNH LỌC NIỀM TIN (BELIEF STATE) ===
+Vị trí xuất phát thật sự (Giấu kín với AI): (9, 12)
+1. Niềm tin ban đầu (Belief Start): Gồm 5 vị trí có thể: [(9, 12), (10, 1), (9, 2), (7, 3), (2, 15)]
+
+--- BƯỚC 1 ---
+Hành động: Trượt TRÁI
+Tín hiệu Cảm Biến nhận được (Lên, Xuống, Trái, Phải): (True, True, False, True)
+Quá trình suy luận lọc giả thuyết:
+  [+] Nếu ở (9, 12) -> trượt đến (2, 12). Cảm biến dự kiến là (True, True, False, True) -> KHỚP VỚI THỰC TẾ -> Giữ lại.
+  [+] Nếu ở (10, 1) -> trượt đến (3, 1). Cảm biến dự kiến là (True, True, False, True) -> KHỚP VỚI THỰC TẾ -> Giữ lại.
+  [-] Nếu ở (9, 2) -> trượt đến (2, 2). Cảm biến dự kiến là (False, False, False, True) -> SAI LỆCH THỰC TẾ -> Loại bỏ.
+  [-] Nếu ở (7, 3) -> trượt đến (3, 3). Cảm biến dự kiến là (False, True, False, True) -> SAI LỆCH THỰC TẾ -> Loại bỏ.
+  [-] Nếu ở (2, 15) -> trượt đến (0, 15). Cảm biến dự kiến là (True, False, False, True) -> SAI LỆCH THỰC TẾ -> Loại bỏ.
+-> Kết quả Bước 1: Loại 3 vị trí, Giữ 2 vị trí.
+-> Niềm tin hiện tại (Belief Update) gồm 2 vị trí: [(3, 1), (2, 12)]
+
+--- BƯỚC 2 ---
+Hành động: Trượt LÊN
+Tín hiệu Cảm Biến nhận được (Lên, Xuống, Trái, Phải): (False, True, False, True)
+Quá trình suy luận lọc giả thuyết:
+  [-] Nếu ở (3, 1) -> trượt đến (3, 0). Cảm biến dự kiến là (False, True, True, True) -> SAI LỆCH THỰC TẾ -> Loại bỏ.
+  [+] Nếu ở (2, 12) -> trượt đến (2, 10). Cảm biến dự kiến là (False, True, False, True) -> KHỚP VỚI THỰC TẾ -> Giữ lại.
+-> Kết quả Bước 2: Loại 1 vị trí, Giữ 1 vị trí.
+-> Niềm tin hiện tại (Belief Update) gồm 1 vị trí: [(2, 10)]
+
+=> KẾT LUẬN: Chỉ còn 1 giả thuyết duy nhất. Đã định vị thành công vị trí thật sự là (2, 10) sau 2 bước.

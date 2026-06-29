@@ -267,12 +267,14 @@ class RicochetArena:
         if not hasattr(self, 'step_mode'): self.step_mode = False
         self.step_queue = [] 
         self.csp_domains = None # Dọn dẹp bóng ma AC-3
+        self.belief_history = [] # Dọn dẹp bóng ma Partial-Observable
         
         # --- FIX: Nạp thêm 3 Trợ thủ vào danh sách Reset ---
         enemy_list = [self.enemy] if hasattr(self, 'enemy') else []
-        aux_list = getattr(self, 'aux_robots', []) 
+        ghost_list = [self.sensorless_ghost] if hasattr(self, 'sensorless_ghost') else []
+        aux_list = getattr(self, 'aux_robots', [])
         
-        for r in self.robots + enemy_list + aux_list:
+        for r in self.robots + enemy_list + ghost_list + aux_list:
             r.logic_pos = list(r.start_pos)
             r.visual_pos = [r.start_pos[0]*self.cell_size, r.start_pos[1]*self.cell_size]
             r.path = []
@@ -733,172 +735,304 @@ class RicochetArena:
 
     # ================= MÔI TRƯỜNG PHỨC TẠP & CSP =================
     def run_sensorless(self, start, obs):
-        start_real = tuple(start)
-        start_ghost = tuple(self.sensorless_ghost.start_pos)
+        self.log_msg("--- LẬP KẾ HOẠCH ĐỒNG BỘ (CONFORMANT PLANNING) ---", (255, 100, 255))
         
-        self.log_msg(f"[Belief State] Khởi tạo: Thực {start_real} | Ảo {start_ghost}", (255, 150, 255))
-        belief_start = tuple(sorted([start_real, start_ghost]))
+        start_1 = tuple(start)
+        start_2 = tuple(self.sensorless_ghost.start_pos)
+
+        # --- KHỞI TẠO BÁO CÁO HỌC THUẬT ---
+        report_lines = []
+        report_lines.append("=== BÁO CÁO TÌM KIẾM KHÔNG CẢM BIẾN (CONFORMANT PLANNING) ===")
+        report_lines.append(f"Mục tiêu: Tìm 1 chuỗi hành động chung đưa hệ thống về Đích {self.target_pos}.")
+        report_lines.append("Cơ chế: Nếu một Trạng thái (State) chạm đích trước, nó sẽ chuyển sang trạng thái dừng (Sink State).")
+        report_lines.append(f"\n[Tập Niềm tin ban đầu - Belief Start]")
+        report_lines.append(f" - State 1: {start_1}")
+        report_lines.append(f" - State 2: {start_2}")
         
-        # Hàng đợi: (Tập Belief, Pos Thực, Đường đi Thực, Pos Ảo, Đường đi Ảo)
-        frontier = deque([(belief_start, start_real, [], start_ghost, [])])
+        belief_start = tuple(sorted([start_1, start_2]))
+
+        # Hàng đợi: (Tập Belief, Pos 1, Path 1, Pos 2, Path 2, Lịch sử Hành động)
+        frontier = deque([(belief_start, start_1, [], start_2, [], [])])
         reached = {belief_start}
         
+        report_lines.append("\n=== QUÁ TRÌNH TÌM KIẾM (BFS TRÊN KHÔNG GIAN BELIEF) ===")
+        steps_explored = 0
+
+        # Hàm di chuyển tuỳ chỉnh: Đã vào đích thì khóa chết (Sink State)
+        def get_next_state(pos, action):
+            if pos == self.target_pos:
+                return pos
+            return self.get_slide_dest(pos, action, obs)
+
         while frontier:
-            current_belief, current_real, path_real, current_ghost, path_ghost = frontier.popleft()
+            current_belief, current_1, path_1, current_2, path_2, action_history = frontier.popleft()
+            steps_explored += 1
             
-            if len(path_real) > 20: continue
+            # Giới hạn độ dài chuỗi để chống treo
+            if len(path_1) > 20: continue
                 
-            if all(s == self.target_pos for s in current_belief):
-                self.log_msg(f"-> Đạt Belief_Goal! Cả 2 đều bị ép vào Đích sau {len(path_real)} bước.", (0, 255, 255))
-                self.sensorless_ghost.computed_path = path_ghost 
-                return path_real
+            # KIỂM TRA ĐÍCH: Cả 2 State đều đã hội tụ tại đích
+            if current_1 == self.target_pos and current_2 == self.target_pos:
+                self.log_msg(f"-> Hội tụ thành công! Cả 2 State đều đã vào Đích sau {len(path_1)} bước.", (0, 255, 255))
                 
+                # Hoàn thiện Báo cáo
+                report_lines.append("\n=======================================================")
+                report_lines.append(f"=> TỔNG KẾT: TÌM THẤY KẾ HOẠCH HỘI TỤ (CONFORMANT PLAN)!")
+                report_lines.append(f"Tổng số trạng thái đã duyệt: {steps_explored}")
+                report_lines.append(f"Chuỗi hành động chung ({len(action_history)} bước): {' -> '.join(action_history)}")
+                report_lines.append("Kết luận: Kế hoạch đảm bảo 100% tỷ lệ thành công.")
+                
+                # Lưu file Text Báo Cáo
+                try:
+                    filename = self.get_map_path("BaoCao_ConformantPlanning.txt")
+                    with open(filename, "w", encoding="utf-8") as f:
+                        f.write("\n".join(report_lines))
+                    self.log_msg(f"-> Đã xuất Báo cáo học thuật: {os.path.basename(filename)}", (100, 255, 100))
+                except Exception as e:
+                    self.log_msg(f"Không thể lưu file báo cáo: {e}", (255, 50, 50))
+
+                self.sensorless_ghost.computed_path = path_2 
+                return path_1
+                
+            # MỞ RỘNG CÁC HÀNH ĐỘNG
             for action in [(0,-1), (0,1), (-1,0), (1,0)]:
-                next_belief_set = set()
-                for s in current_belief:
-                    next_belief_set.add(self.get_slide_dest(s, action, obs))
-                next_belief = tuple(sorted(list(next_belief_set)))
+                action_name = {(0,-1): "LÊN", (0,1): "XUỐNG", (-1,0): "TRÁI", (1,0): "PHẢI"}[action]
+                
+                # Tính điểm đến bằng hàm Sink State
+                next_1 = get_next_state(current_1, action)
+                next_2 = get_next_state(current_2, action)
+                
+                next_belief = tuple(sorted(list({next_1, next_2})))
                 
                 if next_belief not in reached:
                     reached.add(next_belief)
-                    next_real = self.get_slide_dest(current_real, action, obs)
-                    next_ghost = self.get_slide_dest(current_ghost, action, obs)
-                    frontier.append((next_belief, next_real, path_real + [next_real], next_ghost, path_ghost + [next_ghost]))
                     
-        self.log_msg("-> Kẹt! Không tồn tại Kế hoạch ép buộc hoàn toàn.", (255, 100, 100))
+                    # GHI NHẬN VÀO BÁO CÁO CÁC SỰ KIỆN QUAN TRỌNG
+                    if current_1 != self.target_pos and next_1 == self.target_pos:
+                        report_lines.append(f" [*] State 1 đã chạm đích {self.target_pos} và chuyển sang dừng (Sink State). Tiếp tục đồng bộ State 2.")
+                    elif current_2 != self.target_pos and next_2 == self.target_pos:
+                        report_lines.append(f" [*] State 2 đã chạm đích {self.target_pos} và chuyển sang dừng (Sink State). Tiếp tục đồng bộ State 1.")
+                    elif len(next_belief) < len(current_belief):
+                        report_lines.append(f"\n[!] BƯỚC HỘI TỤ (State Convergence):")
+                        report_lines.append(f"    - Từ tập Niềm tin {current_belief}, phát lệnh chung trượt {action_name}.")
+                        report_lines.append(f"    - Kết quả: Các trạng thái đã sáp nhập tại cùng một điểm {next_belief[0]}.")
+                    elif steps_explored % 50 == 0: 
+                        report_lines.append(f" - Duyệt nút {steps_explored}: Từ {current_belief} trượt {action_name} -> {next_belief}")
+
+                    frontier.append((next_belief, next_1, path_1 + [next_1], next_2, path_2 + [next_2], action_history + [action_name]))
+                    
+        self.log_msg("-> Bế tắc! Không tồn tại Kế hoạch hội tụ.", (255, 100, 100))
+        
+        report_lines.append("\n=======================================================")
+        report_lines.append("=> TỔNG KẾT: THẤT BẠI.")
+        report_lines.append("Không thể đồng bộ 2 State do cấu trúc Map không cho phép.")
+        try:
+            filename = self.get_map_path("BaoCao_ConformantPlanning.txt")
+            with open(filename, "w", encoding="utf-8") as f:
+                f.write("\n".join(report_lines))
+        except: pass
+        
         return []
 
     def run_partial_observable(self, start, obs):
         self.log_msg("--- MÔI TRƯỜNG NHÌN THẤY MỘT PHẦN (PARTIAL OBSERVE) ---", (255, 200, 255))
         
-        # 1. Khởi tạo Belief_Start (Niềm tin ban đầu)
-        # Giả sử robot bị mất định vị, nó nghĩ nó có thể đang ở 1 trong 3 vị trí khác nhau.
+        # --- KHỞI TẠO BÁO CÁO (Dành cho báo cáo đồ án) ---
+        report_lines = []
+        report_lines.append("=== BÁO CÁO QUÁ TRÌNH LỌC NIỀM TIN (BELIEF STATE) ===")
+        report_lines.append(f"Vị trí xuất phát thật sự (Giấu kín với AI): {start}")
+
+        # 1. Khởi tạo Belief_Start (Tăng lên 4 bóng ma ảo cho phong phú)
         fake_1 = self.get_random_valid_pos(obs, start)
         fake_2 = self.get_random_valid_pos(obs, start)
-        belief_state = {start, fake_1, fake_2}
-        self.log_msg(f"[Belief Start] Robot bị mù toạ độ, nghĩ nó ở: {len(belief_state)} vị trí.", (200, 200, 255))
+        fake_3 = self.get_random_valid_pos(obs, start)
+        fake_4 = self.get_random_valid_pos(obs, start)
+        belief_state = {start, fake_1, fake_2, fake_3, fake_4}
+        
+        self.log_msg(f"[Belief Start] Robot bị mù toạ độ, phân thân ở: {len(belief_state)} vị trí.", (200, 200, 255))
+        report_lines.append(f"1. Niềm tin ban đầu (Belief Start): Gồm {len(belief_state)} vị trí có thể: {list(belief_state)}")
 
-        # Cảm biến mô phỏng (Sensor): Nhận biết được các hướng có thể trượt (không bị kẹt tường sát bên)
         def get_percept(pos):
-            # Trả về tuple 4 giá trị boolean (Up, Down, Left, Right). Vd: (True, False, True, True)
+            # Cảm biến trả về: (Có kẹt LÊN không, XUỐNG không, TRÁI không, PHẢI không)
+            # True = Không kẹt (đi được), False = Kẹt tường
             return tuple(self.get_slide_dest(pos, d, obs) != pos for d in [(0,-1), (0,1), (-1,0), (1,0)])
 
         real_pos = start
         path = []
+        self.belief_history = [belief_state.copy()]
 
-        # 2. Vòng lặp Hành động - Cảm biến - Cập nhật (Tối đa 30 bước khám phá)
         for step in range(30):
-            # a. Đạt Belief Goal (Mục tiêu định vị thành công)
-            # Khi tập Belief State chỉ còn 1, robot đã suy luận ra chính xác 100% vị trí thật
+            # A. KIỂM TRA ĐỊNH VỊ THÀNH CÔNG
             if len(belief_state) == 1:
                 localized_pos = list(belief_state)[0]
                 self.log_msg(f"-> [Định vị Thành Công!] Robot chắc chắn đang ở: {localized_pos}", (0, 255, 0))
+                report_lines.append(f"\n=> KẾT LUẬN: Chỉ còn 1 giả thuyết duy nhất. Đã định vị thành công vị trí thật sự là {localized_pos} sau {step} bước.")
                 
-                # Sau khi định vị được bản thân, chuyển sang dùng A* để đi đến Đích
-                self.log_msg(f"-> Chuyển sang thuật toán A* để tiến về Goal.", (0, 255, 255))
+                # Lưu file Text Báo Cáo
+                try:
+                    filename = self.get_map_path("BaoCao_PartialObservable.txt")
+                    with open(filename, "w", encoding="utf-8") as f:
+                        f.write("\n".join(report_lines))
+                    self.log_msg(f"-> Đã xuất File báo cáo chi tiết: {os.path.basename(filename)}", (100, 255, 100))
+                except Exception as e:
+                    self.log_msg(f"Không thể lưu file báo cáo: {e}", (255, 50, 50))
+
+                # Chạy tiếp A*
                 astar_path = self.run_astar(localized_pos, obs)
+                for _ in astar_path: self.belief_history.append(belief_state.copy())
                 return path + astar_path
 
-            # b. Chọn hành động (Action) để khám phá
-            # Tìm các hướng đi hợp lệ từ vị trí thực tế để không bị đứng im
+            # B. CHỌN HÀNH ĐỘNG KHÁM PHÁ
             valid_dirs = [d for d in [(0,-1), (0,1), (-1,0), (1,0)] if self.get_slide_dest(real_pos, d, obs) != real_pos]
-            if not valid_dirs:
-                self.log_msg("-> Lỗi: Kẹt cứng không thể di chuyển.", (255, 0, 0))
+            if not valid_dirs: 
+                report_lines.append("\n=> BẾ TẮC: Kẹt cứng không thể di chuyển.")
                 return path
 
-            # Robot chọn đi ngẫu nhiên để thu thập thông tin môi trường
             action = random.choice(valid_dirs)
             action_name = {(0,-1): "LÊN", (0,1): "XUỐNG", (-1,0): "TRÁI", (1,0): "PHẢI"}[action]
-
-            # c. Thực thi hành động: Môi trường phản hồi Vị trí mới & Cảm biến (Percept)
+            
+            # C. THỰC THI & ĐỌC CẢM BIẾN (TỪ VỊ TRÍ THỰC)
             real_pos = self.get_slide_dest(real_pos, action, obs)
             path.append(real_pos)
             percept = get_percept(real_pos)
             
             self.log_msg(f"Bước {step+1}: Trượt {action_name}. Đọc cảm biến: {percept}", (220, 220, 220))
+            
+            # Ghi vào báo cáo
+            report_lines.append(f"\n--- BƯỚC {step+1} ---")
+            report_lines.append(f"Hành động: Trượt {action_name}")
+            report_lines.append(f"Tín hiệu Cảm Biến nhận được (Lên, Xuống, Trái, Phải): {percept}")
+            report_lines.append("Quá trình suy luận lọc giả thuyết:")
 
-            # d. Cập nhật Trạng thái Niềm tin (Belief Update)
-            # Công thức: B' = { s' = Result(s, a) | s thuộc B và Percept(s') == percept }
+            # D. LỌC NIỀM TIN (BELIEF UPDATE)
             new_belief_state = set()
+            kept_count = 0
+            eliminated_count = 0
+
             for s in belief_state:
-                # Dự đoán vị trí điểm đến nếu xuất phát từ điểm s ảo
                 s_next = self.get_slide_dest(s, action, obs)
+                s_percept = get_percept(s_next)
                 
-                # Lọc: Nếu tại vị trí dự đoán mà cảm biến đọc KHÁC với thực tế -> Loại bỏ giả thuyết s_next
-                if get_percept(s_next) == percept:
+                if s_percept == percept:
                     new_belief_state.add(s_next)
+                    report_lines.append(f"  [+] Nếu ở {s} -> trượt đến {s_next}. Cảm biến dự kiến là {s_percept} -> KHỚP VỚI THỰC TẾ -> Giữ lại.")
+                    kept_count += 1
+                else:
+                    report_lines.append(f"  [-] Nếu ở {s} -> trượt đến {s_next}. Cảm biến dự kiến là {s_percept} -> SAI LỆCH THỰC TẾ -> Loại bỏ.")
+                    eliminated_count += 1
 
             belief_state = new_belief_state
-            self.log_msg(f"   [Cập nhật Niềm tin] Loại bỏ giả thuyết sai. Còn: {len(belief_state)} vị trí.", (255, 255, 100))
+            self.belief_history.append(belief_state.copy())
+            
+            report_lines.append(f"-> Kết quả Bước {step+1}: Loại {eliminated_count} vị trí, Giữ {kept_count} vị trí.")
+            report_lines.append(f"-> Niềm tin hiện tại (Belief Update) gồm {len(belief_state)} vị trí: {list(belief_state)}")
+            self.log_msg(f"   [Lọc Niềm tin] Loại {eliminated_count}, Giữ {kept_count}. Còn: {len(belief_state)} vị trí.", (255, 255, 100))
 
-        self.log_msg("-> Thất bại: Không thể định vị được bản thân sau 30 bước.", (255, 100, 100))
+        report_lines.append("\n=> THẤT BẠI: Đã quá 30 bước nhưng không thể định vị.")
         return path
     
     def run_and_or_graph(self, start, obs):
-        self.log_msg("--- DUYỆT CÂY AND-OR (Kế hoạch dự phòng) ---", (255, 255, 100))
+        self.log_msg("--- LẬP KẾ HOẠCH DỰ PHÒNG (AND-OR GRAPH) ---", (255, 255, 100))
+        
+        # --- KHỞI TẠO BÁO CÁO ---
+        report_lines = []
+        report_lines.append("=== BÁO CÁO LẬP KẾ HOẠCH DỰ PHÒNG (AND-OR GRAPH) ===")
+        report_lines.append(f"Vị trí xuất phát: {start}")
+        report_lines.append(f"Mục tiêu: {self.target_pos}")
+        report_lines.append("Luật môi trường bất định (Non-deterministic): Khi phát lệnh trượt, có thể xảy ra 2 trường hợp:")
+        report_lines.append("  1. Suôn sẻ: Tới đúng điểm dừng ở góc tường.")
+        report_lines.append("  2. Rủi ro: Bị trượt ngã, dừng lại trước điểm dừng chuẩn 1 ô.\n")
 
-        # function OR_SEARCH(state, problem, path):
-        def or_search(state, path):
-            # if state ∈ problem.goal_test:
+        # Giới hạn độ sâu để tránh treo máy khi vẽ cây quá lớn
+        MAX_DEPTH = 10 
+
+        # function OR_SEARCH(state, path) - ĐẠI DIỆN CHO QUYẾT ĐỊNH CỦA ROBOT
+        def or_search(state, path, depth):
+            indent = "    " * depth
+            
             if state == self.target_pos:
-                # return [] // kế hoạch rỗng (đã đạt mục tiêu)
+                report_lines.append(f"{indent}-> ĐẠT MỤC TIÊU! (Kế hoạch rỗng)")
                 return [] 
                 
-            # if state ∈ path:
             if state in path:
-                # return failure // tránh lặp
-                return "failure" 
-                
-            # (Mẹo thực tế: Giới hạn độ sâu đệ quy để game không bị treo nếu kẹt vòng lặp lớn)
-            if len(path) > 15: 
                 return "failure"
-
-            # for each action in problem.actions(state):
-            for action in [(0,-1), (0,1), (-1,0), (1,0)]: 
-                next_state = self.get_slide_dest(state, action, obs)
-                if next_state == state: continue # Bỏ qua nếu trượt đâm tường sát bên
                 
-                # result_states = problem.results(state, action)
-                # (Vì Ricochet là game đơn định, mỗi action chỉ ra 1 kết quả, nhưng ta vẫn đưa vào mảng để đúng logic AND)
-                result_states = [next_state]
+            if depth >= MAX_DEPTH:
+                report_lines.append(f"{indent}-> (Chạm giới hạn độ sâu {MAX_DEPTH}, tạm dừng duyệt nhánh này)")
+                return "failure"
                 
-                # plan = AND_SEARCH(result_states, problem, path + [state])
-                plan = and_search(result_states, path + [state])
+            for action in [(0,-1), (0,1), (-1,0), (1,0)]:
+                action_name = {(0,-1): "LÊN", (0,1): "XUỐNG", (-1,0): "TRÁI", (1,0): "PHẢI"}[action]
                 
-                # if plan ≠ failure:
+                # Tính điểm đến lý tưởng
+                normal_dest = self.get_slide_dest(state, action, obs)
+                if normal_dest == state: continue # Kẹt tường không đi được
+                
+                # Tính điểm đến rủi ro (dừng trước 1 ô)
+                dx, dy = action
+                slip_dest = (normal_dest[0] - dx, normal_dest[1] - dy)
+                
+                # Nếu khoảng cách trượt chỉ là 1 ô, thì không có rủi ro ngã giữa đường
+                states_result = [normal_dest, slip_dest] if slip_dest != state else [normal_dest]
+                
+                report_lines.append(f"{indent}[NÚT OR] Thử ra lệnh trượt {action_name} từ {state}:")
+                
+                # Gọi AND_SEARCH để xem môi trường phản ứng ra sao
+                plan = and_search(states_result, path + [state], depth + 1, action_name)
+                
                 if plan != "failure":
-                    # return [action, plan]
-                    # (Để UI vẽ được đường đi robot, ta thay 'action' bằng toạ độ 'next_state' để nối mảng)
-                    return [next_state] + plan 
+                    report_lines.append(f"{indent}=> [CHỐT KẾ HOẠCH] Chọn nhánh trượt {action_name} làm phương án an toàn nhất.")
+                    return [normal_dest] + plan # Ghép đường đi để robot trên giao diện có thể chạy
                     
-            # return failure
             return "failure"
 
-        # function AND_SEARCH(states, problem, path):
-        def and_search(states, path):
-            # plans = empty mapping // lưu kế hoạch cho từng state
-            plans = []
+        # function AND_SEARCH(states, path) - ĐẠI DIỆN CHO PHẢN ỨNG CỦA MÔI TRƯỜNG
+        def and_search(states, path, depth, action_name):
+            indent = "    " * depth
+            report_lines.append(f"{indent}[NÚT AND] Môi trường có thể trả về {len(states)} khả năng: {states}")
             
-            # for each s in states:
-            for s in states:
-                # plan_s = OR_SEARCH(s, problem, path)
-                plan_s = or_search(s, path)
+            plan_a_path = None # Chỉ lưu đường đi của Plan A để vẽ lên UI cho đẹp
+            
+            for i, s in enumerate(states):
+                scenario = "SUÔN SẺ" if i == 0 else "RỦI RO NGÃ"
+                report_lines.append(f"{indent}--- NẾU {scenario} (Rơi vào {s}) THÌ LÀM GÌ TIẾP? ---")
                 
-                # if plan_s == failure:
+                plan_s = or_search(s, path, depth + 1)
+                
                 if plan_s == "failure":
-                    # return failure
+                    report_lines.append(f"{indent}-> BẾ TẮC CỤC BỘ. Không có phương án dự phòng an toàn cho trường hợp này. Hủy bỏ nhánh AND.")
                     return "failure"
-                    
-                # plans[s] = plan_s
-                # (Với mảng 1D mô phỏng của game, ta dùng extend để gộp chuỗi hành động thay vì dùng dictionary mapping)
-                plans.extend(plan_s)
                 
-            # return plans
-            return plans
+                # Lấy mảng tọa độ của trường hợp lý tưởng để hàm ngoài vẽ UI (Tránh robot chạy giật lùi)
+                if i == 0: plan_a_path = plan_s 
+                
+            return plan_a_path
 
-        # function AND_OR_GRAPH_SEARCH(problem):
-        # return OR_SEARCH(problem.initial_state, problem, [])
-        res = or_search(start, [])
+        # BẮT ĐẦU CHẠY THUẬT TOÁN
+        self.log_msg("Đang dựng Cây quyết định dự phòng...", (200, 255, 255))
+        res = or_search(start, [], 0)
+        
+        # --- KẾT LUẬN & XUẤT FILE ---
+        if res != "failure":
+            self.log_msg("-> Lập kế hoạch dự phòng thành công! Đã quét hết rủi ro.", (0, 255, 0))
+            report_lines.append("\n=======================================================")
+            report_lines.append("=> TỔNG KẾT: ĐÃ TÌM THẤY KẾ HOẠCH DỰ PHÒNG HOÀN CHỈNH!")
+            report_lines.append("Dù môi trường có làm robot trượt ngã, hệ thống vẫn có bước đi IF-THEN dự phòng để đảm bảo 100% đến đích.")
+        else:
+            self.log_msg("-> Thất bại: Độ sâu không đủ hoặc map không có Kế hoạch an toàn tuyệt đối.", (255, 50, 50))
+            report_lines.append("\n=======================================================")
+            report_lines.append("=> TỔNG KẾT: THẤT BẠI.")
+            report_lines.append("Không thể vẽ ra kế hoạch dự phòng an toàn tuyệt đối (Vượt quá giới hạn quét 6 bước).")
+
+        # Lưu file Text Báo Cáo
+        try:
+            filename = self.get_map_path("BaoCao_AndOrGraph.txt")
+            with open(filename, "w", encoding="utf-8") as f:
+                f.write("\n".join(report_lines))
+            self.log_msg(f"-> Đã xuất File báo cáo cây quyết định: {os.path.basename(filename)}", (100, 255, 100))
+        except Exception as e:
+            self.log_msg(f"Không thể lưu file báo cáo: {e}", (255, 50, 50))
+
         return res if res != "failure" else []
 
     def setup_csp_map(self):
@@ -926,25 +1060,6 @@ class RicochetArena:
             self.aux_robots[2].start_pos = [3, 1] 
             
         self.reset_simulation()
-
-    def reset_simulation(self):
-        self.sim_status = "Chờ lệnh"
-        if not hasattr(self, 'step_mode'): self.step_mode = False
-        self.step_queue = [] 
-        self.csp_domains = None # Dọn dẹp bóng ma AC-3
-        
-        # Nạp thêm 3 Trợ thủ vào danh sách Reset
-        enemy_list = [self.enemy] if hasattr(self, 'enemy') else []
-        aux_list = getattr(self, 'aux_robots', []) 
-        
-        for r in self.robots + enemy_list + aux_list:
-            r.logic_pos = list(r.start_pos)
-            r.visual_pos = [r.start_pos[0]*self.cell_size, r.start_pos[1]*self.cell_size]
-            r.path = []
-            r.moves = 0
-            r.finished = False
-            r.current_target = None 
-            r.computed_path = [] 
 
     def get_valid_y_domain(self, col_x, start):
         # Trả về các hàng (Y) hợp lệ cho một cột (X)
@@ -1247,7 +1362,10 @@ class RicochetArena:
             "Backtracking": self.run_backtracking, "AC-3": self.run_ac3, "Min-Conflicts": self.run_min_conflicts,
             "Minimax": self.run_minimax_wrapper, "Alpha-Beta": self.run_alphabeta, "Expectimax": self.run_expectimax
         }
-        return algo_map.get(r.name, self.run_bfs)(sp, obs)
+        
+        # --- MỚI SỬA: Lấy tên thuật toán đang chọn thay vì tên Robot ---
+        algo_name = self.current_ai if self.current_ai else r.name
+        return algo_map.get(algo_name, self.run_bfs)(sp, obs)
 
   # ================= GIAO DIỆN & TƯƠNG TÁC (PACMAN LAB THEME) =================
     def draw_text(self, text, font, color, pos):
@@ -1407,7 +1525,7 @@ class RicochetArena:
             pygame.draw.circle(self.screen, robot_obj.color, (int(rx), int(ry)), R)
             
             # Gắn chữ chỉ thị
-            char = "?" if robot_obj.name == "Bóng ma" else "Ta"
+            char = "S2" if robot_obj.name == "Bóng ma" else "S1"
             t_surf = self.font_sm.render(char, True, (255,255,255))
             self.screen.blit(t_surf, (int(rx) - t_surf.get_width()//2, int(ry) - t_surf.get_height()//2))
 
@@ -1429,20 +1547,19 @@ class RicochetArena:
         # --------------------------------------------------------------------------
 
         # ---------------- CỘT 1: MAP LƯỚI (BÊN TRÁI - RỘNG THOẢI MÁI) ----------------
+        # ---------------- CỘT 1: MAP LƯỚI ----------------
         if self.current_ai == "Sensorless":
-            # Giao diện Tách Đôi (Split-Screen)
             mini_size = (actual_board_size // 2) - 20
             
             # Map 1: Vị trí Thực (Player)
-            self.draw_mini_board(OFFSET_X, OFFSET_Y + 50, mini_size, self.player, "BELIEF START 1 (Thực)")
+            self.draw_mini_board(OFFSET_X, OFFSET_Y + 50, mini_size, self.player, "TRẠNG THÁI NIỀM TIN 1 (State 1)")
             
             # Map 2: Vị trí Ảo (Ghost)
             if hasattr(self, 'sensorless_ghost'):
-                self.draw_mini_board(OFFSET_X + mini_size + 40, OFFSET_Y + 50, mini_size, self.sensorless_ghost, "BELIEF START 2 (Ảo)")
+                self.draw_mini_board(OFFSET_X + mini_size + 40, OFFSET_Y + 50, mini_size, self.sensorless_ghost, "TRẠNG THÁI NIỀM TIN 2 (State 2)")
                 
-            # --- FIX TEXT: Chữ nhỏ gọn, không bị tràn ---
-            self.draw_text("Chế độ Split-Screen: Đa Vũ Trụ Belief State", self.font_md, (255, 150, 255), (OFFSET_X, OFFSET_Y + mini_size + 70))
-            self.draw_text("Bật chế độ sửa (Phím E) để nhấp vào từng map và đặt lại Vị trí Thực/Ảo.", self.font_sm, (150, 150, 150), (OFFSET_X, OFFSET_Y + mini_size + 95))
+            self.draw_text("Mô hình Belief State: Lập kế hoạch đồng bộ (Conformant Planning)", self.font_md, (255, 150, 255), (OFFSET_X, OFFSET_Y + mini_size + 70))
+            self.draw_text("Bật chế độ sửa (Phím E) để nhấp vào từng map và đặt lại State 1 / State 2.", self.font_sm, (150, 150, 150), (OFFSET_X, OFFSET_Y + mini_size + 95))
             
             # Highlight ô Edit cho Mini-map
             if self.edit_mode > 0:
@@ -1505,6 +1622,22 @@ class RicochetArena:
                 eye_radius = max(2, int(R_eye * 0.15))
                 pygame.draw.circle(self.screen, (255, 50, 50), (ex - eye_offset, ey - eye_offset), eye_radius)
                 pygame.draw.circle(self.screen, (255, 50, 50), (ex + eye_offset, ey - eye_offset), eye_radius)
+
+            # VẼ BÓNG MA CHO PARTIAL-OBSERVABLE
+            if self.current_ai == "Partial-Observable" and hasattr(self, 'belief_history') and self.belief_history and r_active:
+                
+                # Đồng bộ frame của bóng ma với số bước di chuyển của robot thực
+                step_idx = min(r_active.moves, len(self.belief_history) - 1)
+                current_belief = self.belief_history[step_idx]
+                
+                for (gx, gy) in current_belief:
+                    if list((gx, gy)) != r_active.logic_pos: 
+                        alpha = 100 + int(math.sin(pygame.time.get_ticks() * 0.005) * 80)
+                        cx = int(OFFSET_X + gx * self.cell_size + self.cell_size//2)
+                        cy = int(OFFSET_Y + gy * self.cell_size + self.cell_size//2)
+                        
+                        pygame.draw.circle(self.shadow_surface, (0, 255, 127, alpha), (cx, cy), int(self.cell_size*0.35))
+                        self.draw_text("?", self.font_sm, (0, 0, 0), (cx - 4, cy - 8))
     
             # Vẽ Bóng ma cho AC-3
             if self.current_group_id == 5 and getattr(self, 'csp_domains', None):
@@ -1576,8 +1709,8 @@ class RicochetArena:
         ]
         
         if self.current_ai == "Sensorless":
-            btn_data.append(("Đổi Vị trí Thật", (255, 105, 180)))
-            btn_data.append(("Random Vị Trí", (155, 89, 182))) # --- THÊM NÚT MỚI ---
+            btn_data.append(("Hoán đổi State 1-2", (255, 105, 180))) # Tên nút mới
+            btn_data.append(("Random State 1-2", (155, 89, 182)))     # Tên nút mới
             
         btn_data.extend([
             (f"Chỉnh Map: {['TẮT', 'TƯỜNG', 'START TA', 'ĐÍCH', 'ĐỊCH'][self.edit_mode]}", (230, 126, 34)),
@@ -1661,11 +1794,16 @@ class RicochetArena:
             return
             
         self.reset_simulation()
-        r = self.get_robot_by_name(self.current_ai)
+        
+        # --- MỚI SỬA: CHỌN ĐÚNG ROBOT ĐỂ TÍNH TOÁN ---
+        if self.current_ai == "Sensorless":
+            r = self.player # Ép dùng Player làm State 1
+        else:
+            r = self.get_robot_by_name(self.current_ai)
+            
         self.log_msg(f"Tiến hành chạy: {self.current_ai}...", (100, 200, 255))
         self.sim_status = "Đang tính toán..."
         
-        # BẬT ĐA LUỒNG: Giao việc cho luồng phụ chạy ngầm
         self.ai_is_computing = True
         self.ai_robot_computing = r
         threading.Thread(target=self.thread_compute_ai, args=(r,), daemon=True).start()
@@ -1731,7 +1869,12 @@ class RicochetArena:
         if self.ai_is_computing: return 
             
         # --- 2. XỬ LÝ DI CHUYỂN TRƯỢT CỦA ROBOT ---
-        r = self.get_robot_by_name(self.current_ai) if self.current_ai else self.player
+        # --- MỚI SỬA: Nắm đầu State 1 kéo đi ---
+        if self.current_ai == "Sensorless":
+            r = self.player
+        else:
+            r = self.get_robot_by_name(self.current_ai) if self.current_ai else self.player
+            
         active_robots = [r] if r else []
         if self.current_group_id == 6 and hasattr(self, 'enemy'): active_robots.append(self.enemy)
         if self.current_ai == "Sensorless" and hasattr(self, 'sensorless_ghost'): active_robots.append(self.sensorless_ghost)
@@ -1885,17 +2028,17 @@ class RicochetArena:
                                     elif "Bước tiếp" in btn_name: self.trigger_next_step()
                                     
                                     # CÁC NÚT RIÊNG CỦA NHÓM SENSORLESS
-                                    elif "Đổi Vị trí" in btn_name:
+                                    elif "Hoán đổi State" in btn_name:
                                         temp = self.player.start_pos
                                         self.player.start_pos = self.sensorless_ghost.start_pos
                                         self.sensorless_ghost.start_pos = temp
                                         self.reset_simulation()
-                                        self.log_msg("Đã hoán đổi Vị trí Thực - Ảo!", (255, 150, 255))
-                                    elif "Random Vị Trí" in btn_name:
+                                        self.log_msg("Đã hoán đổi Vị trí State 1 và State 2!", (255, 150, 255))
+                                    elif "Random State" in btn_name:
                                         self.player.start_pos = list(self.get_random_valid_pos(set()))
                                         self.sensorless_ghost.start_pos = list(self.get_random_valid_pos(set(), tuple(self.player.start_pos)))
                                         self.reset_simulation()
-                                        self.log_msg("Đã random vị trí Thực và Ảo!", (0, 255, 255))
+                                        self.log_msg("Đã random vị trí State 1 và State 2!", (0, 255, 255))
                                         
                                     elif "Chỉnh Map" in btn_name: self.edit_mode = (self.edit_mode + 1) % 5
                                     elif "Lưu Map" in btn_name: self.save_custom_map()
@@ -1942,10 +2085,10 @@ class RicochetArena:
                                     if self.current_ai == "Sensorless":
                                         if map_clicked == 1:
                                             self.player.start_pos = [c, r]
-                                            self.log_msg(f"Đã đặt Start Thực tại {(c, r)}", (100, 255, 100))
+                                            self.log_msg(f"Đã đặt State 1 tại {(c, r)}", (100, 255, 100))
                                         elif map_clicked == 2:
                                             self.sensorless_ghost.start_pos = [c, r]
-                                            self.log_msg(f"Đã đặt Start Ảo tại {(c, r)}", (100, 255, 100))
+                                            self.log_msg(f"Đã đặt State 2 tại {(c, r)}", (100, 255, 100))
                                     else:
                                         for rb in self.robots: rb.start_pos = [c, r]
                                         self.log_msg(f"Đã đặt Start mới tại {(c, r)}", (100, 255, 100))
