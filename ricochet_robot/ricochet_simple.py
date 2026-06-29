@@ -304,8 +304,6 @@ class RicochetArena:
             if pos != self.target_pos and pos not in obstacles: return pos
 
     # ================= CÁC THUẬT TOÁN AI =================
-    def heuristic(self, pos): return abs(pos[0] - self.target_pos[0]) + abs(pos[1] - self.target_pos[1])
-    
     # ================= NHÓM 1: TÌM KIẾM MÙ (UNINFORMED SEARCH) =================
     def run_bfs(self, start, obs):
         self.log_msg("--- BẮT ĐẦU BFS (Duyệt theo chiều rộng) ---", COLORS["BFS"])
@@ -430,6 +428,11 @@ class RicochetArena:
         return []
 
     # ================= NHÓM 2: CÓ THÔNG TIN (HEURISTIC SEARCH) =================
+    # [MÃ GIẢ]: Hàm Heuristic h(n) ước lượng chi phí từ trạng thái hiện tại đến Đích.
+    # Sử dụng Khoảng cách Manhattan (Tổng trị tuyệt đối hiệu tọa độ x và y).
+    def heuristic(self, pos): 
+        return abs(pos[0] - self.target_pos[0]) + abs(pos[1] - self.target_pos[1])
+        
     def run_ucs(self, start, obs):
         self.log_msg("--- BẮT ĐẦU UCS (Tìm kiếm chi phí đồng nhất) ---", (200, 150, 255))
         
