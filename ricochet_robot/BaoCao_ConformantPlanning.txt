@@ -5,17 +5,15 @@ Luật Sink State: Nếu một Trạng thái (State) chạm đích trước, nó
 
 [Tập Niềm tin ban đầu - Belief Start]
  - State 1: (4, 12)
- - State 2: (8, 12)
+ - State 2: (8, 13)
 
 
-[Bước 1] Lấy tập Niềm tin (Belief) ra xét: ((4, 12), (8, 12))
+[Bước 1] Lấy tập Niềm tin (Belief) ra xét: ((4, 12), (8, 13))
  - Chuỗi lệnh đang có: (Chưa di chuyển)
   + Phát lệnh LÊN: State 1 tới (4, 10), State 2 tới (8, 6) -> Sinh ra Belief mới: ((4, 10), (8, 6))
   + Phát lệnh XUỐNG: State 1 tới (4, 15), State 2 tới (8, 15) -> Sinh ra Belief mới: ((4, 15), (8, 15))
-  + Phát lệnh TRÁI: State 1 tới (2, 12), State 2 tới (2, 12) -> Sinh ra Belief mới: ((2, 12),)
-    [!] BƯỚC ĐỘT PHÁ (State Convergence): 2 State đã sáp nhập làm 1 tại (2, 12)!
-  + Phát lệnh PHẢI: State 1 tới (15, 12), State 2 tới (15, 12) -> Sinh ra Belief mới: ((15, 12),)
-    [!] BƯỚC ĐỘT PHÁ (State Convergence): 2 State đã sáp nhập làm 1 tại (15, 12)!
+  + Phát lệnh TRÁI: State 1 tới (2, 12), State 2 tới (4, 13) -> Sinh ra Belief mới: ((2, 12), (4, 13))
+  + Phát lệnh PHẢI: State 1 tới (15, 12), State 2 tới (15, 13) -> Sinh ra Belief mới: ((15, 12), (15, 13))
 
 [Bước 2] Lấy tập Niềm tin (Belief) ra xét: ((4, 10), (8, 6))
  - Chuỗi lệnh đang có: LÊN
@@ -34,19 +32,20 @@ Luật Sink State: Nếu một Trạng thái (State) chạm đích trước, nó
   + Phát lệnh PHẢI: State 1 tới (15, 15), State 2 tới (15, 15) -> Sinh ra Belief mới: ((15, 15),)
     [!] BƯỚC ĐỘT PHÁ (State Convergence): 2 State đã sáp nhập làm 1 tại (15, 15)!
 
-[Bước 4] Lấy tập Niềm tin (Belief) ra xét: ((2, 12),)
+[Bước 4] Lấy tập Niềm tin (Belief) ra xét: ((2, 12), (4, 13))
  - Chuỗi lệnh đang có: TRÁI
-  + Phát lệnh LÊN: State 1 tới (2, 10), State 2 tới (2, 10) -> Sinh ra Belief mới: ((2, 10),)
-  + Phát lệnh XUỐNG: State 1 tới (2, 15), State 2 tới (2, 15) -> Sinh ra Belief mới: ((2, 15),)
-  - Phát lệnh TRÁI: Sinh ra Belief ((2, 12),) (Đã có trong Reached -> Bỏ qua).
-  - Phát lệnh PHẢI: Sinh ra Belief ((15, 12),) (Đã có trong Reached -> Bỏ qua).
+  + Phát lệnh LÊN: State 1 tới (2, 10), State 2 tới (4, 10) -> Sinh ra Belief mới: ((2, 10), (4, 10))
+  + Phát lệnh XUỐNG: State 1 tới (2, 15), State 2 tới (4, 15) -> Sinh ra Belief mới: ((2, 15), (4, 15))
+  - Phát lệnh TRÁI: Sinh ra Belief ((2, 12), (4, 13)) (Đã có trong Reached -> Bỏ qua).
+  - Phát lệnh PHẢI: Sinh ra Belief ((15, 12), (15, 13)) (Đã có trong Reached -> Bỏ qua).
 
-[Bước 5] Lấy tập Niềm tin (Belief) ra xét: ((15, 12),)
+[Bước 5] Lấy tập Niềm tin (Belief) ra xét: ((15, 12), (15, 13))
  - Chuỗi lệnh đang có: PHẢI
   + Phát lệnh LÊN: State 1 tới (15, 0), State 2 tới (15, 0) -> Sinh ra Belief mới: ((15, 0),)
+    [!] BƯỚC ĐỘT PHÁ (State Convergence): 2 State đã sáp nhập làm 1 tại (15, 0)!
   - Phát lệnh XUỐNG: Sinh ra Belief ((15, 15),) (Đã có trong Reached -> Bỏ qua).
-  - Phát lệnh TRÁI: Sinh ra Belief ((2, 12),) (Đã có trong Reached -> Bỏ qua).
-  - Phát lệnh PHẢI: Sinh ra Belief ((15, 12),) (Đã có trong Reached -> Bỏ qua).
+  - Phát lệnh TRÁI: Sinh ra Belief ((2, 12), (4, 13)) (Đã có trong Reached -> Bỏ qua).
+  - Phát lệnh PHẢI: Sinh ra Belief ((15, 12), (15, 13)) (Đã có trong Reached -> Bỏ qua).
 
 [Bước 6] Lấy tập Niềm tin (Belief) ra xét: ((4, 6), (4, 10))
  - Chuỗi lệnh đang có: LÊN -> TRÁI
@@ -76,17 +75,18 @@ Luật Sink State: Nếu một Trạng thái (State) chạm đích trước, nó
   - Phát lệnh TRÁI: Sinh ra Belief ((0, 15),) (Đã có trong Reached -> Bỏ qua).
   - Phát lệnh PHẢI: Sinh ra Belief ((15, 15),) (Đã có trong Reached -> Bỏ qua).
 
-[Bước 10] Lấy tập Niềm tin (Belief) ra xét: ((2, 10),)
+[Bước 10] Lấy tập Niềm tin (Belief) ra xét: ((2, 10), (4, 10))
  - Chuỗi lệnh đang có: TRÁI -> LÊN
-  - Phát lệnh LÊN: Sinh ra Belief ((2, 10),) (Đã có trong Reached -> Bỏ qua).
-  - Phát lệnh XUỐNG: Sinh ra Belief ((2, 15),) (Đã có trong Reached -> Bỏ qua).
-  - Phát lệnh TRÁI: Sinh ra Belief ((2, 10),) (Đã có trong Reached -> Bỏ qua).
-  + Phát lệnh PHẢI: State 1 tới (3, 10), State 2 tới (3, 10) -> Sinh ra Belief mới: ((3, 10),)
+  - Phát lệnh LÊN: Sinh ra Belief ((2, 10), (4, 10)) (Đã có trong Reached -> Bỏ qua).
+  - Phát lệnh XUỐNG: Sinh ra Belief ((2, 15), (4, 15)) (Đã có trong Reached -> Bỏ qua).
+  - Phát lệnh TRÁI: Sinh ra Belief ((2, 10), (4, 10)) (Đã có trong Reached -> Bỏ qua).
+  + Phát lệnh PHẢI: State 1 tới (3, 10), State 2 tới (5, 10) -> Sinh ra Belief mới: ((3, 10), (5, 10))
+    [*] LƯU Ý: State 2 đã chạm đích (5, 10) -> Chuyển sang dừng (Sink State).
 
-[Bước 11] Lấy tập Niềm tin (Belief) ra xét: ((2, 15),)
+[Bước 11] Lấy tập Niềm tin (Belief) ra xét: ((2, 15), (4, 15))
  - Chuỗi lệnh đang có: TRÁI -> XUỐNG
-  - Phát lệnh LÊN: Sinh ra Belief ((2, 10),) (Đã có trong Reached -> Bỏ qua).
-  - Phát lệnh XUỐNG: Sinh ra Belief ((2, 15),) (Đã có trong Reached -> Bỏ qua).
+  - Phát lệnh LÊN: Sinh ra Belief ((2, 10), (4, 10)) (Đã có trong Reached -> Bỏ qua).
+  - Phát lệnh XUỐNG: Sinh ra Belief ((2, 15), (4, 15)) (Đã có trong Reached -> Bỏ qua).
   - Phát lệnh TRÁI: Sinh ra Belief ((0, 15),) (Đã có trong Reached -> Bỏ qua).
   - Phát lệnh PHẢI: Sinh ra Belief ((15, 15),) (Đã có trong Reached -> Bỏ qua).
 
@@ -140,12 +140,12 @@ Luật Sink State: Nếu một Trạng thái (State) chạm đích trước, nó
   - Phát lệnh TRÁI: Sinh ra Belief ((0, 0),) (Đã có trong Reached -> Bỏ qua).
   - Phát lệnh PHẢI: Sinh ra Belief ((15, 0),) (Đã có trong Reached -> Bỏ qua).
 
-[Bước 19] Lấy tập Niềm tin (Belief) ra xét: ((3, 10),)
+[Bước 19] Lấy tập Niềm tin (Belief) ra xét: ((3, 10), (5, 10))
  - Chuỗi lệnh đang có: TRÁI -> LÊN -> PHẢI
-  + Phát lệnh LÊN: State 1 tới (3, 9), State 2 tới (3, 9) -> Sinh ra Belief mới: ((3, 9),)
-  + Phát lệnh XUỐNG: State 1 tới (3, 13), State 2 tới (3, 13) -> Sinh ra Belief mới: ((3, 13),)
-  - Phát lệnh TRÁI: Sinh ra Belief ((2, 10),) (Đã có trong Reached -> Bỏ qua).
-  - Phát lệnh PHẢI: Sinh ra Belief ((3, 10),) (Đã có trong Reached -> Bỏ qua).
+  + Phát lệnh LÊN: State 1 tới (3, 9), State 2 tới (5, 10) -> Sinh ra Belief mới: ((3, 9), (5, 10))
+  + Phát lệnh XUỐNG: State 1 tới (3, 13), State 2 tới (5, 10) -> Sinh ra Belief mới: ((3, 13), (5, 10))
+  + Phát lệnh TRÁI: State 1 tới (2, 10), State 2 tới (5, 10) -> Sinh ra Belief mới: ((2, 10), (5, 10))
+  - Phát lệnh PHẢI: Sinh ra Belief ((3, 10), (5, 10)) (Đã có trong Reached -> Bỏ qua).
 
 [Bước 20] Lấy tập Niềm tin (Belief) ra xét: ((0, 0), (4, 10))
  - Chuỗi lệnh đang có: LÊN -> TRÁI -> LÊN -> TRÁI
@@ -204,73 +204,80 @@ Luật Sink State: Nếu một Trạng thái (State) chạm đích trước, nó
   - Phát lệnh TRÁI: Sinh ra Belief ((0, 0), (5, 10)) (Đã có trong Reached -> Bỏ qua).
   - Phát lệnh PHẢI: Sinh ra Belief ((5, 10), (15, 0)) (Đã có trong Reached -> Bỏ qua).
 
-[Bước 28] Lấy tập Niềm tin (Belief) ra xét: ((3, 9),)
+[Bước 28] Lấy tập Niềm tin (Belief) ra xét: ((3, 9), (5, 10))
  - Chuỗi lệnh đang có: TRÁI -> LÊN -> PHẢI -> LÊN
-  - Phát lệnh LÊN: Sinh ra Belief ((3, 9),) (Đã có trong Reached -> Bỏ qua).
-  - Phát lệnh XUỐNG: Sinh ra Belief ((3, 13),) (Đã có trong Reached -> Bỏ qua).
-  - Phát lệnh TRÁI: Sinh ra Belief ((3, 9),) (Đã có trong Reached -> Bỏ qua).
-  + Phát lệnh PHẢI: State 1 tới (5, 9), State 2 tới (5, 9) -> Sinh ra Belief mới: ((5, 9),)
+  - Phát lệnh LÊN: Sinh ra Belief ((3, 9), (5, 10)) (Đã có trong Reached -> Bỏ qua).
+  - Phát lệnh XUỐNG: Sinh ra Belief ((3, 13), (5, 10)) (Đã có trong Reached -> Bỏ qua).
+  - Phát lệnh TRÁI: Sinh ra Belief ((3, 9), (5, 10)) (Đã có trong Reached -> Bỏ qua).
+  + Phát lệnh PHẢI: State 1 tới (5, 9), State 2 tới (5, 10) -> Sinh ra Belief mới: ((5, 9), (5, 10))
 
-[Bước 29] Lấy tập Niềm tin (Belief) ra xét: ((3, 13),)
+[Bước 29] Lấy tập Niềm tin (Belief) ra xét: ((3, 13), (5, 10))
  - Chuỗi lệnh đang có: TRÁI -> LÊN -> PHẢI -> XUỐNG
-  - Phát lệnh LÊN: Sinh ra Belief ((3, 9),) (Đã có trong Reached -> Bỏ qua).
-  - Phát lệnh XUỐNG: Sinh ra Belief ((3, 13),) (Đã có trong Reached -> Bỏ qua).
-  + Phát lệnh TRÁI: State 1 tới (0, 13), State 2 tới (0, 13) -> Sinh ra Belief mới: ((0, 13),)
-  - Phát lệnh PHẢI: Sinh ra Belief ((3, 13),) (Đã có trong Reached -> Bỏ qua).
+  - Phát lệnh LÊN: Sinh ra Belief ((3, 9), (5, 10)) (Đã có trong Reached -> Bỏ qua).
+  - Phát lệnh XUỐNG: Sinh ra Belief ((3, 13), (5, 10)) (Đã có trong Reached -> Bỏ qua).
+  + Phát lệnh TRÁI: State 1 tới (0, 13), State 2 tới (5, 10) -> Sinh ra Belief mới: ((0, 13), (5, 10))
+  - Phát lệnh PHẢI: Sinh ra Belief ((3, 13), (5, 10)) (Đã có trong Reached -> Bỏ qua).
 
-[Bước 30] Lấy tập Niềm tin (Belief) ra xét: ((0, 15), (4, 15))
+[Bước 30] Lấy tập Niềm tin (Belief) ra xét: ((2, 10), (5, 10))
+ - Chuỗi lệnh đang có: TRÁI -> LÊN -> PHẢI -> TRÁI
+  - Phát lệnh LÊN: Sinh ra Belief ((2, 10), (5, 10)) (Đã có trong Reached -> Bỏ qua).
+  + Phát lệnh XUỐNG: State 1 tới (2, 15), State 2 tới (5, 10) -> Sinh ra Belief mới: ((2, 15), (5, 10))
+  - Phát lệnh TRÁI: Sinh ra Belief ((2, 10), (5, 10)) (Đã có trong Reached -> Bỏ qua).
+  - Phát lệnh PHẢI: Sinh ra Belief ((3, 10), (5, 10)) (Đã có trong Reached -> Bỏ qua).
+
+[Bước 31] Lấy tập Niềm tin (Belief) ra xét: ((0, 15), (4, 15))
  - Chuỗi lệnh đang có: LÊN -> TRÁI -> LÊN -> TRÁI -> XUỐNG
   - Phát lệnh LÊN: Sinh ra Belief ((0, 0), (4, 10)) (Đã có trong Reached -> Bỏ qua).
   - Phát lệnh XUỐNG: Sinh ra Belief ((0, 15), (4, 15)) (Đã có trong Reached -> Bỏ qua).
   - Phát lệnh TRÁI: Sinh ra Belief ((0, 15),) (Đã có trong Reached -> Bỏ qua).
   - Phát lệnh PHẢI: Sinh ra Belief ((15, 15),) (Đã có trong Reached -> Bỏ qua).
 
-[Bước 31] Lấy tập Niềm tin (Belief) ra xét: ((5, 10), (15, 15))
+[Bước 32] Lấy tập Niềm tin (Belief) ra xét: ((5, 10), (15, 15))
  - Chuỗi lệnh đang có: LÊN -> TRÁI -> LÊN -> PHẢI -> XUỐNG
   - Phát lệnh LÊN: Sinh ra Belief ((5, 10), (15, 0)) (Đã có trong Reached -> Bỏ qua).
   - Phát lệnh XUỐNG: Sinh ra Belief ((5, 10), (15, 15)) (Đã có trong Reached -> Bỏ qua).
   - Phát lệnh TRÁI: Sinh ra Belief ((0, 15), (5, 10)) (Đã có trong Reached -> Bỏ qua).
   - Phát lệnh PHẢI: Sinh ra Belief ((5, 10), (15, 15)) (Đã có trong Reached -> Bỏ qua).
 
-[Bước 32] Lấy tập Niềm tin (Belief) ra xét: ((0, 0), (4, 0))
+[Bước 33] Lấy tập Niềm tin (Belief) ra xét: ((0, 0), (4, 0))
  - Chuỗi lệnh đang có: LÊN -> TRÁI -> XUỐNG -> TRÁI -> LÊN
   - Phát lệnh LÊN: Sinh ra Belief ((0, 0), (4, 0)) (Đã có trong Reached -> Bỏ qua).
   - Phát lệnh XUỐNG: Sinh ra Belief ((0, 15), (4, 6)) (Đã có trong Reached -> Bỏ qua).
   - Phát lệnh TRÁI: Sinh ra Belief ((0, 0),) (Đã có trong Reached -> Bỏ qua).
   - Phát lệnh PHẢI: Sinh ra Belief ((15, 0),) (Đã có trong Reached -> Bỏ qua).
 
-[Bước 33] Lấy tập Niềm tin (Belief) ra xét: ((9, 0), (15, 0))
+[Bước 34] Lấy tập Niềm tin (Belief) ra xét: ((9, 0), (15, 0))
  - Chuỗi lệnh đang có: LÊN -> TRÁI -> XUỐNG -> PHẢI -> LÊN
   - Phát lệnh LÊN: Sinh ra Belief ((9, 0), (15, 0)) (Đã có trong Reached -> Bỏ qua).
   - Phát lệnh XUỐNG: Sinh ra Belief ((9, 8), (15, 15)) (Đã có trong Reached -> Bỏ qua).
   - Phát lệnh TRÁI: Sinh ra Belief ((0, 0),) (Đã có trong Reached -> Bỏ qua).
   - Phát lệnh PHẢI: Sinh ra Belief ((15, 0),) (Đã có trong Reached -> Bỏ qua).
 
-[Bước 34] Lấy tập Niềm tin (Belief) ra xét: ((9, 8), (15, 15))
+[Bước 35] Lấy tập Niềm tin (Belief) ra xét: ((9, 8), (15, 15))
  - Chuỗi lệnh đang có: LÊN -> TRÁI -> XUỐNG -> PHẢI -> XUỐNG
   - Phát lệnh LÊN: Sinh ra Belief ((9, 0), (15, 0)) (Đã có trong Reached -> Bỏ qua).
   - Phát lệnh XUỐNG: Sinh ra Belief ((9, 8), (15, 15)) (Đã có trong Reached -> Bỏ qua).
   + Phát lệnh TRÁI: State 1 tới (0, 15), State 2 tới (5, 8) -> Sinh ra Belief mới: ((0, 15), (5, 8))
   + Phát lệnh PHẢI: State 1 tới (15, 15), State 2 tới (15, 8) -> Sinh ra Belief mới: ((15, 8), (15, 15))
 
-[Bước 35] Lấy tập Niềm tin (Belief) ra xét: ((0, 15), (5, 10))
+[Bước 36] Lấy tập Niềm tin (Belief) ra xét: ((0, 15), (5, 10))
  - Chuỗi lệnh đang có: LÊN -> PHẢI -> LÊN -> TRÁI -> XUỐNG
   - Phát lệnh LÊN: Sinh ra Belief ((0, 0), (5, 10)) (Đã có trong Reached -> Bỏ qua).
   - Phát lệnh XUỐNG: Sinh ra Belief ((0, 15), (5, 10)) (Đã có trong Reached -> Bỏ qua).
   - Phát lệnh TRÁI: Sinh ra Belief ((0, 15), (5, 10)) (Đã có trong Reached -> Bỏ qua).
   - Phát lệnh PHẢI: Sinh ra Belief ((5, 10), (15, 15)) (Đã có trong Reached -> Bỏ qua).
 
-[Bước 36] Lấy tập Niềm tin (Belief) ra xét: ((5, 0), (5, 10))
+[Bước 37] Lấy tập Niềm tin (Belief) ra xét: ((5, 0), (5, 10))
  - Chuỗi lệnh đang có: LÊN -> PHẢI -> XUỐNG -> TRÁI -> LÊN
   - Phát lệnh LÊN: Sinh ra Belief ((5, 0), (5, 10)) (Đã có trong Reached -> Bỏ qua).
   - Phát lệnh XUỐNG: Sinh ra Belief ((5, 10),) (Đã có trong Reached -> Bỏ qua).
   - Phát lệnh TRÁI: Sinh ra Belief ((0, 0), (5, 10)) (Đã có trong Reached -> Bỏ qua).
   - Phát lệnh PHẢI: Sinh ra Belief ((5, 10), (15, 0)) (Đã có trong Reached -> Bỏ qua).
 
-[Bước 37] Lấy tập Niềm tin (Belief) ra xét: ((5, 10),)
+[Bước 38] Lấy tập Niềm tin (Belief) ra xét: ((5, 10),)
  - Chuỗi lệnh đang có: LÊN -> PHẢI -> XUỐNG -> TRÁI -> XUỐNG
 
 =======================================================
 => [THÀNH CÔNG] ĐÃ TÌM THẤY KẾ HOẠCH HỘI TỤ (CONFORMANT PLAN)!
-Tổng số trạng thái đã duyệt: 37
+Tổng số trạng thái đã duyệt: 38
 Chuỗi hành động vạn năng (5 bước): LÊN -> PHẢI -> XUỐNG -> TRÁI -> XUỐNG

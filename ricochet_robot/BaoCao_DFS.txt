@@ -1,0 +1,21 @@
+=== BÁO CÁO CHI TIẾT THUẬT TOÁN DFS ===
+Trạng thái xuất phát: (1, 1)
+Mục tiêu (Goal): (3, 2)
+
+Bước 1: Lấy (1, 1) khỏi Frontier (Stack). Độ sâu hiện tại: 0
+  + Lân cận (1, 0) chưa duyệt -> Thêm vào Reached và đẩy vào Stack.
+  + Lân cận (1, 4) chưa duyệt -> Thêm vào Reached và đẩy vào Stack.
+  + Lân cận (3, 1) chưa duyệt -> Thêm vào Reached và đẩy vào Stack.
+  + Lân cận (0, 1) chưa duyệt -> Thêm vào Reached và đẩy vào Stack.
+Bước 2: Lấy (0, 1) khỏi Frontier (Stack). Độ sâu hiện tại: 1
+  + Lân cận (0, 0) chưa duyệt -> Thêm vào Reached và đẩy vào Stack.
+  + Lân cận (0, 4) chưa duyệt -> Thêm vào Reached và đẩy vào Stack.
+Bước 3: Lấy (0, 4) khỏi Frontier (Stack). Độ sâu hiện tại: 2
+  + Lân cận (4, 4) chưa duyệt -> Thêm vào Reached và đẩy vào Stack.
+Bước 4: Lấy (4, 4) khỏi Frontier (Stack). Độ sâu hiện tại: 3
+  + Lân cận (4, 0) chưa duyệt -> Thêm vào Reached và đẩy vào Stack.
+Bước 5: Lấy (4, 0) khỏi Frontier (Stack). Độ sâu hiện tại: 4
+Bước 6: Lấy (0, 0) khỏi Frontier (Stack). Độ sâu hiện tại: 2
+Bước 7: Lấy (3, 1) khỏi Frontier (Stack). Độ sâu hiện tại: 1
+  => [THÀNH CÔNG] Lân cận (3, 2) là Đích! Dừng thuật toán.
+Tổng số nút đã lấy ra khỏi ngăn xếp: 7

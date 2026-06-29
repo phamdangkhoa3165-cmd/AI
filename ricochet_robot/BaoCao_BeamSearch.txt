@@ -1,0 +1,307 @@
+=== BÁO CÁO CHI TIẾT THUẬT TOÁN LOCAL BEAM SEARCH ===
+Trạng thái xuất phát: (1, 5)
+Mục tiêu (Goal): (8, 8)
+Tham số K (Số lượng chùm/Beam size) = 3
+
+Khởi tạo ngẫu nhiên 3 lân cận ban đầu: [(1, 2), (0, 5), (0, 5)]
+
+--- Vòng lặp thứ 1, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 8 lân cận.
+  + Giữ lại (4, 5) có h = 7
+  + Giữ lại (4, 5) có h = 7
+  + Giữ lại (1, 5) có h = 10
+
+--- Vòng lặp thứ 2, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 9 lân cận.
+  + Giữ lại (4, 10) có h = 6
+  + Giữ lại (4, 10) có h = 6
+  + Giữ lại (4, 5) có h = 7
+
+--- Vòng lặp thứ 3, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 9 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (4, 10) có h = 6
+
+--- Vòng lặp thứ 4, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 7 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 0) có h = 10
+  + Giữ lại (0, 10) có h = 10
+
+--- Vòng lặp thứ 5, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (0, 10) có h = 10
+
+--- Vòng lặp thứ 6, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 0) có h = 10
+  + Giữ lại (0, 10) có h = 10
+
+--- Vòng lặp thứ 7, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (0, 10) có h = 10
+
+--- Vòng lặp thứ 8, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 0) có h = 10
+  + Giữ lại (0, 10) có h = 10
+
+--- Vòng lặp thứ 9, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 0) có h = 10
+
+--- Vòng lặp thứ 10, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 0) có h = 10
+  + Giữ lại (0, 10) có h = 10
+
+--- Vòng lặp thứ 11, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (0, 10) có h = 10
+
+--- Vòng lặp thứ 12, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 0) có h = 10
+  + Giữ lại (0, 10) có h = 10
+
+--- Vòng lặp thứ 13, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (0, 10) có h = 10
+
+--- Vòng lặp thứ 14, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (0, 10) có h = 10
+  + Giữ lại (10, 0) có h = 10
+
+--- Vòng lặp thứ 15, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 0) có h = 10
+
+--- Vòng lặp thứ 16, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (0, 10) có h = 10
+  + Giữ lại (10, 0) có h = 10
+
+--- Vòng lặp thứ 17, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 0) có h = 10
+
+--- Vòng lặp thứ 18, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (0, 10) có h = 10
+  + Giữ lại (10, 0) có h = 10
+
+--- Vòng lặp thứ 19, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 0) có h = 10
+
+--- Vòng lặp thứ 20, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (0, 10) có h = 10
+  + Giữ lại (10, 0) có h = 10
+
+--- Vòng lặp thứ 21, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 0) có h = 10
+
+--- Vòng lặp thứ 22, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 0) có h = 10
+  + Giữ lại (0, 10) có h = 10
+
+--- Vòng lặp thứ 23, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 0) có h = 10
+
+--- Vòng lặp thứ 24, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (0, 10) có h = 10
+  + Giữ lại (10, 0) có h = 10
+
+--- Vòng lặp thứ 25, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 0) có h = 10
+
+--- Vòng lặp thứ 26, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 0) có h = 10
+  + Giữ lại (0, 10) có h = 10
+
+--- Vòng lặp thứ 27, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 0) có h = 10
+
+--- Vòng lặp thứ 28, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 0) có h = 10
+  + Giữ lại (0, 10) có h = 10
+
+--- Vòng lặp thứ 29, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 0) có h = 10
+
+--- Vòng lặp thứ 30, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (0, 10) có h = 10
+  + Giữ lại (10, 0) có h = 10
+
+--- Vòng lặp thứ 31, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (0, 10) có h = 10
+
+--- Vòng lặp thứ 32, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (0, 10) có h = 10
+  + Giữ lại (10, 0) có h = 10
+
+--- Vòng lặp thứ 33, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (0, 10) có h = 10
+
+--- Vòng lặp thứ 34, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 0) có h = 10
+  + Giữ lại (0, 10) có h = 10
+
+--- Vòng lặp thứ 35, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 0) có h = 10
+
+--- Vòng lặp thứ 36, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (0, 10) có h = 10
+  + Giữ lại (10, 0) có h = 10
+
+--- Vòng lặp thứ 37, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 0) có h = 10
+
+--- Vòng lặp thứ 38, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (0, 10) có h = 10
+  + Giữ lại (10, 0) có h = 10
+
+--- Vòng lặp thứ 39, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 0) có h = 10
+
+--- Vòng lặp thứ 40, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (0, 10) có h = 10
+  + Giữ lại (10, 0) có h = 10
+
+--- Vòng lặp thứ 41, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (0, 10) có h = 10
+
+--- Vòng lặp thứ 42, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 0) có h = 10
+  + Giữ lại (0, 10) có h = 10
+
+--- Vòng lặp thứ 43, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (0, 10) có h = 10
+
+--- Vòng lặp thứ 44, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (0, 10) có h = 10
+  + Giữ lại (10, 0) có h = 10
+
+--- Vòng lặp thứ 45, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 0) có h = 10
+
+--- Vòng lặp thứ 46, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (0, 10) có h = 10
+  + Giữ lại (10, 0) có h = 10
+
+--- Vòng lặp thứ 47, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (0, 10) có h = 10
+
+--- Vòng lặp thứ 48, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (0, 10) có h = 10
+  + Giữ lại (10, 0) có h = 10
+
+--- Vòng lặp thứ 49, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (0, 10) có h = 10
+
+--- Vòng lặp thứ 50, đang giữ 3 trạng thái tốt nhất ---
+Lọc ra tối đa 3 trạng thái tốt nhất từ 6 lân cận.
+  + Giữ lại (10, 10) có h = 4
+  + Giữ lại (0, 10) có h = 10
+  + Giữ lại (10, 0) có h = 10
+=> [DỪNG] Hết số vòng lặp tối đa (50). Trả về kết quả tốt nhất (10, 10)
