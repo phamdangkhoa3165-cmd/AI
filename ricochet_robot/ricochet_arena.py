@@ -7,6 +7,7 @@ import random
 import json
 import os
 import threading
+import re
 from collections import deque
 
 # --- CẤU HÌNH ---
@@ -266,8 +267,6 @@ class RicochetArena:
         # --- NẾU KHÔNG CÓ FILE HOẶC FILE LỖI -> DÙNG MAP MẶC ĐỊNH ---
         if self.current_group_id == 5:
             self.setup_csp_map()
-        elif self.current_group_id == 6:
-            self.setup_adversarial_map()
         else:
             self.grid_size = 16
             self.cell_size = self.board_size // 16
@@ -1442,7 +1441,7 @@ class RicochetArena:
         random.shuffle(all_col_combinations)
 
         step_counter = 0
-        
+
         # 2. Duyệt qua từng bộ 3 cột
         for cols in all_col_combinations:
             domains = [self.get_valid_y_domain(cols[0], start),
