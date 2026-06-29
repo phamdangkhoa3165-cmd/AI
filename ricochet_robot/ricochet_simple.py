@@ -306,431 +306,438 @@ class RicochetArena:
     # ================= CÁC THUẬT TOÁN AI =================
     def heuristic(self, pos): return abs(pos[0] - self.target_pos[0]) + abs(pos[1] - self.target_pos[1])
     
+    # ================= NHÓM 1: TÌM KIẾM MÙ (UNINFORMED SEARCH) =================
     def run_bfs(self, start, obs):
         self.log_msg("--- BẮT ĐẦU BFS (Duyệt theo chiều rộng) ---", COLORS["BFS"])
-        # if problem.IS-GOAL(node.STATE) then return node
+        
+        # [MÃ GIẢ]: node <- NODE(problem.INITIAL)
+        # [MÃ GIẢ]: if problem.IS-GOAL(node.STATE) then return node
         if start == self.target_pos: 
             return [] 
         
-        # frontier <- a FIFO queue / reached <- {problem.INITIAL}
+        # [MÃ GIẢ]: frontier <- a FIFO queue, with node as an element
         frontier = deque([(start, [])])
+        # [MÃ GIẢ]: reached <- {problem.INITIAL}
         reached = {start}
 
         steps = 0
-        # while not IS-EMPTY(frontier) do
+        # [MÃ GIẢ]: while not IS-EMPTY(frontier) do
         while frontier:
-            # node <- POP(frontier)
+            # [MÃ GIẢ]: node <- POP(frontier) (Lấy ra phần tử đầu tiên - FIFO)
             current_node, path = frontier.popleft()
 
             steps += 1
-            # Chỉ in chi tiết 15 bước đầu, hoặc mỗi 50 bước để chống giật lag
             if steps <= 15 or steps % 50 == 0: 
                 self.log_msg(f"[{steps}] BFS mở rộng: {current_node}, Hàng đợi còn: {len(frontier)}", (150, 180, 255))
 
-            # for each child in EXPAND(problem, node) do
+            # [MÃ GIẢ]: for each child in EXPAND(problem, node) do
             for neighbor in self.get_neighbors(current_node, obs):
-                # if problem.IS-GOAL(s) then return child
+                # [MÃ GIẢ]: s <- child.STATE
+                # [MÃ GIẢ]: if problem.IS-GOAL(s) then return child
                 if neighbor == self.target_pos: 
                     self.log_msg(f"-> TÌM THẤY ĐÍCH! Tổng số nút đã duyệt: {steps}", (0, 255, 0))
-
                     return path + [neighbor] 
                 
-                # if s is not in reached then
+                # [MÃ GIẢ]: if s is not in reached then
                 if neighbor not in reached: 
-                    # add s to reached
+                    # [MÃ GIẢ]: add s to reached
                     reached.add(neighbor)
-                    # add child to frontier
+                    # [MÃ GIẢ]: add child to frontier
                     frontier.append((neighbor, path+[neighbor])) 
 
         self.log_msg("-> Bế tắc, không tìm thấy đường!", (255, 50, 50))            
-        # return failure
+        # [MÃ GIẢ]: return failure
         return []
     
     def run_dfs(self, start, obs):
-        # if problem.IS-GOAL(node.STATE) then return node
-        if start == self.target_pos: 
-            return [] 
+        self.log_msg("--- BẮT ĐẦU DFS (Duyệt theo chiều sâu) ---", COLORS["DFS"])
+        # [MÃ GIẢ]: node <- NODE(problem.INITIAL)
+        # [MÃ GIẢ]: if problem.IS-GOAL(node.STATE) then return node
+        if start == self.target_pos: return [] 
         
-        # frontier <- a LIFO queue (Stack), with node as an element
-        # reached <- {problem.INITIAL}
+        # [MÃ GIẢ]: frontier <- a LIFO stack, with node as an element
         st = [(start, [])]
+        frontier_states = {start} # Thêm set phụ để kiểm tra "child is not in frontier" nhanh hơn
+        # [MÃ GIẢ]: reached <- {problem.INITIAL}
         reached = {start}
         
-        # while not IS-EMPTY(frontier) do
+        # [MÃ GIẢ]: while not IS-EMPTY(frontier) do
         while st:
-            # node <- POP(frontier) - Lấy phần tử thêm vào gần nhất (LIFO)
+            # [MÃ GIẢ]: node <- POP(frontier)
             c, p = st.pop()
-            
-            # Giới hạn độ sâu để tránh DFS đi các đường ziczac quá dài và xấu (Optional)
-            if len(p) > 50: 
-                continue
+            if c in frontier_states: frontier_states.remove(c)
                 
-            # for each child in EXPAND(problem, node) do
+            if len(p) > 50: continue # Tránh giật lag
+                
+            # [MÃ GIẢ]: for each child in EXPAND(problem, node) do
             for n in self.get_neighbors(c, obs):
-                # if problem.IS-GOAL(s) then return child
-                if n == self.target_pos: 
-                    return p + [n] 
+                # [MÃ GIẢ]: s <- child.STATE
+                # [MÃ GIẢ]: if problem.IS-GOAL(s) then return child
+                if n == self.target_pos: return p + [n] 
                 
-                # if s is not in reached then
-                if n not in reached: 
-                    # add s to reached
+                # [MÃ GIẢ]: if s is not in reached and child is not in frontier then
+                if n not in reached and n not in frontier_states: 
+                    # [MÃ GIẢ]: add s to reached
                     reached.add(n)
-                    # add child to frontier
+                    # [MÃ GIẢ]: add child to frontier
                     st.append((n, p+[n])) 
+                    frontier_states.add(n)
                     
-        # return failure
+        # [MÃ GIẢ]: return failure
         return []
 
     def run_ids(self, start, obs):
-        # function DEPTH-LIMITED-SEARCH(problem, l)
+        self.log_msg("--- BẮT ĐẦU IDS (Duyệt sâu lặp lại) ---", COLORS["IDS"])
+        # [MÃ GIẢ]: function DEPTH-LIMITED-SEARCH(problem, l)
         def depth_limited_search(limit):
-            # frontier <- a LIFO queue (stack)
+            # [MÃ GIẢ]: frontier <- a LIFO queue (stack)
             st = [(start, [])] 
-            # result <- failure
+            # [MÃ GIẢ]: result <- failure
             result = "failure"
 
-            # while not IS-EMPTY(frontier) do
+            # [MÃ GIẢ]: while not IS-EMPTY(frontier) do
             while st:
-                # node <- POP(frontier)
+                # [MÃ GIẢ]: node <- POP(frontier)
                 c, p = st.pop()
 
-                # if problem.IS-GOAL(node.STATE) then return node
-                if c == self.target_pos:
-                    return p
+                # [MÃ GIẢ]: if problem.IS-GOAL(node.STATE) then return node
+                if c == self.target_pos: return p
 
-                # if DEPTH(node) >= l then result <- cutoff
+                # [MÃ GIẢ]: if DEPTH(node) >= l then result <- cutoff
                 if len(p) >= limit:
                     result = "cutoff"
-                # else if not IS-CYCLE(node) do
+                # [MÃ GIẢ]: else if not IS-CYCLE(node) do (Chống chu trình)
                 elif c not in p: 
-                    # for each child in EXPAND(problem, node) do
+                    # [MÃ GIẢ]: for each child in EXPAND(problem, node) do
                     for n in self.get_neighbors(c, obs):
-                        # add child to frontier
+                        # [MÃ GIẢ]: add child to frontier
                         st.append((n, p + [n]))
-
-            # return result
+            # [MÃ GIẢ]: return result
             return result
 
-        # function ITERATIVE-DEEPENING-SEARCH(problem)
-        # for depth = 0 to infinity do (giới hạn 45 bước để tránh treo máy)
-        for depth in range(0, 45):
-            # result <- DEPTH-LIMITED-SEARCH(problem, depth)
+        # [MÃ GIẢ]: function ITERATIVE-DEEPENING-SEARCH(problem)
+        # [MÃ GIẢ]: for depth = 0 to infinity do
+        for depth in range(0, 45): # Giới hạn 45 bước để tránh treo máy
+            self.log_msg(f"-> Đang chạy DFS với Limit = {depth}", (200, 200, 200))
+            # [MÃ GIẢ]: result <- DEPTH-LIMITED-SEARCH(problem, depth)
             res = depth_limited_search(depth)
             
-            # if result != cutoff then return result
-            # (Nếu res không phải là cutoff và không phải failure tức là đã tìm thấy đường đi)
+            # [MÃ GIẢ]: if result != cutoff then return result
             if res != "cutoff" and res != "failure":
+                self.log_msg(f"-> TÌM THẤY ĐÍCH tại độ sâu (Depth) = {depth}", (0, 255, 0))
                 return res
 
         return []
 
+    # ================= NHÓM 2: CÓ THÔNG TIN (HEURISTIC SEARCH) =================
     def run_ucs(self, start, obs):
-        # 1. Khởi tạo FRONTIER = {Start} (chỉ dùng g(n) thay vì f(n))
+        self.log_msg("--- BẮT ĐẦU UCS (Tìm kiếm chi phí đồng nhất) ---", (200, 150, 255))
+        
+        # [MÃ GIẢ]: 1. Khởi tạo tập FRONTIER = {Start} với g(Start) = 0
         g_costs = {start: 0}
+        # (Dùng heapq để mô phỏng Priority Queue lấy g(n) nhỏ nhất)
         frontier = [(0, next(self.counter), start, [])] 
         frontier_set = {start}
         
-        # 2. Khởi tạo REACHED = {}
+        # [MÃ GIẢ]: 2. Khởi tạo tập REACHED = {}
         reached = set()
 
-        # 3. TRONG KHI (FRONTIER không rỗng):
+        steps = 0
+        # [MÃ GIẢ]: 3. TRONG KHI (FRONTIER không rỗng):
         while frontier:
-            # a. Chọn trạng thái n từ FRONTIER có g(n) nhỏ nhất
+            # [MÃ GIẢ]: a. Chọn trạng thái n từ FRONTIER có g(n) nhỏ nhất.
             g_n, _, n, p = heapq.heappop(frontier)
+            
+            # (Đồng bộ xử lý heapq: Bỏ qua các bản sao cũ có g(n) đắt hơn)
             if n in frontier_set: 
                 frontier_set.remove(n)
             else: 
-                continue # Bỏ qua các bản sao cũ trong heap
+                continue 
 
-            # b. NẾU n == Goal (Kiểm tra đích trễ - giống BFS Cách 1)
+            steps += 1
+            if steps <= 15 or steps % 50 == 0:
+                self.log_msg(f"[{steps}] UCS xét nút {n} | Tổng chi phí g(n) = {g_n}", (200, 150, 255))
+
+            # [MÃ GIẢ]: b. NẾU n == Goal: TRẢ VỀ "Thành công" và truy xuất lại đường đi
+            # (UCS kiểm tra đích TRỄ - lấy ra khỏi frontier mới check để đảm bảo đường đi là tối ưu nhất)
             if n == self.target_pos:
+                self.log_msg(f"-> TÌM THẤY ĐÍCH! Chi phí tối ưu g(n) = {g_n}", (0, 255, 0))
                 return p
 
-            # c. Loại bỏ n khỏi FRONTIER và thêm n vào REACHED
+            # [MÃ GIẢ]: c. Loại bỏ n khỏi FRONTIER và thêm n vào REACHED.
             reached.add(n)
 
-            # d. Với mỗi trạng thái m kề với n:
+            # [MÃ GIẢ]: d. Với mỗi trạng thái m kề với n:
             for m in self.get_neighbors(n, obs):
-                g_new = g_costs[n] + 1 # cost(m) = 1 cho mỗi bước trượt
+                # [MÃ GIẢ]: i. Tính toán chi phí thực tế mới: g_new(m) = g(n) + cost(m)
+                g_new = g_costs[n] + 1 # cost(m) = 1 cho mỗi bước trượt trong game
                 
-                # NẾU m đã nằm trong REACHED
+                # [MÃ GIẢ]: ii. NẾU m đã nằm trong REACHED:
                 if m in reached:
+                    # NẾU g_new(m) >= g(m) hiện tại: Bỏ qua trạng thái m (tệ hơn).
                     if g_new >= g_costs[m]: 
-                        continue # Bỏ qua trạng thái m tệ hơn
+                        continue 
+                    # NGƯỢC LẠI: Xóa m khỏi REACHED và cập nhật lại g(m) = g_new(m).
                     else:
                         reached.remove(m)
                         g_costs[m] = g_new
                         heapq.heappush(frontier, (g_new, next(self.counter), m, p + [m]))
                         frontier_set.add(m)
                 
-                # NẾU m đã nằm trong FRONTIER
+                # [MÃ GIẢ]: iii. NẾU m đã nằm trong FRONTIER:
                 elif m in frontier_set:
+                    # NẾU g_new(m) < g(m) hiện tại: Cập nhật lại g(m) = g_new(m) và đỉnh cha.
                     if g_new < g_costs[m]:
                         g_costs[m] = g_new
                         heapq.heappush(frontier, (g_new, next(self.counter), m, p + [m]))
                 
-                # NẾU m chưa có mặt trong FRONTIER và REACHED
+                # [MÃ GIẢ]: iv. NẾU m chưa có mặt trong FRONTIER và REACHED:
                 else:
+                    # Gán g(m) = g_new(m). Thêm m vào FRONTIER.
                     g_costs[m] = g_new
                     heapq.heappush(frontier, (g_new, next(self.counter), m, p + [m]))
                     frontier_set.add(m)
                     
+        # [MÃ GIẢ]: 4. TRẢ VỀ "Thất bại" (Không tìm thấy đường đi tới đích).
+        self.log_msg("-> Bế tắc, không tìm thấy đường!", (255, 50, 50))
         return []
 
     def run_greedy(self, start, obs):
-        # 1. Khởi tạo tập Frontier = {Start}. Tính hàm đánh giá h(Start)
+        self.log_msg("--- GREEDY SEARCH (Tìm kiếm Tham lam) ---", COLORS["Greedy"])
+        # [MÃ GIẢ]: 1. Khởi tạo tập Frontier = {Start}. Tính hàm đánh giá h(Start)
         frontier = [(self.heuristic(start), next(self.counter), start, [])]
-        frontier_set = {start} # Dùng set phụ để kiểm tra "m có trong frontier" cực nhanh
+        frontier_set = {start} 
         
-        # 2. Khởi tạo tập reached = {}
+        # [MÃ GIẢ]: 2. Khởi tạo tập reached = {}
         reached = set()
 
-        # 3. TRONG KHI (frontier không rỗng):
+        # [MÃ GIẢ]: 3. TRONG KHI (frontier không rỗng):
         while frontier:
-            # a. Chọn trạng thái n từ frontier có h(n) nhỏ nhất
+            # [MÃ GIẢ]: a. Chọn trạng thái n từ frontier có h(n) nhỏ nhất.
             h_n, _, n, p = heapq.heappop(frontier)
-            
-            # Đồng bộ tập frontier_set (xóa n vì đã lấy ra)
-            if n in frontier_set: 
-                frontier_set.remove(n)
-            else: 
-                continue
+            if n in frontier_set: frontier_set.remove(n)
+            else: continue
 
-            # b. NẾU n == Goal: TRẢ VỀ "Thành công" và truy xuất đường đi
-            if n == self.target_pos:
-                return p
+            # [MÃ GIẢ]: b. NẾU n == Goal: TRẢ VỀ "Thành công" và truy xuất đường đi
+            if n == self.target_pos: return p
 
-            # c. Loại bỏ n khỏi frontier (đã pop ở trên) và thêm n vào reached
+            # [MÃ GIẢ]: c. Loại bỏ n khỏi frontier và thêm n vào reached.
             reached.add(n)
 
-            # d. Với mỗi trạng thái m kề với n:
+            # [MÃ GIẢ]: d. Với mỗi trạng thái m kề với n:
             for m in self.get_neighbors(n, obs):
-                # i. NẾU m chưa có trong cả frontier và reached:
+                # [MÃ GIẢ]: i. NẾU m chưa có trong cả frontier và reached:
                 if m not in frontier_set and m not in reached:
-                    # Tính giá trị heuristic h(m). Gán đỉnh cha (được xử lý ẩn qua mảng p + [m]).
-                    # Thêm m vào frontier.
+                    # [MÃ GIẢ]: Gán đỉnh cha. Tính h(m). Thêm m vào frontier.
                     heapq.heappush(frontier, (self.heuristic(m), next(self.counter), m, p + [m]))
                     frontier_set.add(m)
+                # [MÃ GIẢ]: ii. NẾU m đã có trong frontier hoặc reached: Bỏ qua m.
                 
-                # ii. NẾU m đã có trong frontier hoặc reached: Bỏ qua m.
-                # (Trong Python, nếu không thỏa điều kiện if ở trên, vòng lặp tự động bỏ qua)
-                
-        # 4. TRẢ VỀ "Thất bại"
+        # [MÃ GIẢ]: 4. TRẢ VỀ "Thất bại"
         return []
 
     def run_astar(self, start, obs):
-        self.log_msg("--- BẮT ĐẦU A* (f = g + h) ---", COLORS["A*"])
-        # 1. Khởi tạo tập FRONTIER = {Start} với f(Start) = g(Start) + h(Start)
+        self.log_msg("--- A* (f = g + h) ---", COLORS["A*"])
+        # [MÃ GIẢ]: 1. Khởi tạo tập FRONTIER = {Start} với f(Start) = g(Start) + h(Start)
         g_costs = {start: 0}
         f_start = 0 + self.heuristic(start)
         frontier = [(f_start, next(self.counter), start, [])]
         frontier_set = {start}
         
-        # 2. Khởi tạo tập REACHED = {}
+        # [MÃ GIẢ]: 2. Khởi tạo tập REACHED = {}
         reached = set()
         steps = 0
-        # 3. TRONG KHI (FRONTIER không rỗng):
+        
+        # [MÃ GIẢ]: 3. TRONG KHI (FRONTIER không rỗng):
         while frontier:
-            # a. Chọn trạng thái n từ FRONTIER có f(n) nhỏ nhất
+            # [MÃ GIẢ]: a. Chọn trạng thái n từ FRONTIER có f(n) nhỏ nhất.
             f_n, _, n, p = heapq.heappop(frontier)
-            if n in frontier_set: 
-                frontier_set.remove(n)
-            else: 
-                continue
+            if n in frontier_set: frontier_set.remove(n)
+            else: continue
 
             steps += 1
             if steps <= 15 or steps % 20 == 0:
-                self.log_msg(f"[{steps}] A* xét nút {n} | g={g_costs[n]}, h={self.heuristic(n)} -> f={f_n}", (255, 255, 150))
-            # b. NẾU n == Goal:
+                self.log_msg(f"[{steps}] A* xét {n} | g={g_costs[n]}, h={self.heuristic(n)} -> f={f_n}", (255, 255, 150))
+                
+            # [MÃ GIẢ]: b. NẾU n == Goal: TRẢ VỀ "Thành công"
             if n == self.target_pos:
                 self.log_msg(f"-> TỐI ƯU! Đã tới đích sau khi duyệt {steps} nút.", (0, 255, 0))
                 return p
 
-            # c. Loại bỏ n khỏi FRONTIER và thêm n vào REACHED
+            # [MÃ GIẢ]: c. Loại bỏ n khỏi FRONTIER và thêm n vào REACHED.
             reached.add(n)
 
-            # d. Với mỗi trạng thái m kề với n:
+            # [MÃ GIẢ]: d. Với mỗi trạng thái m kề với n:
             for m in self.get_neighbors(n, obs):
-                # i. Tính toán chi phí thực tế mới: g_new(m) = g(n) + cost(m)
+                # [MÃ GIẢ]: i. Tính toán chi phí thực tế mới: g_new(m) = g(n) + cost(m)
                 g_new = g_costs[n] + 1
                 
-                # ii. NẾU m đã nằm trong REACHED:
+                # [MÃ GIẢ]: ii. NẾU m đã nằm trong REACHED:
                 if m in reached:
-                    if g_new >= g_costs.get(m, float('inf')): 
-                        continue # Bỏ qua trạng thái tệ hơn
+                    # NẾU g_new(m) >= g(m) hiện tại: Bỏ qua trạng thái m
+                    if g_new >= g_costs.get(m, float('inf')): continue 
                     else:
-                        # Xóa m khỏi REACHED và cập nhật lại g(m)
+                        # NGƯỢC LẠI: Xóa m khỏi REACHED và cập nhật lại g(m)
                         reached.remove(m)
                         g_costs[m] = g_new
                         f_m = g_new + self.heuristic(m)
                         heapq.heappush(frontier, (f_m, next(self.counter), m, p + [m]))
                         frontier_set.add(m)
-                        self.log_msg(f"   [!] Tìm thấy đường đi ngắn hơn tới {m} (Cập nhật f={f_m})", (200, 255, 200))
                         
-                # iii. NẾU m đã nằm trong FRONTIER:
+                # [MÃ GIẢ]: iii. NẾU m đã nằm trong FRONTIER:
                 elif m in frontier_set:
+                    # NẾU g_new(m) < g(m) hiện tại: Cập nhật lại g, f, cha.
                     if g_new < g_costs[m]:
-                        # Cập nhật lại g(m) và f(m)
                         g_costs[m] = g_new
                         f_m = g_new + self.heuristic(m)
                         heapq.heappush(frontier, (f_m, next(self.counter), m, p + [m]))
                         
-                # iv. NẾU m chưa có mặt trong FRONTIER và REACHED:
+                # [MÃ GIẢ]: iv. NẾU m chưa có mặt trong FRONTIER và REACHED:
                 else:
                     g_costs[m] = g_new
                     f_m = g_new + self.heuristic(m)
                     heapq.heappush(frontier, (f_m, next(self.counter), m, p + [m]))
                     frontier_set.add(m)
                     
-        # 4. TRẢ VỀ "Thất bại"
+        # [MÃ GIẢ]: 4. TRẢ VỀ "Thất bại"
         return []
     
-    # ================= Nhóm LOCAL SEARCH =================
+    # ================= NHÓM 3: TÌM KIẾM CỤC BỘ (LOCAL SEARCH) =================
     def run_simple_hc(self, start, obs):
         self.log_msg("--- BẮT ĐẦU LEO ĐỒI (Simple HC) ---", COLORS["Simple HC"])
-        # 1. Khởi tạo trạng thái hiện tại Current_State = Start.
+        # [MÃ GIẢ]: 1.Khởi tạo trạng thái hiện tại Current_State = Start.
         current_state = start
-        # Tính giá trị đánh giá của Current_State. (Dùng hàm Heuristic h)
+        # [MÃ GIẢ]: Tính giá trị đánh giá của Current_State.
         current_value = self.heuristic(current_state)
         path = []
         steps = 0
 
-        # 2. TRONG KHI (đúng):
+        # [MÃ GIẢ]: 2.TRONG KHI (đúng):
         while True:
             steps += 1
-            self.log_msg(f"[Bước {steps}] Đang đứng tại {current_state} (Cách đích h={current_value})", (255, 180, 220))
             if current_state == self.target_pos: return path
             found_better = False
             
-            # a. Sinh lần lượt các trạng thái lân cận của Current_State.
-            # b. Với mỗi trạng thái lân cận Next_State:
+            # [MÃ GIẢ]: a. Sinh lần lượt các trạng thái lân cận của Current_State.
+            # [MÃ GIẢ]: b. Với mỗi trạng thái lân cận Next_State:
             for next_state in self.get_neighbors(current_state, obs):
-                # i. Tính giá trị đánh giá của Next_State.
+                # [MÃ GIẢ]: i. Tính giá trị đánh giá của Next_State.
                 next_value = self.heuristic(next_state)
                 
-                # ii. NẾU Value(Next_State) > Value(Current_State):
-                # (Lưu ý: Khoảng cách ngắn hơn tức là tốt hơn, nên dùng dấu <)
+                # [MÃ GIẢ]: ii. NẾU Value(Next_State) > Value(Current_State):
+                # (Vì h(n) càng nhỏ càng tốt, nên dấu > trên slide tương ứng dấu < trong code)
                 if next_value < current_value:
-                    self.log_msg(f"-> Tìm thấy lân cận tốt hơn: {next_state} (h={next_value}). Di chuyển!", (150, 255, 150))
+                    self.log_msg(f"-> Tìm thấy lân cận tốt hơn (h={next_value}). Di chuyển!", (150, 255, 150))
+                    # [MÃ GIẢ]: Current_State = Next_State.
                     current_state = next_state
                     current_value = next_value
                     path.append(current_state)
                     found_better = True
-                    # Chuyển sang lần lặp tiếp theo. (Thoát vòng lặp for để quay lại while)
+                    # [MÃ GIẢ]: Chuyển sang lần lặp tiếp theo.
                     break 
 
-            # c. NẾU không tồn tại trạng thái lân cận nào tốt hơn:
+            # [MÃ GIẢ]: c. NẾU không tồn tại trạng thái lân cận nào tốt hơn:
             if not found_better:
-                # Dừng vì đã đạt cực đại cục bộ.
+                # [MÃ GIẢ]: Dừng vì đã đạt cực đại cục bộ.
                 self.log_msg(f"-> Bế tắc! Cực đại cục bộ (Xung quanh không ô nào tốt hơn {current_value}).", (255, 100, 100))
                 break
 
-        # 3. TRẢ VỀ Current_State.
+        # [MÃ GIẢ]: 3.TRẢ VỀ Current_State.
         return path if current_state == self.target_pos else []
 
     def run_beam_search(self, start, obs, k=3):
-        # 1. Khởi tạo: Current_State_set = {Sinh ngẫu nhiên k trạng thái từ Start}
+        self.log_msg("--- LOCAL BEAM SEARCH ---", COLORS["Local Beam"])
+        # [MÃ GIẢ]: 1. Khởi tạo: Current_State_set = {Sinh ngẫu nhiên k trạng thái từ Start}
         current_state_set = []
-        
-        # Để đường đi liên tục (không bị dịch chuyển tức thời), ta lấy trực tiếp
-        # các ô lân cận của Start làm k trạng thái khởi tạo.
         start_neighbors = self.get_neighbors(start, obs)
-        if not start_neighbors: 
-            return [] # Kẹt ngay từ đầu
+        if not start_neighbors: return [] 
             
         for _ in range(k):
-            # Chọn ngẫu nhiên 1 lân cận của Start
             first_state = random.choice(start_neighbors)
-            # Lưu trữ dưới dạng Tuple: (Trạng_thái_hiện_tại, Mảng_lưu_vết_đường_đi)
             current_state_set.append((first_state, [first_state]))
             
-        # 2. TRONG KHI (đúng):
-        # (Dùng vòng lặp an toàn 50 bước để chống treo game nếu bị kẹt vô tận)
+        # [MÃ GIẢ]: 2. TRONG KHI (đúng):
         for _ in range(50):
-            # Neighbor_States = rỗng
+            # [MÃ GIẢ]: Neighbor_States = rỗng
             neighbor_states = []
             
-            # 2.1. SINH TRẠNG THÁI LÂN CẬN:
-            # VỚI MỖI State trong Current_State_set:
+            # [MÃ GIẢ]: 2.1. SINH TRẠNG THÁI LÂN CẬN:
+            # [MÃ GIẢ]: VỚI MỖI State trong Current_State_set:
             for state, path_history in current_state_set:
-                # Sinh tất cả các trạng thái lân cận của State.
-                # Thêm các trạng thái lân cận này vào Neighbor_States.
+                # [MÃ GIẢ]: Sinh tất cả các trạng thái lân cận của State.
+                # [MÃ GIẢ]: Thêm các trạng thái lân cận này vào Neighbor_States.
                 for neighbor in self.get_neighbors(state, obs):
                     neighbor_states.append((neighbor, path_history + [neighbor]))
                     
-            # 2.2. KIỂM TRA BẾ TẮC / KHÔNG CẢI THIỆN
-            # NẾU Neighbor_States = rỗng:
+            # [MÃ GIẢ]: 2.2. KIỂM TRA BẾ TẮC / KHÔNG CẢI THIỆN
+            # [MÃ GIẢ]: NẾU Neighbor_States = rỗng:
             if not neighbor_states:
-                # Sắp xếp Current_State_set theo h tốt dần
+                # [MÃ GIẢ]: Sắp xếp Current_State_set theo h tốt dần
                 current_state_set.sort(key=lambda item: self.heuristic(item[0]))
-                # TRẢ VỀ trạng thái tốt nhất trong Current_State_set // Không còn lân cận nào để đi tiếp
+                # [MÃ GIẢ]: TRẢ VỀ trạng thái tốt nhất trong Current_State_set
                 return current_state_set[0][1] 
                 
-            # 2.3. KIỂM TRA ĐÍCH:
-            # VỚI MỖI Neighbor trong Neighbor_States:
+            # [MÃ GIẢ]: 2.3. KIỂM TRA ĐÍCH:
+            # [MÃ GIẢ]: VỚI MỖI Neighbor trong Neighbor_States:
             for neighbor, path_history in neighbor_states:
-                # NẾU Neighbor == Goal: TRẢ VỀ Neighbor // Tìm thấy đích, dừng thuật toán
-                if neighbor == self.target_pos:
-                    return path_history
+                # [MÃ GIẢ]: NẾU Neighbor == Goal: TRẢ VỀ Neighbor
+                if neighbor == self.target_pos: return path_history
                     
-            # 2.4. LỰA CHỌN CHÙM (NẾU CHƯA TÌM THẤY ĐÍCH):
-            # Sắp xếp Neighbor_States theo thứ tự giá trị hàm mục tiêu h tốt dần.
+            # [MÃ GIẢ]: 2.4. LỰA CHỌN CHÙM (NẾU CHƯA TÌM THẤY ĐÍCH):
+            # [MÃ GIẢ]: Sắp xếp Neighbor_States theo thứ tự giá trị hàm mục tiêu h tốt dần.
             neighbor_states.sort(key=lambda item: self.heuristic(item[0]))
             
-            # Current_State_set = Lấy k trạng thái tốt nhất từ Neighbor_States đã sắp xếp.
+            # [MÃ GIẢ]: Current_State_set = Lấy k trạng thái tốt nhất từ Neighbor_States
             current_state_set = neighbor_states[:k]
             
-        # Nếu chạy hết vòng lặp an toàn mà không chạm đích, trả về đường đi tốt nhất hiện tại
         current_state_set.sort(key=lambda item: self.heuristic(item[0]))
         return current_state_set[0][1]
 
     def run_simulated_annealing(self, start, obs):
-        # current state = start
+        self.log_msg("--- SIMULATED ANNEALING (Luyện kim) ---", COLORS["Simulated Annealing"])
+        # [MÃ GIẢ]: current state = start
         current_state = start
-        path = [] # Mảng lưu vết đường đi cho giao diện UI
+        path = []
         
-        # T = T0 (Khởi tạo nhiệt độ ban đầu và các hệ số)
+        # [MÃ GIẢ]: T = T0
         T = 1000.0
         T_min = 0.01
         alpha = 0.95
         
-        # while T > Tmin:
+        # [MÃ GIẢ]: while T > Tmin:
         while T > T_min:
-            # if current state == goal:
-            if current_state == self.target_pos:
-                # return current state
-                return path
+            # [MÃ GIẢ]: if current state == goal: return current state
+            if current_state == self.target_pos: return path
                 
             neighbors = self.get_neighbors(current_state, obs)
-            if not neighbors: 
-                break # Kẹt cứng không có lân cận
+            if not neighbors: break 
                 
-            # next state = RandomNeighbor(current state)
+            # [MÃ GIẢ]: next state = RandomNeighbor(current state)
             next_state = random.choice(neighbors)
             
-            # Δ = h(next state) - h(current state)
+            # [MÃ GIẢ]: Δ = h(next state) - h(current state)
             delta = self.heuristic(next_state) - self.heuristic(current_state)
             
-            # if Δ < 0:
+            # [MÃ GIẢ]: if Δ < 0:
             if delta < 0:
-                # current state = next state
+                # [MÃ GIẢ]: current state = next state
                 current_state = next_state
                 path.append(current_state)
-            # else:
+            # [MÃ GIẢ]: else:
             else:
-                # p = exp(-Δ / T)
+                # [MÃ GIẢ]: p = exp(-Δ / T)
                 p = math.exp(-delta / T)
                 
-                # if Random(0,1) < p:
+                # [MÃ GIẢ]: if Random(0,1) < p:
                 if random.random() < p:
-                    # current state = next state
+                    # [MÃ GIẢ]: current state = next state
                     current_state = next_state
                     path.append(current_state)
                     
-            # T = α * T
+            # [MÃ GIẢ]: T = α * T
             T = alpha * T
 
-        # return current state (Trả về mảng đường đi nếu chạm đích)
+        # [MÃ GIẢ]: return current state
         return path if current_state == self.target_pos else []
 
     # ================= MÔI TRƯỜNG PHỨC TẠP & CSP =================
@@ -740,301 +747,223 @@ class RicochetArena:
         start_1 = tuple(start)
         start_2 = tuple(self.sensorless_ghost.start_pos)
 
-        # --- KHỞI TẠO BÁO CÁO HỌC THUẬT ---
         report_lines = []
         report_lines.append("=== BÁO CÁO TÌM KIẾM KHÔNG CẢM BIẾN (CONFORMANT PLANNING) ===")
         report_lines.append(f"Mục tiêu: Tìm 1 chuỗi hành động chung đưa hệ thống về Đích {self.target_pos}.")
         report_lines.append("Cơ chế: Nếu một Trạng thái (State) chạm đích trước, nó sẽ chuyển sang trạng thái dừng (Sink State).")
-        report_lines.append(f"\n[Tập Niềm tin ban đầu - Belief Start]")
-        report_lines.append(f" - State 1: {start_1}")
-        report_lines.append(f" - State 2: {start_2}")
         
+        # [MÃ GIẢ]: b_start = {s | s in INITIAL_STATE_SET}
         belief_start = tuple(sorted([start_1, start_2]))
 
+        # [MÃ GIẢ]: frontier <- a FIFO queue containing b_start
         # Hàng đợi: (Tập Belief, Pos 1, Path 1, Pos 2, Path 2, Lịch sử Hành động)
         frontier = deque([(belief_start, start_1, [], start_2, [], [])])
+        
+        # [MÃ GIẢ]: explored <- {b_start}
         reached = {belief_start}
         
-        report_lines.append("\n=== QUÁ TRÌNH TÌM KIẾM (BFS TRÊN KHÔNG GIAN BELIEF) ===")
         steps_explored = 0
 
         # Hàm di chuyển tuỳ chỉnh: Đã vào đích thì khóa chết (Sink State)
         def get_next_state(pos, action):
-            if pos == self.target_pos:
-                return pos
+            if pos == self.target_pos: return pos
             return self.get_slide_dest(pos, action, obs)
 
+        # [MÃ GIẢ]: loop do
         while frontier:
+            # [MÃ GIẢ]: if EMPTY?(frontier) then return failure
+            # (Được xử lý ẩn bởi vòng lặp while của Python)
+            
+            # [MÃ GIẢ]: b <- POP(frontier)
             current_belief, current_1, path_1, current_2, path_2, action_history = frontier.popleft()
             steps_explored += 1
             
-            # Giới hạn độ dài chuỗi để chống treo
-            if len(path_1) > 20: continue
+            if len(path_1) > 20: continue # Cắt tỉa chống treo máy
                 
-            # KIỂM TRA ĐÍCH: Cả 2 State đều đã hội tụ tại đích
+            # [MÃ GIẢ]: if b is a subset of GOAL then return SOLUTION(b)
+            # (Tất cả trạng thái trong Belief đều đã hội tụ tại Đích)
             if current_1 == self.target_pos and current_2 == self.target_pos:
                 self.log_msg(f"-> Hội tụ thành công! Cả 2 State đều đã vào Đích sau {len(path_1)} bước.", (0, 255, 255))
                 
-                # Hoàn thiện Báo cáo
                 report_lines.append("\n=======================================================")
                 report_lines.append(f"=> TỔNG KẾT: TÌM THẤY KẾ HOẠCH HỘI TỤ (CONFORMANT PLAN)!")
                 report_lines.append(f"Tổng số trạng thái đã duyệt: {steps_explored}")
                 report_lines.append(f"Chuỗi hành động chung ({len(action_history)} bước): {' -> '.join(action_history)}")
-                report_lines.append("Kết luận: Kế hoạch đảm bảo 100% tỷ lệ thành công.")
                 
-                # Lưu file Text Báo Cáo
                 try:
                     filename = self.get_map_path("BaoCao_ConformantPlanning.txt")
-                    with open(filename, "w", encoding="utf-8") as f:
-                        f.write("\n".join(report_lines))
+                    with open(filename, "w", encoding="utf-8") as f: f.write("\n".join(report_lines))
                     self.log_msg(f"-> Đã xuất Báo cáo học thuật: {os.path.basename(filename)}", (100, 255, 100))
-                except Exception as e:
-                    self.log_msg(f"Không thể lưu file báo cáo: {e}", (255, 50, 50))
+                except Exception as e: pass
 
                 self.sensorless_ghost.computed_path = path_2 
                 return path_1
                 
-            # MỞ RỘNG CÁC HÀNH ĐỘNG
+            # [MÃ GIẢ]: for each action in ACTIONS(b) do
             for action in [(0,-1), (0,1), (-1,0), (1,0)]:
                 action_name = {(0,-1): "LÊN", (0,1): "XUỐNG", (-1,0): "TRÁI", (1,0): "PHẢI"}[action]
                 
-                # Tính điểm đến bằng hàm Sink State
+                # [MÃ GIẢ]: b_prime <- PREDICT(b, action)
                 next_1 = get_next_state(current_1, action)
                 next_2 = get_next_state(current_2, action)
-                
                 next_belief = tuple(sorted(list({next_1, next_2})))
                 
+                # [MÃ GIẢ]: if b_prime not in explored then
                 if next_belief not in reached:
+                    # [MÃ GIẢ]: explored.ADD(b_prime)
                     reached.add(next_belief)
                     
-                    # GHI NHẬN VÀO BÁO CÁO CÁC SỰ KIỆN QUAN TRỌNG
+                    # Log báo cáo...
                     if current_1 != self.target_pos and next_1 == self.target_pos:
-                        report_lines.append(f" [*] State 1 đã chạm đích {self.target_pos} và chuyển sang dừng (Sink State). Tiếp tục đồng bộ State 2.")
+                        report_lines.append(f" [*] State 1 đã chạm đích {self.target_pos} và chuyển sang dừng (Sink State).")
                     elif current_2 != self.target_pos and next_2 == self.target_pos:
-                        report_lines.append(f" [*] State 2 đã chạm đích {self.target_pos} và chuyển sang dừng (Sink State). Tiếp tục đồng bộ State 1.")
+                        report_lines.append(f" [*] State 2 đã chạm đích {self.target_pos} và chuyển sang dừng (Sink State).")
                     elif len(next_belief) < len(current_belief):
-                        report_lines.append(f"\n[!] BƯỚC HỘI TỤ (State Convergence):")
-                        report_lines.append(f"    - Từ tập Niềm tin {current_belief}, phát lệnh chung trượt {action_name}.")
-                        report_lines.append(f"    - Kết quả: Các trạng thái đã sáp nhập tại cùng một điểm {next_belief[0]}.")
-                    elif steps_explored % 50 == 0: 
-                        report_lines.append(f" - Duyệt nút {steps_explored}: Từ {current_belief} trượt {action_name} -> {next_belief}")
+                        report_lines.append(f"\n[!] BƯỚC HỘI TỤ (State Convergence): Trượt {action_name} -> {next_belief[0]}")
 
+                    # [MÃ GIẢ]: frontier.INSERT(b_prime)
                     frontier.append((next_belief, next_1, path_1 + [next_1], next_2, path_2 + [next_2], action_history + [action_name]))
                     
         self.log_msg("-> Bế tắc! Không tồn tại Kế hoạch hội tụ.", (255, 100, 100))
-        
-        report_lines.append("\n=======================================================")
-        report_lines.append("=> TỔNG KẾT: THẤT BẠI.")
-        report_lines.append("Không thể đồng bộ 2 State do cấu trúc Map không cho phép.")
-        try:
-            filename = self.get_map_path("BaoCao_ConformantPlanning.txt")
-            with open(filename, "w", encoding="utf-8") as f:
-                f.write("\n".join(report_lines))
-        except: pass
-        
         return []
 
     def run_partial_observable(self, start, obs):
         self.log_msg("--- MÔI TRƯỜNG NHÌN THẤY MỘT PHẦN (PARTIAL OBSERVE) ---", (255, 200, 255))
-        
-        # --- KHỞI TẠO BÁO CÁO (Dành cho báo cáo đồ án) ---
         report_lines = []
-        report_lines.append("=== BÁO CÁO QUÁ TRÌNH LỌC NIỀM TIN (BELIEF STATE) ===")
-        report_lines.append(f"Vị trí xuất phát thật sự (Giấu kín với AI): {start}")
+        report_lines.append("=== BÁO CÁO QUÁ TRÌNH LỌC NIỀM TIN (BELIEF STATE UPDATE) ===")
 
-        # 1. Khởi tạo Belief_Start (Tăng lên 4 bóng ma ảo cho phong phú)
+        # [MÃ GIẢ]: b <- b_start (Tập hợp các trạng thái có thể đang đứng)
         fake_1 = self.get_random_valid_pos(obs, start)
         fake_2 = self.get_random_valid_pos(obs, start)
         fake_3 = self.get_random_valid_pos(obs, start)
         fake_4 = self.get_random_valid_pos(obs, start)
         belief_state = {start, fake_1, fake_2, fake_3, fake_4}
         
-        self.log_msg(f"[Belief Start] Robot bị mù toạ độ, phân thân ở: {len(belief_state)} vị trí.", (200, 200, 255))
+        self.log_msg(f"[Belief Start] Robot phân thân ở: {len(belief_state)} vị trí.", (200, 200, 255))
         report_lines.append(f"1. Niềm tin ban đầu (Belief Start): Gồm {len(belief_state)} vị trí có thể: {list(belief_state)}")
 
+        # [MÃ GIẢ]: Hàm PERCEPT(s) trả về quan sát tại trạng thái s
         def get_percept(pos):
-            # Cảm biến trả về: (Có kẹt LÊN không, XUỐNG không, TRÁI không, PHẢI không)
-            # True = Không kẹt (đi được), False = Kẹt tường
+            # Cảm biến trả về: (Có đi LÊN được không, XUỐNG, TRÁI, PHẢI được không)
             return tuple(self.get_slide_dest(pos, d, obs) != pos for d in [(0,-1), (0,1), (-1,0), (1,0)])
 
         real_pos = start
         path = []
         self.belief_history = [belief_state.copy()]
 
+        # [MÃ GIẢ]: loop do:
         for step in range(30):
-            # A. KIỂM TRA ĐỊNH VỊ THÀNH CÔNG
+            # [MÃ GIẢ]: if IS-LOCALIZED(b) then return A*(b_pos)
             if len(belief_state) == 1:
                 localized_pos = list(belief_state)[0]
-                self.log_msg(f"-> [Định vị Thành Công!] Robot chắc chắn đang ở: {localized_pos}", (0, 255, 0))
-                report_lines.append(f"\n=> KẾT LUẬN: Chỉ còn 1 giả thuyết duy nhất. Đã định vị thành công vị trí thật sự là {localized_pos} sau {step} bước.")
+                self.log_msg(f"-> [Định vị Thành Công!] Vị trí thật sự là: {localized_pos}", (0, 255, 0))
+                report_lines.append(f"\n=> KẾT LUẬN: Đã định vị thành công vị trí {localized_pos} sau {step} bước.")
                 
-                # Lưu file Text Báo Cáo
                 try:
                     filename = self.get_map_path("BaoCao_PartialObservable.txt")
-                    with open(filename, "w", encoding="utf-8") as f:
-                        f.write("\n".join(report_lines))
-                    self.log_msg(f"-> Đã xuất File báo cáo chi tiết: {os.path.basename(filename)}", (100, 255, 100))
-                except Exception as e:
-                    self.log_msg(f"Không thể lưu file báo cáo: {e}", (255, 50, 50))
+                    with open(filename, "w", encoding="utf-8") as f: f.write("\n".join(report_lines))
+                except Exception: pass
 
-                # Chạy tiếp A*
                 astar_path = self.run_astar(localized_pos, obs)
                 for _ in astar_path: self.belief_history.append(belief_state.copy())
                 return path + astar_path
 
-            # B. CHỌN HÀNH ĐỘNG KHÁM PHÁ
             valid_dirs = [d for d in [(0,-1), (0,1), (-1,0), (1,0)] if self.get_slide_dest(real_pos, d, obs) != real_pos]
-            if not valid_dirs: 
-                report_lines.append("\n=> BẾ TẮC: Kẹt cứng không thể di chuyển.")
-                return path
+            if not valid_dirs: return path
 
+            # [MÃ GIẢ]: action <- CHOOSE-ACTION(b)
             action = random.choice(valid_dirs)
             action_name = {(0,-1): "LÊN", (0,1): "XUỐNG", (-1,0): "TRÁI", (1,0): "PHẢI"}[action]
             
-            # C. THỰC THI & ĐỌC CẢM BIẾN (TỪ VỊ TRÍ THỰC)
+            # [MÃ GIẢ]: thực thi action trên môi trường thực
             real_pos = self.get_slide_dest(real_pos, action, obs)
             path.append(real_pos)
-            percept = get_percept(real_pos)
             
+            # [MÃ GIẢ]: o <- PERCEPT(environment)
+            percept = get_percept(real_pos)
             self.log_msg(f"Bước {step+1}: Trượt {action_name}. Đọc cảm biến: {percept}", (220, 220, 220))
             
-            # Ghi vào báo cáo
             report_lines.append(f"\n--- BƯỚC {step+1} ---")
-            report_lines.append(f"Hành động: Trượt {action_name}")
-            report_lines.append(f"Tín hiệu Cảm Biến nhận được (Lên, Xuống, Trái, Phải): {percept}")
-            report_lines.append("Quá trình suy luận lọc giả thuyết:")
+            report_lines.append(f"Hành động: Trượt {action_name} | Cảm biến đo được: {percept}")
 
-            # D. LỌC NIỀM TIN (BELIEF UPDATE)
+            # [MÃ GIẢ]: b_prime <- UPDATE-BELIEF(b, action, o)
+            # Hàm UPDATE: Giữ lại s' nếu s' được tạo từ action và Percept(s') khớp với cảm biến thực
             new_belief_state = set()
-            kept_count = 0
-            eliminated_count = 0
-
             for s in belief_state:
                 s_next = self.get_slide_dest(s, action, obs)
                 s_percept = get_percept(s_next)
                 
                 if s_percept == percept:
                     new_belief_state.add(s_next)
-                    report_lines.append(f"  [+] Nếu ở {s} -> trượt đến {s_next}. Cảm biến dự kiến là {s_percept} -> KHỚP VỚI THỰC TẾ -> Giữ lại.")
-                    kept_count += 1
+                    report_lines.append(f"  [+] Nếu ở {s} -> trượt đến {s_next}. Cảm biến dự kiến {s_percept} KHỚP THỰC TẾ -> Giữ lại.")
                 else:
-                    report_lines.append(f"  [-] Nếu ở {s} -> trượt đến {s_next}. Cảm biến dự kiến là {s_percept} -> SAI LỆCH THỰC TẾ -> Loại bỏ.")
-                    eliminated_count += 1
+                    report_lines.append(f"  [-] Nếu ở {s} -> trượt đến {s_next}. Cảm biến dự kiến {s_percept} SAI LỆCH -> Loại bỏ.")
 
+            # [MÃ GIẢ]: b <- b_prime
             belief_state = new_belief_state
             self.belief_history.append(belief_state.copy())
-            
-            report_lines.append(f"-> Kết quả Bước {step+1}: Loại {eliminated_count} vị trí, Giữ {kept_count} vị trí.")
-            report_lines.append(f"-> Niềm tin hiện tại (Belief Update) gồm {len(belief_state)} vị trí: {list(belief_state)}")
-            self.log_msg(f"   [Lọc Niềm tin] Loại {eliminated_count}, Giữ {kept_count}. Còn: {len(belief_state)} vị trí.", (255, 255, 100))
+            self.log_msg(f"   [Lọc Niềm tin] Còn: {len(belief_state)} vị trí.", (255, 255, 100))
 
-        report_lines.append("\n=> THẤT BẠI: Đã quá 30 bước nhưng không thể định vị.")
+        report_lines.append("\n=> THẤT BẠI: Quá 30 bước không thể định vị.")
         return path
     
     def run_and_or_graph(self, start, obs):
         self.log_msg("--- LẬP KẾ HOẠCH DỰ PHÒNG (AND-OR GRAPH) ---", (255, 255, 100))
-        
-        # --- KHỞI TẠO BÁO CÁO ---
         report_lines = []
-        report_lines.append("=== BÁO CÁO LẬP KẾ HOẠCH DỰ PHÒNG (AND-OR GRAPH) ===")
-        report_lines.append(f"Vị trí xuất phát: {start}")
-        report_lines.append(f"Mục tiêu: {self.target_pos}")
-        report_lines.append("Luật môi trường bất định (Non-deterministic): Khi phát lệnh trượt, có thể xảy ra 2 trường hợp:")
-        report_lines.append("  1. Suôn sẻ: Tới đúng điểm dừng ở góc tường.")
-        report_lines.append("  2. Rủi ro: Bị trượt ngã, dừng lại trước điểm dừng chuẩn 1 ô.\n")
-
-        # Giới hạn độ sâu để tránh treo máy khi vẽ cây quá lớn
         MAX_DEPTH = 10 
 
-        # function OR_SEARCH(state, path) - ĐẠI DIỆN CHO QUYẾT ĐỊNH CỦA ROBOT
+        # [MÃ GIẢ]: function OR_SEARCH(state, problem, path):
         def or_search(state, path, depth):
-            indent = "    " * depth
-            
-            if state == self.target_pos:
-                report_lines.append(f"{indent}-> ĐẠT MỤC TIÊU! (Kế hoạch rỗng)")
-                return [] 
+            # [MÃ GIẢ]: if state in problem.goal_test: return [] // kế hoạch rỗng
+            if state == self.target_pos: return [] 
+            # [MÃ GIẢ]: if state in path: return failure // tránh lặp
+            if state in path: return "failure"
                 
-            if state in path:
-                return "failure"
+            if depth >= MAX_DEPTH: return "failure"
                 
-            if depth >= MAX_DEPTH:
-                report_lines.append(f"{indent}-> (Chạm giới hạn độ sâu {MAX_DEPTH}, tạm dừng duyệt nhánh này)")
-                return "failure"
-                
+            # [MÃ GIẢ]: for each action in problem.actions(state):
             for action in [(0,-1), (0,1), (-1,0), (1,0)]:
                 action_name = {(0,-1): "LÊN", (0,1): "XUỐNG", (-1,0): "TRÁI", (1,0): "PHẢI"}[action]
-                
-                # Tính điểm đến lý tưởng
                 normal_dest = self.get_slide_dest(state, action, obs)
-                if normal_dest == state: continue # Kẹt tường không đi được
+                if normal_dest == state: continue 
                 
-                # Tính điểm đến rủi ro (dừng trước 1 ô)
                 dx, dy = action
                 slip_dest = (normal_dest[0] - dx, normal_dest[1] - dy)
                 
-                # Nếu khoảng cách trượt chỉ là 1 ô, thì không có rủi ro ngã giữa đường
+                # [MÃ GIẢ]: result_states = problem.results(state, action)
                 states_result = [normal_dest, slip_dest] if slip_dest != state else [normal_dest]
                 
-                report_lines.append(f"{indent}[NÚT OR] Thử ra lệnh trượt {action_name} từ {state}:")
-                
-                # Gọi AND_SEARCH để xem môi trường phản ứng ra sao
+                # [MÃ GIẢ]: plan = AND_SEARCH(result_states, problem, path + [state])
                 plan = and_search(states_result, path + [state], depth + 1, action_name)
                 
-                if plan != "failure":
-                    report_lines.append(f"{indent}=> [CHỐT KẾ HOẠCH] Chọn nhánh trượt {action_name} làm phương án an toàn nhất.")
-                    return [normal_dest] + plan # Ghép đường đi để robot trên giao diện có thể chạy
-                    
+                # [MÃ GIẢ]: if plan != failure: return [action, plan]
+                if plan != "failure": return [normal_dest] + plan 
+            # [MÃ GIẢ]: return failure
             return "failure"
 
-        # function AND_SEARCH(states, path) - ĐẠI DIỆN CHO PHẢN ỨNG CỦA MÔI TRƯỜNG
+        # [MÃ GIẢ]: function AND_SEARCH(states, problem, path):
         def and_search(states, path, depth, action_name):
-            indent = "    " * depth
-            report_lines.append(f"{indent}[NÚT AND] Môi trường có thể trả về {len(states)} khả năng: {states}")
+            # [MÃ GIẢ]: plans = empty mapping
+            plan_a_path = None 
             
-            plan_a_path = None # Chỉ lưu đường đi của Plan A để vẽ lên UI cho đẹp
-            
+            # [MÃ GIẢ]: for each s in states:
             for i, s in enumerate(states):
-                scenario = "SUÔN SẺ" if i == 0 else "RỦI RO NGÃ"
-                report_lines.append(f"{indent}--- NẾU {scenario} (Rơi vào {s}) THÌ LÀM GÌ TIẾP? ---")
-                
+                # [MÃ GIẢ]: plan_s = OR_SEARCH(s, problem, path)
                 plan_s = or_search(s, path, depth + 1)
                 
-                if plan_s == "failure":
-                    report_lines.append(f"{indent}-> BẾ TẮC CỤC BỘ. Không có phương án dự phòng an toàn cho trường hợp này. Hủy bỏ nhánh AND.")
-                    return "failure"
-                
-                # Lấy mảng tọa độ của trường hợp lý tưởng để hàm ngoài vẽ UI (Tránh robot chạy giật lùi)
+                # [MÃ GIẢ]: if plan_s == failure: return failure
+                if plan_s == "failure": return "failure"
                 if i == 0: plan_a_path = plan_s 
-                
+            # [MÃ GIẢ]: return plans
             return plan_a_path
 
-        # BẮT ĐẦU CHẠY THUẬT TOÁN
-        self.log_msg("Đang dựng Cây quyết định dự phòng...", (200, 255, 255))
+        # [MÃ GIẢ]: return OR_SEARCH(problem.initial_state, problem, [])
         res = or_search(start, [], 0)
         
-        # --- KẾT LUẬN & XUẤT FILE ---
-        if res != "failure":
-            self.log_msg("-> Lập kế hoạch dự phòng thành công! Đã quét hết rủi ro.", (0, 255, 0))
-            report_lines.append("\n=======================================================")
-            report_lines.append("=> TỔNG KẾT: ĐÃ TÌM THẤY KẾ HOẠCH DỰ PHÒNG HOÀN CHỈNH!")
-            report_lines.append("Dù môi trường có làm robot trượt ngã, hệ thống vẫn có bước đi IF-THEN dự phòng để đảm bảo 100% đến đích.")
-        else:
-            self.log_msg("-> Thất bại: Độ sâu không đủ hoặc map không có Kế hoạch an toàn tuyệt đối.", (255, 50, 50))
-            report_lines.append("\n=======================================================")
-            report_lines.append("=> TỔNG KẾT: THẤT BẠI.")
-            report_lines.append("Không thể vẽ ra kế hoạch dự phòng an toàn tuyệt đối (Vượt quá giới hạn quét 6 bước).")
-
-        # Lưu file Text Báo Cáo
-        try:
-            filename = self.get_map_path("BaoCao_AndOrGraph.txt")
-            with open(filename, "w", encoding="utf-8") as f:
-                f.write("\n".join(report_lines))
-            self.log_msg(f"-> Đã xuất File báo cáo cây quyết định: {os.path.basename(filename)}", (100, 255, 100))
-        except Exception as e:
-            self.log_msg(f"Không thể lưu file báo cáo: {e}", (255, 50, 50))
-
+        if res != "failure": self.log_msg("-> Lập kế hoạch dự phòng thành công! Đã quét hết rủi ro.", (0, 255, 0))
+        else: self.log_msg("-> Thất bại: Không có Kế hoạch an toàn tuyệt đối.", (255, 50, 50))
         return res if res != "failure" else []
-
+    
     def setup_csp_map(self):
         self.grid_size = 5  # Bàn cờ 5x5
         self.board_size = min(HEIGHT - 100, WIDTH - 680)
@@ -1081,115 +1010,100 @@ class RicochetArena:
             if abs(y2 - y1) != 4: conflicts += 1
         return conflicts
 
+    # ================= NHÓM 5: THỎA MÃN RÀNG BUỘC (CSP) =================
     def run_backtracking(self, start, obs):
-        self.log_msg("--- BACKTRACKING (Xếp đáy chữ U) ---", (180, 100, 255))
-        # Cấp cho mỗi cột một Miền giá trị độc lập (Đã lọc sạch ô cấm)
-        domains = [
-            self.get_valid_y_domain(1, start),
-            self.get_valid_y_domain(2, start),
-            self.get_valid_y_domain(3, start)
-        ]
+        self.log_msg("--- BACKTRACKING ---", (180, 100, 255))
+        domains = [self.get_valid_y_domain(1, start), self.get_valid_y_domain(2, start), self.get_valid_y_domain(3, start)]
         
+        # [MÃ GIẢ]: function BACKTRACK(assignment, csp) returns a solution or failure
         def backtrack(assignment):
-            if self.current_group_id == 5 and len(assignment) > 0:
-                self.log_msg(f"[Backtrack] Đang thử gán Y = {assignment}", (180, 100, 255))
-                for i, y_val in enumerate(assignment):
-                    self.aux_robots[i].visual_pos = [(i+1) * self.cell_size, y_val * self.cell_size]
-                
-                # CƠ CHẾ DỪNG KHI BACKTRACK
+            # Cập nhật Giao diện
+            if len(assignment) > 0:
+                for i, y_val in enumerate(assignment): self.aux_robots[i].visual_pos = [(i+1) * self.cell_size, y_val * self.cell_size]
                 if getattr(self, 'step_mode', False):
-                    self.sim_status = f"Chờ bước tiếp (Đang thử Y={assignment[-1]})..."
+                    self.sim_status = f"Chờ bước tiếp..."
                     self.csp_waiting = True
-                    while getattr(self, 'csp_waiting', False) and self.state == "SIMULATION":
-                        pygame.time.delay(20)
+                    while getattr(self, 'csp_waiting', False) and self.state == "SIMULATION": pygame.time.delay(20)
                 else:
                     self.draw_simulation(); pygame.display.flip(); pygame.time.delay(50)
             
-            col_idx = len(assignment)
-            if col_idx == 3:
-                if self.calculate_csp_conflicts(assignment, start) == 0:
-                    return assignment
+            # [MÃ GIẢ]: if assignment is complete then return assignment
+            if len(assignment) == 3:
+                if self.calculate_csp_conflicts(assignment, start) == 0: return assignment
                 return "failure"
                 
+            # [MÃ GIẢ]: var <- SELECT-UNASSIGNED-VARIABLE(assignment, csp)
+            col_idx = len(assignment)
+            
+            # [MÃ GIẢ]: for each value in ORDER-DOMAIN-VALUES(var, assignment, csp) do
             for value in domains[col_idx]:
+                # [MÃ GIẢ]: add {var = value} to assignment
+                # [MÃ GIẢ]: result <- BACKTRACK(assignment, csp)
                 res = backtrack(assignment + [value])
+                # [MÃ GIẢ]: if result != failure then return result
                 if res != "failure": return res
+                # [MÃ GIẢ]: remove {var = value} from assignment (Bỏ qua qua logic Python ẩn)
+                
+            # [MÃ GIẢ]: return failure
             return "failure"
             
         res = backtrack([])
         if res != "failure":
             self.log_msg(f"-> TÌM THẤY NGHIỆM: Y = {res}", (0, 255, 0))
-            for i, aux in enumerate(self.aux_robots):
-                aux.logic_pos = [i+1, res[i]]; aux.start_pos = [i+1, res[i]]
+            for i, aux in enumerate(self.aux_robots): aux.logic_pos = [i+1, res[i]]; aux.start_pos = [i+1, res[i]]
             return [self.target_pos]
-        self.log_msg("-> Bế tắc, không tìm thấy nghiệm!", (255, 50, 50))
         return []
 
     def run_ac3(self, start, obs):
-        self.log_msg("--- AC-3 (Lọc miền giá trị) ---", (147, 112, 219))
+        self.log_msg("--- AC-3 (Arc Consistency) ---", (147, 112, 219))
+        domains = { 0: self.get_valid_y_domain(1, start), 1: self.get_valid_y_domain(2, start), 2: self.get_valid_y_domain(3, start) }
         
-        domains = [
-            self.get_valid_y_domain(1, start),
-            self.get_valid_y_domain(2, start),
-            self.get_valid_y_domain(3, start)
-        ]
-        
-        # 1. KHỞI TẠO BÓNG MA TỪ MIỀN SẠCH
-        self.csp_domains = [
-            [(1, y) for y in domains[0]],
-            [(2, y) for y in domains[1]],
-            [(3, y) for y in domains[2]]
-        ]
-        self.log_msg("1. Điền Bóng ma (Đã tự động né ô Start và Target).", (255, 255, 100))
+        # Vẽ Bóng ma trước khi cắt
+        self.csp_domains = [[(i+1, y) for y in domains[i]] for i in range(3)]
         self.draw_simulation(); pygame.display.flip(); pygame.time.delay(1000)
+
+        # Ràng buộc: i=0 và j=1 thì khoảng cách bằng 4. i=0 và j=2 thì phải giống nhau (cùng hàng).
+        def satisfy(i, x, j, y):
+            if (i==0 and j==1) or (i==1 and j==0): return abs(x - y) == 4
+            if (i==0 and j==2) or (i==2 and j==0): return x == y
+            return True # 1 và 2 không ràng buộc trực tiếp
+
+        # [MÃ GIẢ]: function RM-INCONSISTENT-VALUES(Xi, Xj) returns true iff remove a value
+        def rm_inconsistent_values(xi, xj):
+            removed = False
+            # [MÃ GIẢ]: for each x in DOMAIN[Xi] do
+            for x in list(domains[xi]): 
+                # [MÃ GIẢ]: if no value y in DOMAIN[Xj] allows (x,y) to satisfy constraint(Xi, Xj)
+                if not any(satisfy(xi, x, xj, y) for y in domains[xj]):
+                    # [MÃ GIẢ]: then delete x from DOMAIN[Xi]; removed <- true
+                    domains[xi].remove(x)
+                    removed = True
+                    self.csp_domains[xi].remove((xi+1, x)) # Xoá bóng ma trên hình
+                    self.draw_simulation(); pygame.display.flip(); pygame.time.delay(150)
+            # [MÃ GIẢ]: return removed
+            return removed
+
+        # [MÃ GIẢ]: function AC-3(csp)
+        # [MÃ GIẢ]: queue, a queue of arcs, initially all the arcs in csp
+        queue = deque([(0,1), (1,0), (0,2), (2,0)]) 
         
-        # 2. CẮT TỈA
-        self.log_msg("2. Đang cắt tỉa các ô vi phạm ràng buộc...", (255, 200, 100))
-        for i in range(3):
-            new_d = []
-            for y in domains[i]:
-                valid = False
-                if i == 0:   valid = any(abs(y2-y)==4 for y2 in domains[1]) and any(y3==y for y3 in domains[2])
-                elif i == 1: valid = any(abs(y-y1)==4 for y1 in domains[0])
-                elif i == 2: valid = any(y==y1 for y1 in domains[0])
-                
-                if valid: 
-                    new_d.append(y)
-                else:
-                    self.csp_domains[i].remove((i+1, y))
-                    if getattr(self, 'step_mode', False):
-                        self.sim_status = f"Chờ bước tiếp (Đang tỉa Cột {i+1}, Y={y})..."
-                        self.csp_waiting = True
-                        while getattr(self, 'csp_waiting', False) and self.state == "SIMULATION":
-                            pygame.time.delay(20)
-                    else:
-                        self.draw_simulation(); pygame.display.flip(); pygame.time.delay(150)
-            domains[i] = new_d
+        # [MÃ GIẢ]: while queue is not empty do
+        while queue:
+            # [MÃ GIẢ]: (Xi, Xj) <- REMOVE-FIRST(queue)
+            xi, xj = queue.popleft()
+            # [MÃ GIẢ]: if RM-INCONSISTENT-VALUES(Xi, Xj) then
+            if rm_inconsistent_values(xi, xj):
+                # [MÃ GIẢ]: for each Xk in NEIGHBORS[Xi] do add (Xk, Xi) to queue
+                neighbors = [k for k in range(3) if k != xi and k != xj and ((xi==0) or (k==0))] 
+                for xk in neighbors: queue.append((xk, xi))
                     
-        self.log_msg(f"-> AC-3 đã tỉa miền giá trị thành: {domains}", (0, 255, 255))
+        self.log_msg(f"-> Đã tỉa miền giá trị thành: {domains}", (0, 255, 255))
         self.csp_domains = None 
-        self.log_msg("3. Bắt đầu Backtracking trên miền đã rút gọn...", (180, 100, 255))
             
         def backtrack(assignment):
-            if self.current_group_id == 5 and len(assignment) > 0:
-                self.log_msg(f"[AC-3] Đang thử gán Y = {assignment}", (180, 100, 255))
-                for i, y_val in enumerate(assignment):
-                    self.aux_robots[i].visual_pos = [(i+1) * self.cell_size, y_val * self.cell_size]
-                
-                if getattr(self, 'step_mode', False):
-                    self.sim_status = f"Chờ bước tiếp (Đang gán Y={assignment[-1]})..."
-                    self.csp_waiting = True
-                    while getattr(self, 'csp_waiting', False) and self.state == "SIMULATION":
-                        pygame.time.delay(20)
-                else:
-                    self.draw_simulation(); pygame.display.flip(); pygame.time.delay(50)
-            
             col_idx = len(assignment)
             if col_idx == 3:
-                if self.calculate_csp_conflicts(assignment, start) == 0:
-                    return assignment
-                return "failure"
-                
+                return assignment if self.calculate_csp_conflicts(assignment, start) == 0 else "failure"
             for value in domains[col_idx]:
                 res = backtrack(assignment + [value])
                 if res != "failure": return res
@@ -1197,119 +1111,148 @@ class RicochetArena:
             
         res = backtrack([])
         if res != "failure":
-            self.log_msg(f"-> TÌM THẤY NGHIỆM: Y = {res}", (0, 255, 0))
-            for i, aux in enumerate(self.aux_robots):
-                aux.logic_pos = [i+1, res[i]]; aux.start_pos = [i+1, res[i]]
+            for i, aux in enumerate(self.aux_robots): aux.visual_pos = [(i+1)*self.cell_size, res[i]*self.cell_size]; aux.logic_pos = [i+1, res[i]]; aux.start_pos = [i+1, res[i]]
             return [self.target_pos]
-        self.log_msg("-> Bế tắc, không tìm thấy nghiệm!", (255, 50, 50))
         return []
 
     def run_min_conflicts(self, start, obs):
-        self.log_msg("--- MIN-CONFLICTS (Sửa sai ngẫu nhiên) ---", (255, 140, 0))
-        domains = [
-            self.get_valid_y_domain(1, start),
-            self.get_valid_y_domain(2, start),
-            self.get_valid_y_domain(3, start)
-        ]
-        
-        # Kiểm tra an toàn: Nếu miền bị rỗng (do start/target chiếm hết), thoát ngay
-        if not domains[0] or not domains[1] or not domains[2]:
-            self.log_msg("-> Bế tắc: Miền giá trị bị chặn bởi Start/Target.", (255, 50, 50))
-            return []
+        self.log_msg("--- MIN-CONFLICTS ---", (255, 140, 0))
+        domains = [self.get_valid_y_domain(1, start), self.get_valid_y_domain(2, start), self.get_valid_y_domain(3, start)]
+        if not all(domains): return []
             
+        # [MÃ GIẢ]: current <- an initial complete assignment for csp
         current = [random.choice(domains[i]) for i in range(3)]
         
+        # [MÃ GIẢ]: for i = 1 to max_steps do
         for step in range(50):
             conflicts = self.calculate_csp_conflicts(current, start)
             
-            if self.current_group_id == 5:
-                self.log_msg(f"[Lặp {step}] Tọa độ Y: {current} | Lỗi: {conflicts}", (255, 165, 0))
-                for i, y_val in enumerate(current):
-                    self.aux_robots[i].visual_pos = [(i+1) * self.cell_size, y_val * self.cell_size]
-                
-                if getattr(self, 'step_mode', False):
-                    self.sim_status = f"Chờ bước tiếp (Đang sửa lỗi)..."
-                    self.csp_waiting = True
-                    while getattr(self, 'csp_waiting', False) and self.state == "SIMULATION":
-                        pygame.time.delay(20)
-                else:
-                    self.draw_simulation(); pygame.display.flip(); pygame.time.delay(50)
+            # Cập nhật giao diện
+            for i, y_val in enumerate(current): self.aux_robots[i].visual_pos = [(i+1) * self.cell_size, y_val * self.cell_size]
+            if getattr(self, 'step_mode', False):
+                self.sim_status = "Chờ bước tiếp..."
+                self.csp_waiting = True
+                while getattr(self, 'csp_waiting', False) and self.state == "SIMULATION": pygame.time.delay(20)
+            else: self.draw_simulation(); pygame.display.flip(); pygame.time.delay(50)
                     
+            # [MÃ GIẢ]: if current is a solution for csp then return current
             if conflicts == 0:
-                self.log_msg(f"-> HỘI TỤ THÀNH CÔNG SAU {step} BƯỚC! Tọa độ Y: {current}", (0, 255, 0))
-                for i, aux in enumerate(self.aux_robots):
-                    aux.logic_pos = [i+1, current[i]]; aux.start_pos = [i+1, current[i]]
+                self.log_msg(f"-> THÀNH CÔNG! Tọa độ Y: {current}", (0, 255, 0))
+                for i, aux in enumerate(self.aux_robots): aux.logic_pos = [i+1, current[i]]; aux.start_pos = [i+1, current[i]]
                 return [self.target_pos]
                 
+            # [MÃ GIẢ]: var <- a randomly chosen conflicted variable from csp.VARIABLES
             var = random.randint(0, 2)
-            min_c = float('inf')
-            best_vals = []
+            
+            # [MÃ GIẢ]: value <- the value v for var that minimizes CONFLICTS(var, v, current, csp)
+            min_c = float('inf'); best_vals = []
             for v in domains[var]:
-                temp = list(current)
-                temp[var] = v
+                temp = list(current); temp[var] = v
                 c = self.calculate_csp_conflicts(temp, start)
-                if c < min_c:
-                    min_c = c
-                    best_vals = [v]
-                elif c == min_c:
-                    best_vals.append(v)
+                if c < min_c: min_c = c; best_vals = [v]
+                elif c == min_c: best_vals.append(v)
                     
+            # [MÃ GIẢ]: set var = value in current
             current[var] = random.choice(best_vals)
             
-        self.log_msg("-> Quá giới hạn bước. Không tìm thấy nghiệm.", (255, 100, 100))
+        # [MÃ GIẢ]: return failure
         return []
 
+    # ================= NHÓM 6: ĐỐI KHÁNG (ADVERSARIAL SEARCH) =================
+    # TERMINAL-TEST(state): xác định xem trạng thái hiện tại (state) đã là trạng thái kết thúc game chưa?
     def is_caught(self, p_pos, e_pos):
         # An toàn nếu đã vào đích
         if tuple(p_pos) == self.target_pos: 
             return False
         # Bị bắt nếu trùng chính xác 100% toạ độ (Khoảng cách = 0)
         return tuple(p_pos) == tuple(e_pos)
+    # Khi cây đệ quy Minimax duyệt xuống một trạng thái mà hàm này trả về True (Bị tóm), 
+    # hệ thống sẽ lập tức dừng duyệt nhánh đó và gọi hàm UTILITY trả về điểm số âm vô cực (-9999), 
+    # báo hiệu đây là một nhánh chết (thua cuộc) để AI của Ta (MAX) biết đường mà né lệnh di chuyển.
 
+    # [MÃ GIẢ]: function UTILITY(state) returns a numeric value
+    # Đánh giá điểm số của trạng thái hiện tại (Càng cao thì MAX/Ta càng có lợi)
     def heuristic_adv(self, p_pos, e_pos):
-        if self.is_caught(p_pos, e_pos): return -9999 # Chết là điểm âm vô cực
-        if p_pos == self.target_pos: return 9999      # Tới đích là điểm dương vô cực
+        # [MÃ GIẢ]: if TERMINAL-TEST(state) then return UTILITY(state)
+        if self.is_caught(p_pos, e_pos): return -9999 # Bị tóm: Điểm âm vô cực (Thua)
+        if p_pos == self.target_pos: return 9999      # Tới đích: Điểm dương vô cực (Thắng)
+        
         dist_to_goal = abs(p_pos[0] - self.target_pos[0]) + abs(p_pos[1] - self.target_pos[1])
         dist_to_enemy = abs(p_pos[0] - e_pos[0]) + abs(p_pos[1] - e_pos[1])
-        # Mục tiêu MAX: Gần đích nhất có thể, nhưng cũng ráng tránh xa địch
+        
+        # Hàm Utility (Tiện ích): Vừa ưu tiên rút ngắn khoảng cách tới đích, vừa ráng cách xa địch
         return -dist_to_goal * 10 + dist_to_enemy
 
+    # Hàm đệ quy này gộp chung cả 3 thuật toán: Minimax, Alpha-Beta và Expectimax
     def get_best_adv_move(self, p_pos, e_pos, depth, is_max, alpha, beta, algo):
+        # [MÃ GIẢ]: if TERMINAL-TEST(state) or depth == 0 then return UTILITY(state)
         if depth == 0 or p_pos == self.target_pos or self.is_caught(p_pos, e_pos):
             return self.heuristic_adv(p_pos, e_pos), None
 
-        if is_max: # NÚT MAX (Lượt của Ta)
+        if is_max: 
+            # ----------------------------------------------------
+            # [MÃ GIẢ]: function MAX-VALUE(state, alpha, beta)
+            # Lượt của MAX (Ta): Tìm nước đi tối đa hóa điểm số
+            # ----------------------------------------------------
+            
+            # [MÃ GIẢ]: v <- -∞
             best_val = float('-inf'); best_move = None
             
-            # --- Ta coi Địch là Bức tường cứng (obstacles={e_pos}) ---
+            # (Ta coi Địch là Bức tường cứng để sinh trạng thái lân cận)
             valid_moves = self.get_neighbors(p_pos, obstacles={e_pos})
             if not valid_moves: return self.heuristic_adv(p_pos, e_pos), None
             
+            # [MÃ GIẢ]: for each a in ACTIONS(state) do
             for nxt_p in valid_moves:
+                # [MÃ GIẢ]: v <- MAX(v, MIN-VALUE(RESULT(state, a), alpha, beta))
                 val, _ = self.get_best_adv_move(nxt_p, e_pos, depth-1, False, alpha, beta, algo)
                 if val > best_val: best_val = val; best_move = nxt_p
-                if algo == "alphabeta": # Cắt tỉa Alpha
+                
+                # CẮT TỈA ALPHA-BETA (Nếu thuật toán là Alpha-Beta)
+                if algo == "alphabeta": 
+                    # [MÃ GIẢ]: if v >= beta then return v
+                    if best_val >= beta: break # Cắt tỉa (Pruning) nhánh phía sau
+                    # [MÃ GIẢ]: alpha <- MAX(alpha, v)
                     alpha = max(alpha, best_val)
-                    if beta <= alpha: break
+                    
+            # [MÃ GIẢ]: return v
             return best_val, best_move
             
-        else: # NÚT MIN (Lượt của Địch)
-            
-            # --- Địch coi Ta là Mục tiêu (Dừng lại khi đè lên Ta: stop_on=p_pos) ---
+        else: 
+            # ----------------------------------------------------
+            # Lượt của MIN / CHANCE (Robot Địch)
+            # ----------------------------------------------------
             valid_moves = self.get_neighbors(e_pos, obstacles=set(), stop_on=p_pos)
             if not valid_moves: return self.heuristic_adv(p_pos, e_pos), None
             
+            # 1. TRƯỜNG HỢP EXPECTIMAX (Môi trường ngẫu nhiên - Chance Node)
             if algo == "expectimax": 
+                # [MÃ GIẢ]: function EXP-VALUE(state)
+                # [MÃ GIẢ]: v <- 0; for each a in ACTIONS(state) do v += P(a) * MAX-VALUE(RESULT(state, a))
+                # (Với P(a) là xác suất đồng đều chia cho tổng số nước đi hợp lệ)
                 avg_val = sum(self.get_best_adv_move(p_pos, nxt_e, depth-1, True, alpha, beta, algo)[0] for nxt_e in valid_moves) / len(valid_moves)
                 return avg_val, random.choice(valid_moves)
+            
+            # 2. TRƯỜNG HỢP MINIMAX / ALPHA-BETA (Đối thủ hoàn hảo - Min Node)
             else:
+                # [MÃ GIẢ]: function MIN-VALUE(state, alpha, beta)
+                # [MÃ GIẢ]: v <- +∞
                 best_val = float('inf'); best_move = None
+                
+                # [MÃ GIẢ]: for each a in ACTIONS(state) do
                 for nxt_e in valid_moves:
+                    # [MÃ GIẢ]: v <- MIN(v, MAX-VALUE(RESULT(state, a), alpha, beta))
                     val, _ = self.get_best_adv_move(p_pos, nxt_e, depth-1, True, alpha, beta, algo)
                     if val < best_val: best_val = val; best_move = nxt_e
-                    if algo == "alphabeta": # Cắt tỉa Beta
+                    
+                    # CẮT TỈA ALPHA-BETA (Nếu thuật toán là Alpha-Beta)
+                    if algo == "alphabeta": 
+                        # [MÃ GIẢ]: if v <= alpha then return v
+                        if best_val <= alpha: break # Cắt tỉa (Pruning) nhánh phía sau
+                        # [MÃ GIẢ]: beta <- MIN(beta, v)
                         beta = min(beta, best_val)
-                        if beta <= alpha: break
+                        
+                # [MÃ GIẢ]: return v
                 return best_val, best_move
             
     def run_adversarial(self, start, obs, algo):
@@ -1317,14 +1260,14 @@ class RicochetArena:
         p_curr = start; e_curr = tuple(self.enemy.start_pos)
         p_path = []; e_path = []
         
-        # --- FIX: Tăng tầm nhìn Depth lên 7 để AI thấy được đường xa hơn (4 nước của Ta) ---
+        # Tầm nhìn (Depth) - Expectimax duyệt rộng hơn nên giảm depth để tránh treo máy
         search_depth = 7 if algo != "expectimax" else 5
-        # ------------------------------------------------------------------------------------
         
         for step in range(1, 15): 
             self.log_msg(f"\n--- LƯỢT {step} ---", (255, 255, 0))
+            
+            # 1. LƯỢT CỦA TA (MAX)
             self.log_msg(f"1. Lượt của TA (Đang tính toán trước {search_depth} bước)...", (100, 255, 100))
-            # 1. Lượt MAX (Ta)
             _, nxt_p = self.get_best_adv_move(p_curr, e_curr, depth=search_depth, is_max=True, alpha=float('-inf'), beta=float('inf'), algo=algo)
             if nxt_p is None: nxt_p = p_curr 
             self.log_msg(f"-> TA quyết định di chuyển tới: {nxt_p}", (100, 255, 100))
@@ -1333,9 +1276,8 @@ class RicochetArena:
             
             if p_curr == self.target_pos or self.is_caught(p_curr, e_curr): break
                 
+            # 2. LƯỢT CỦA ĐỊCH (MIN / CHANCE)
             self.log_msg(f"2. Lượt của ĐỊCH (Đang tìm cách chặn đường)...", (255, 100, 100))
-
-            # 2. Lượt MIN (Địch)
             _, nxt_e = self.get_best_adv_move(p_curr, e_curr, depth=search_depth-1, is_max=False, alpha=float('-inf'), beta=float('inf'), algo=algo)
             if nxt_e is None: nxt_e = e_curr
             self.log_msg(f"-> ĐỊCH quyết định chặn tại: {nxt_e}", (255, 100, 100))
@@ -1347,7 +1289,9 @@ class RicochetArena:
         self.enemy.computed_path = e_path 
         return p_path
 
-    # Ghi đè 3 hàm gọi bằng Wrapper này
+    # thay vì phải viết 3 hàm Minimax, Alpha-Beta và Expectimax, thì sử dụng hàm bọc (Wrapper): đóngv ai trò cầu nối
+    # Sử dụng Wrapper để chuẩn hóa số lượng tham số đầu vào (start, obs)
+    # giúp tái sử dụng 1 hàm run_adversarial duy nhất cho cả 3 thuật toán.
     def run_minimax_wrapper(self, start, obs): return self.run_adversarial(start, obs, "minimax")
     def run_alphabeta(self, start, obs): return self.run_adversarial(start, obs, "alphabeta")
     def run_expectimax(self, start, obs): return self.run_adversarial(start, obs, "expectimax")

@@ -2,33 +2,18 @@
 Mục tiêu: Tìm 1 chuỗi hành động chung đưa hệ thống về Đích (5, 10).
 Cơ chế: Nếu một Trạng thái (State) chạm đích trước, nó sẽ chuyển sang trạng thái dừng (Sink State).
 
-[Tập Niềm tin ban đầu - Belief Start]
- - State 1: (4, 12)
- - State 2: (8, 14)
+[!] BƯỚC HỘI TỤ (State Convergence): Trượt TRÁI -> (2, 12)
 
-=== QUÁ TRÌNH TÌM KIẾM (BFS TRÊN KHÔNG GIAN BELIEF) ===
- [*] State 1 đã chạm đích (5, 10) và chuyển sang dừng (Sink State). Tiếp tục đồng bộ State 2.
+[!] BƯỚC HỘI TỤ (State Convergence): Trượt PHẢI -> (15, 12)
+ [*] State 1 đã chạm đích (5, 10) và chuyển sang dừng (Sink State).
 
-[!] BƯỚC HỘI TỤ (State Convergence):
-    - Từ tập Niềm tin ((4, 15), (8, 15)), phát lệnh chung trượt TRÁI.
-    - Kết quả: Các trạng thái đã sáp nhập tại cùng một điểm (0, 15).
+[!] BƯỚC HỘI TỤ (State Convergence): Trượt TRÁI -> (0, 15)
 
-[!] BƯỚC HỘI TỤ (State Convergence):
-    - Từ tập Niềm tin ((4, 15), (8, 15)), phát lệnh chung trượt PHẢI.
-    - Kết quả: Các trạng thái đã sáp nhập tại cùng một điểm (15, 15).
-
-[!] BƯỚC HỘI TỤ (State Convergence):
-    - Từ tập Niềm tin ((2, 12), (2, 14)), phát lệnh chung trượt LÊN.
-    - Kết quả: Các trạng thái đã sáp nhập tại cùng một điểm (2, 10).
-
-[!] BƯỚC HỘI TỤ (State Convergence):
-    - Từ tập Niềm tin ((2, 12), (2, 14)), phát lệnh chung trượt XUỐNG.
-    - Kết quả: Các trạng thái đã sáp nhập tại cùng một điểm (2, 15).
- [*] State 1 đã chạm đích (5, 10) và chuyển sang dừng (Sink State). Tiếp tục đồng bộ State 2.
- [*] State 2 đã chạm đích (5, 10) và chuyển sang dừng (Sink State). Tiếp tục đồng bộ State 1.
+[!] BƯỚC HỘI TỤ (State Convergence): Trượt PHẢI -> (15, 15)
+ [*] State 1 đã chạm đích (5, 10) và chuyển sang dừng (Sink State).
+ [*] State 2 đã chạm đích (5, 10) và chuyển sang dừng (Sink State).
 
 =======================================================
 => TỔNG KẾT: TÌM THẤY KẾ HOẠCH HỘI TỤ (CONFORMANT PLAN)!
-Tổng số trạng thái đã duyệt: 44
+Tổng số trạng thái đã duyệt: 37
 Chuỗi hành động chung (5 bước): LÊN -> PHẢI -> XUỐNG -> TRÁI -> XUỐNG
-Kết luận: Kế hoạch đảm bảo 100% tỷ lệ thành công.
