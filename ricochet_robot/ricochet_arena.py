@@ -1577,17 +1577,14 @@ class RicochetArena:
                 report_lines.append(f"{indent}-> [BẾ TẮC] Utility = {val}")
                 return val, None
 
-            report_lines.append(
-                f"{indent}[MAX] Ta ở {p_pos} | Địch ở {e_pos} | Alpha={alpha}, Beta={beta}. Thử {len(valid_moves)} nhánh:")
+            report_lines.append(f"{indent}[MAX] Ta ở {p_pos} | Địch ở {e_pos} | Alpha={alpha}, Beta={beta}. Thử {len(valid_moves)} nhánh:")
 
             # [MÃ GIẢ]: for each a in ACTIONS(state) do
             for nxt_p in valid_moves:
                 report_lines.append(f"{indent} + Giả sử Ta đi tới {nxt_p}:")
                 # [MÃ GIẢ]: v <- MAX(v, MIN-VALUE(RESULT(state, a), alpha, beta))
                 val, _ = self.get_best_adv_move(nxt_p, e_pos, depth - 1, False, alpha, beta, algo, report_lines, max_depth)
-                if val > best_val: 
-                    best_val = val
-                    best_move = nxt_p
+                if val > best_val: best_val = val; best_move = nxt_p
 
                 # CẮT TỈA ALPHA-BETA (Nếu thuật toán là Alpha-Beta)
                 if algo == "alphabeta":
@@ -1617,9 +1614,7 @@ class RicochetArena:
                 # [MÃ GIẢ]: function EXP-VALUE(state)
                 # [MÃ GIẢ]: v <- 0; for each a in ACTIONS(state) do v += P(a) * MAX-VALUE(RESULT(state, a))
                 # (Với P(a) là xác suất đồng đều chia cho tổng số nước đi hợp lệ)
-                avg_val = sum(
-                    self.get_best_adv_move(p_pos, nxt_e, depth - 1, True, alpha, beta, algo, report_lines, max_depth)[0]
-                    for nxt_e in valid_moves) / len(valid_moves)
+                avg_val = sum(self.get_best_adv_move(p_pos, nxt_e, depth - 1, True, alpha, beta, algo, report_lines, max_depth)[0] for nxt_e in valid_moves) / len(valid_moves)
                 return avg_val, random.choice(valid_moves)
 
             # 2. TRƯỜNG HỢP MINIMAX / ALPHA-BETA (Đối thủ hoàn hảo - Min Node)
@@ -1690,14 +1685,17 @@ class RicochetArena:
 
             if self.is_caught(p_curr, e_curr): break
 
-        filename = f"BaoCao_{algo.capitalize()}.txt"
-        if algo == "alphabeta": filename = "BaoCao_AlphaBeta.txt"
-        elif algo == "minimax": filename = "BaoCao_Minimax.txt"
-        elif algo == "expectimax": filename = "BaoCao_Expectimax.txt"
+        filename_map = {
+            "minimax": "BaoCao_Minimax.txt",
+            "alphabeta": "BaoCao_AlphaBeta.txt",
+            "expectimax": "BaoCao_Expectimax.txt"
+        }
+        
         try:
-            with open(self.get_map_path("BaoCao_AlphaBeta.txt"), "w", encoding="utf-8") as f:
+            filename = filename_map.get(algo, f"BaoCao_{algo}.txt")
+            with open(self.get_map_path(filename), "w", encoding="utf-8") as f:
                 f.write("\n".join(report_lines))
-            self.log_msg("-> Đã xuất Báo cáo: BaoCao_AlphaBeta.txt", (100, 255, 100))
+            self.log_msg(f"-> Đã xuất Báo cáo: {filename}", (100, 255, 100))
         except:
             pass
 
