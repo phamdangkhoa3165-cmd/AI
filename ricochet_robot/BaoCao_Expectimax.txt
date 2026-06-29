@@ -3,577 +3,292 @@
 
 
 ================ LƯỢT 1 ================
-[MAX] Ta ở (3, 3) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
- + Giả sử Ta đi tới (3, 0):
-    [MAX] Ta ở (3, 0) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+[MAX] Ta ở (3, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+ + Giả sử Ta đi tới (0, 3):
+    [MAX] Ta ở (0, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
      + Giả sử Ta đi tới (3, 3):
-        [MAX] Ta ở (3, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (3, 1):
-          -> [LÁ] Đánh giá Utility = -29
-         + Giả sử Ta đi tới (0, 3):
-          -> [LÁ] Đánh giá Utility = -14
-        [MAX] Ta ở (3, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (3, 0):
-          -> [LÁ] Đánh giá Utility = -35
-         + Giả sử Ta đi tới (0, 3):
-          -> [LÁ] Đánh giá Utility = -19
-     + Giả sử Ta đi tới (1, 0):
         -> [LÁ] Đánh giá Utility = -9999
-        [MAX] Ta ở (1, 0) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 3 nhánh:
-         + Giả sử Ta đi tới (3, 0):
-          -> [LÁ] Đánh giá Utility = -35
-         + Giả sử Ta đi tới (1, 3):
-          -> [LÁ] Đánh giá Utility = -8
-         + Giả sử Ta đi tới (0, 0):
-          -> [LÁ] Đánh giá Utility = -28
-    -> [LÁ] Đánh giá Utility = -9999
-    [MAX] Ta ở (3, 0) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-     + Giả sử Ta đi tới (0, 0):
-        [MAX] Ta ở (0, 0) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
-         + Giả sử Ta đi tới (0, 2):
-          -> [LÁ] Đánh giá Utility = -7
-        [MAX] Ta ở (0, 0) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (3, 0):
-          -> [LÁ] Đánh giá Utility = -34
-         + Giả sử Ta đi tới (0, 2):
-          -> [LÁ] Đánh giá Utility = -9
-        [MAX] Ta ở (0, 0) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+        [MAX] Ta ở (3, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
          + Giả sử Ta đi tới (3, 0):
           -> [LÁ] Đánh giá Utility = -37
-         + Giả sử Ta đi tới (0, 2):
-          -> [LÁ] Đánh giá Utility = -6
-     + Giả sử Ta đi tới (3, 3):
-        -> [LÁ] Đánh giá Utility = -9999
-        [MAX] Ta ở (3, 3) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (3, 0):
-          -> [LÁ] Đánh giá Utility = -38
          + Giả sử Ta đi tới (0, 3):
-          -> [LÁ] Đánh giá Utility = -16
-        [MAX] Ta ở (3, 3) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (1, 3):
+          -> [LÁ] Đánh giá Utility = -17
+    [MAX] Ta ở (0, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
+     + Giả sử Ta đi tới (3, 3):
+        [MAX] Ta ở (3, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (3, 0):
+          -> [LÁ] Đánh giá Utility = -37
+         + Giả sử Ta đi tới (0, 3):
+          -> [LÁ] Đánh giá Utility = -17
+        [MAX] Ta ở (3, 3) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (0, 3):
+          -> [LÁ] Đánh giá Utility = -18
+         + Giả sử Ta đi tới (3, 0):
+          -> [LÁ] Đánh giá Utility = -36
+ + Giả sử Ta đi tới (3, 0):
+    -> [LÁ] Đánh giá Utility = -9997
+    [MAX] Ta ở (3, 0) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+     + Giả sử Ta đi tới (3, 3):
+        [MAX] Ta ở (3, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (3, 0):
+          -> [LÁ] Đánh giá Utility = -37
+         + Giả sử Ta đi tới (0, 3):
+          -> [LÁ] Đánh giá Utility = -17
+        [MAX] Ta ở (3, 3) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (0, 3):
+          -> [LÁ] Đánh giá Utility = -18
+         + Giả sử Ta đi tới (3, 0):
+          -> [LÁ] Đánh giá Utility = -36
+     + Giả sử Ta đi tới (0, 0):
+        [MAX] Ta ở (0, 0) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (0, 2):
           -> [LÁ] Đánh giá Utility = -9
          + Giả sử Ta đi tới (3, 0):
-          -> [LÁ] Đánh giá Utility = -34
- + Giả sử Ta đi tới (0, 3):
-    -> [BẾ TẮC] Utility = -19
-    [MAX] Ta ở (0, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
+          -> [LÁ] Đánh giá Utility = -36
+        -> [LÁ] Đánh giá Utility = -9999
+
+--- LƯỢT CỦA ĐỊCH (MIN) PHẢN CÔNG ---
+  [MAX] Ta ở (0, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
+   + Giả sử Ta đi tới (3, 3):
+      [MAX] Ta ở (3, 3) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (0, 3):
+        -> [LÁ] Đánh giá Utility = -18
+       + Giả sử Ta đi tới (3, 0):
+        -> [LÁ] Đánh giá Utility = -36
+      [MAX] Ta ở (3, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (3, 0):
+        -> [LÁ] Đánh giá Utility = -37
+       + Giả sử Ta đi tới (0, 3):
+        -> [LÁ] Đánh giá Utility = -17
+  [MAX] Ta ở (0, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
+   + Giả sử Ta đi tới (3, 3):
+      -> [LÁ] Đánh giá Utility = -9999
+      [MAX] Ta ở (3, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (0, 3):
+        -> [LÁ] Đánh giá Utility = -17
+       + Giả sử Ta đi tới (3, 0):
+        -> [LÁ] Đánh giá Utility = -37
+
+================ LƯỢT 2 ================
+[MAX] Ta ở (0, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
+ + Giả sử Ta đi tới (3, 3):
+    -> [LÁ] Đánh giá Utility = -9997
+    [MAX] Ta ở (3, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+     + Giả sử Ta đi tới (3, 0):
+        [MAX] Ta ở (3, 0) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (3, 3):
+          -> [LÁ] Đánh giá Utility = -26
+         + Giả sử Ta đi tới (0, 0):
+          -> [LÁ] Đánh giá Utility = -28
+        -> [LÁ] Đánh giá Utility = -9999
+     + Giả sử Ta đi tới (0, 3):
+        [MAX] Ta ở (0, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
+         + Giả sử Ta đi tới (3, 3):
+          -> [LÁ] Đánh giá Utility = -26
+        [MAX] Ta ở (0, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
+         + Giả sử Ta đi tới (3, 3):
+          -> [LÁ] Đánh giá Utility = -27
+
+--- LƯỢT CỦA ĐỊCH (MIN) PHẢN CÔNG ---
+  -> [LÁ] Đánh giá Utility = -9997
+  [MAX] Ta ở (3, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+   + Giả sử Ta đi tới (3, 0):
+      -> [LÁ] Đánh giá Utility = -9999
+      [MAX] Ta ở (3, 0) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (3, 3):
+        -> [LÁ] Đánh giá Utility = -26
+       + Giả sử Ta đi tới (0, 0):
+        -> [LÁ] Đánh giá Utility = -28
+   + Giả sử Ta đi tới (0, 3):
+      [MAX] Ta ở (0, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
+       + Giả sử Ta đi tới (3, 3):
+        -> [LÁ] Đánh giá Utility = -26
+      [MAX] Ta ở (0, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
+       + Giả sử Ta đi tới (3, 3):
+        -> [LÁ] Đánh giá Utility = -27
+
+================ LƯỢT 3 ================
+[MAX] Ta ở (3, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+ + Giả sử Ta đi tới (3, 0):
+    [MAX] Ta ở (3, 0) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
      + Giả sử Ta đi tới (3, 3):
         [MAX] Ta ở (3, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
          + Giả sử Ta đi tới (0, 3):
           -> [LÁ] Đánh giá Utility = -17
          + Giả sử Ta đi tới (3, 0):
           -> [LÁ] Đánh giá Utility = -37
-        -> [LÁ] Đánh giá Utility = -9999
-    [MAX] Ta ở (0, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
-     + Giả sử Ta đi tới (3, 3):
-        [MAX] Ta ở (3, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (0, 3):
-          -> [LÁ] Đánh giá Utility = -14
-         + Giả sử Ta đi tới (3, 1):
-          -> [LÁ] Đánh giá Utility = -29
-        [MAX] Ta ở (3, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (0, 3):
-          -> [LÁ] Đánh giá Utility = -19
+        [MAX] Ta ở (3, 3) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
          + Giả sử Ta đi tới (3, 0):
-          -> [LÁ] Đánh giá Utility = -35
+          -> [LÁ] Đánh giá Utility = -36
+         + Giả sử Ta đi tới (0, 3):
+          -> [LÁ] Đánh giá Utility = -18
+     + Giả sử Ta đi tới (0, 0):
+        [MAX] Ta ở (0, 0) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (0, 2):
+          -> [LÁ] Đánh giá Utility = -9
+         + Giả sử Ta đi tới (3, 0):
+          -> [LÁ] Đánh giá Utility = -36
+        -> [LÁ] Đánh giá Utility = -9999
+    -> [LÁ] Đánh giá Utility = -9997
+ + Giả sử Ta đi tới (0, 3):
+    [MAX] Ta ở (0, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
+     + Giả sử Ta đi tới (3, 3):
+        [MAX] Ta ở (3, 3) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (3, 0):
+          -> [LÁ] Đánh giá Utility = -36
+         + Giả sử Ta đi tới (0, 3):
+          -> [LÁ] Đánh giá Utility = -18
+        [MAX] Ta ở (3, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (3, 0):
+          -> [LÁ] Đánh giá Utility = -37
+         + Giả sử Ta đi tới (0, 3):
+          -> [LÁ] Đánh giá Utility = -17
+    [MAX] Ta ở (0, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
+     + Giả sử Ta đi tới (3, 3):
+        -> [LÁ] Đánh giá Utility = -9999
+        [MAX] Ta ở (3, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (3, 0):
+          -> [LÁ] Đánh giá Utility = -37
+         + Giả sử Ta đi tới (0, 3):
+          -> [LÁ] Đánh giá Utility = -17
 
 --- LƯỢT CỦA ĐỊCH (MIN) PHẢN CÔNG ---
-  [MAX] Ta ở (0, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
-   + Giả sử Ta đi tới (3, 3):
-      [MAX] Ta ở (3, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-       + Giả sử Ta đi tới (0, 3):
-        -> [LÁ] Đánh giá Utility = -14
-       + Giả sử Ta đi tới (3, 1):
-        -> [LÁ] Đánh giá Utility = -29
-      [MAX] Ta ở (3, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-       + Giả sử Ta đi tới (3, 0):
-        -> [LÁ] Đánh giá Utility = -35
-       + Giả sử Ta đi tới (0, 3):
-        -> [LÁ] Đánh giá Utility = -19
-  -> [BẾ TẮC] Utility = -19
   [MAX] Ta ở (0, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
    + Giả sử Ta đi tới (3, 3):
+      -> [LÁ] Đánh giá Utility = -9999
       [MAX] Ta ở (3, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
        + Giả sử Ta đi tới (3, 0):
         -> [LÁ] Đánh giá Utility = -37
        + Giả sử Ta đi tới (0, 3):
         -> [LÁ] Đánh giá Utility = -17
-      -> [LÁ] Đánh giá Utility = -9999
-
-================ LƯỢT 2 ================
-[MAX] Ta ở (0, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
- + Giả sử Ta đi tới (3, 3):
-    [MAX] Ta ở (3, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-     + Giả sử Ta đi tới (0, 3):
-        [MAX] Ta ở (0, 3) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
-         + Giả sử Ta đi tới (3, 3):
-          -> [LÁ] Đánh giá Utility = -27
-        [MAX] Ta ở (0, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
-         + Giả sử Ta đi tới (3, 3):
-          -> [LÁ] Đánh giá Utility = -24
-     + Giả sử Ta đi tới (3, 0):
-        [MAX] Ta ở (3, 0) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (1, 0):
-          -> [LÁ] Đánh giá Utility = -19
-         + Giả sử Ta đi tới (3, 3):
-          -> [LÁ] Đánh giá Utility = -24
-        [MAX] Ta ở (3, 0) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (0, 0):
-          -> [LÁ] Đánh giá Utility = -27
-         + Giả sử Ta đi tới (3, 3):
-          -> [LÁ] Đánh giá Utility = -27
-    [MAX] Ta ở (3, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-     + Giả sử Ta đi tới (3, 1):
-        [MAX] Ta ở (3, 1) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 3 nhánh:
-         + Giả sử Ta đi tới (0, 1):
-          -> [LÁ] Đánh giá Utility = -19
-         + Giả sử Ta đi tới (3, 3):
-          -> [LÁ] Đánh giá Utility = -24
-         + Giả sử Ta đi tới (3, 0):
-          -> [LÁ] Đánh giá Utility = -37
-        -> [LÁ] Đánh giá Utility = -9999
-     + Giả sử Ta đi tới (0, 3):
-        [MAX] Ta ở (0, 3) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
-         + Giả sử Ta đi tới (2, 3):
-          -> [LÁ] Đánh giá Utility = -19
-        [MAX] Ta ở (0, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
-         + Giả sử Ta đi tới (3, 3):
-          -> [LÁ] Đánh giá Utility = -24
-
---- LƯỢT CỦA ĐỊCH (MIN) PHẢN CÔNG ---
-  [MAX] Ta ở (3, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-   + Giả sử Ta đi tới (3, 1):
-      [MAX] Ta ở (3, 1) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 3 nhánh:
-       + Giả sử Ta đi tới (0, 1):
-        -> [LÁ] Đánh giá Utility = -19
+  [MAX] Ta ở (0, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
+   + Giả sử Ta đi tới (3, 3):
+      [MAX] Ta ở (3, 3) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (3, 0):
+        -> [LÁ] Đánh giá Utility = -36
+       + Giả sử Ta đi tới (0, 3):
+        -> [LÁ] Đánh giá Utility = -18
+      [MAX] Ta ở (3, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (0, 3):
+        -> [LÁ] Đánh giá Utility = -17
        + Giả sử Ta đi tới (3, 0):
         -> [LÁ] Đánh giá Utility = -37
-       + Giả sử Ta đi tới (3, 3):
-        -> [LÁ] Đánh giá Utility = -24
-      -> [LÁ] Đánh giá Utility = -9999
-   + Giả sử Ta đi tới (0, 3):
-      [MAX] Ta ở (0, 3) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
-       + Giả sử Ta đi tới (2, 3):
-        -> [LÁ] Đánh giá Utility = -19
-      [MAX] Ta ở (0, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
-       + Giả sử Ta đi tới (3, 3):
-        -> [LÁ] Đánh giá Utility = -24
-  [MAX] Ta ở (3, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-   + Giả sử Ta đi tới (3, 0):
-      [MAX] Ta ở (3, 0) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-       + Giả sử Ta đi tới (1, 0):
-        -> [LÁ] Đánh giá Utility = -19
-       + Giả sử Ta đi tới (3, 3):
-        -> [LÁ] Đánh giá Utility = -24
-      [MAX] Ta ở (3, 0) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-       + Giả sử Ta đi tới (0, 0):
-        -> [LÁ] Đánh giá Utility = -27
-       + Giả sử Ta đi tới (3, 3):
-        -> [LÁ] Đánh giá Utility = -27
-   + Giả sử Ta đi tới (0, 3):
-      [MAX] Ta ở (0, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
-       + Giả sử Ta đi tới (3, 3):
-        -> [LÁ] Đánh giá Utility = -24
-      [MAX] Ta ở (0, 3) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
-       + Giả sử Ta đi tới (3, 3):
-        -> [LÁ] Đánh giá Utility = -27
-
-================ LƯỢT 3 ================
-[MAX] Ta ở (3, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
- + Giả sử Ta đi tới (0, 3):
-    [MAX] Ta ở (0, 3) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
-     + Giả sử Ta đi tới (3, 3):
-        [MAX] Ta ở (3, 3) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (3, 0):
-          -> [LÁ] Đánh giá Utility = -35
-         + Giả sử Ta đi tới (2, 3):
-          -> [LÁ] Đánh giá Utility = -19
-        [MAX] Ta ở (3, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (0, 3):
-          -> [LÁ] Đánh giá Utility = -19
-         + Giả sử Ta đi tới (3, 0):
-          -> [LÁ] Đánh giá Utility = -35
-        [MAX] Ta ở (3, 3) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (0, 3):
-          -> [LÁ] Đánh giá Utility = -16
-         + Giả sử Ta đi tới (3, 0):
-          -> [LÁ] Đánh giá Utility = -38
-    [MAX] Ta ở (0, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
-     + Giả sử Ta đi tới (3, 3):
-        [MAX] Ta ở (3, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (0, 3):
-          -> [LÁ] Đánh giá Utility = -19
-         + Giả sử Ta đi tới (3, 0):
-          -> [LÁ] Đánh giá Utility = -35
-        [MAX] Ta ở (3, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (0, 3):
-          -> [LÁ] Đánh giá Utility = -14
-         + Giả sử Ta đi tới (3, 1):
-          -> [LÁ] Đánh giá Utility = -29
- + Giả sử Ta đi tới (3, 0):
-    [MAX] Ta ở (3, 0) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-     + Giả sử Ta đi tới (0, 0):
-        [MAX] Ta ở (0, 0) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (0, 1):
-          -> [LÁ] Đánh giá Utility = -19
-         + Giả sử Ta đi tới (3, 0):
-          -> [LÁ] Đánh giá Utility = -35
-        [MAX] Ta ở (0, 0) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
-         + Giả sử Ta đi tới (0, 2):
-          -> [LÁ] Đánh giá Utility = -7
-        [MAX] Ta ở (0, 0) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (0, 2):
-          -> [LÁ] Đánh giá Utility = -8
-         + Giả sử Ta đi tới (3, 0):
-          -> [LÁ] Đánh giá Utility = -35
-     + Giả sử Ta đi tới (3, 3):
-        [MAX] Ta ở (3, 3) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (0, 3):
-          -> [LÁ] Đánh giá Utility = -16
-         + Giả sử Ta đi tới (3, 0):
-          -> [LÁ] Đánh giá Utility = -38
-        [MAX] Ta ở (3, 3) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (3, 0):
-          -> [LÁ] Đánh giá Utility = -35
-         + Giả sử Ta đi tới (2, 3):
-          -> [LÁ] Đánh giá Utility = -19
-        [MAX] Ta ở (3, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (0, 3):
-          -> [LÁ] Đánh giá Utility = -19
-         + Giả sử Ta đi tới (3, 0):
-          -> [LÁ] Đánh giá Utility = -35
-    [MAX] Ta ở (3, 0) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-     + Giả sử Ta đi tới (3, 3):
-        [MAX] Ta ở (3, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (3, 0):
-          -> [LÁ] Đánh giá Utility = -35
-         + Giả sử Ta đi tới (0, 3):
-          -> [LÁ] Đánh giá Utility = -19
-        [MAX] Ta ở (3, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (3, 1):
-          -> [LÁ] Đánh giá Utility = -29
-         + Giả sử Ta đi tới (0, 3):
-          -> [LÁ] Đánh giá Utility = -14
-     + Giả sử Ta đi tới (1, 0):
-        -> [LÁ] Đánh giá Utility = -9999
-        [MAX] Ta ở (1, 0) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 3 nhánh:
-         + Giả sử Ta đi tới (1, 3):
-          -> [LÁ] Đánh giá Utility = -8
-         + Giả sử Ta đi tới (3, 0):
-          -> [LÁ] Đánh giá Utility = -35
-         + Giả sử Ta đi tới (0, 0):
-          -> [LÁ] Đánh giá Utility = -28
-
---- LƯỢT CỦA ĐỊCH (MIN) PHẢN CÔNG ---
-  [MAX] Ta ở (3, 0) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-   + Giả sử Ta đi tới (3, 3):
-      [MAX] Ta ở (3, 3) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-       + Giả sử Ta đi tới (2, 3):
-        -> [LÁ] Đánh giá Utility = -19
-       + Giả sử Ta đi tới (3, 0):
-        -> [LÁ] Đánh giá Utility = -35
-      [MAX] Ta ở (3, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-       + Giả sử Ta đi tới (0, 3):
-        -> [LÁ] Đánh giá Utility = -19
-       + Giả sử Ta đi tới (3, 0):
-        -> [LÁ] Đánh giá Utility = -35
-      [MAX] Ta ở (3, 3) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-       + Giả sử Ta đi tới (3, 0):
-        -> [LÁ] Đánh giá Utility = -38
-       + Giả sử Ta đi tới (0, 3):
-        -> [LÁ] Đánh giá Utility = -16
-   + Giả sử Ta đi tới (0, 0):
-      [MAX] Ta ở (0, 0) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
-       + Giả sử Ta đi tới (0, 2):
-        -> [LÁ] Đánh giá Utility = -7
-      [MAX] Ta ở (0, 0) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-       + Giả sử Ta đi tới (0, 2):
-        -> [LÁ] Đánh giá Utility = -8
-       + Giả sử Ta đi tới (3, 0):
-        -> [LÁ] Đánh giá Utility = -35
-      [MAX] Ta ở (0, 0) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-       + Giả sử Ta đi tới (3, 0):
-        -> [LÁ] Đánh giá Utility = -35
-       + Giả sử Ta đi tới (0, 1):
-        -> [LÁ] Đánh giá Utility = -19
-  [MAX] Ta ở (3, 0) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-   + Giả sử Ta đi tới (3, 3):
-      [MAX] Ta ở (3, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-       + Giả sử Ta đi tới (3, 0):
-        -> [LÁ] Đánh giá Utility = -35
-       + Giả sử Ta đi tới (0, 3):
-        -> [LÁ] Đánh giá Utility = -19
-      [MAX] Ta ở (3, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-       + Giả sử Ta đi tới (3, 1):
-        -> [LÁ] Đánh giá Utility = -29
-       + Giả sử Ta đi tới (0, 3):
-        -> [LÁ] Đánh giá Utility = -14
-   + Giả sử Ta đi tới (1, 0):
-      -> [LÁ] Đánh giá Utility = -9999
-      [MAX] Ta ở (1, 0) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 3 nhánh:
-       + Giả sử Ta đi tới (0, 0):
-        -> [LÁ] Đánh giá Utility = -28
-       + Giả sử Ta đi tới (3, 0):
-        -> [LÁ] Đánh giá Utility = -35
-       + Giả sử Ta đi tới (1, 3):
-        -> [LÁ] Đánh giá Utility = -8
 
 ================ LƯỢT 4 ================
-[MAX] Ta ở (3, 0) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
- + Giả sử Ta đi tới (0, 0):
-    [MAX] Ta ở (0, 0) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-     + Giả sử Ta đi tới (3, 0):
-        [MAX] Ta ở (3, 0) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (3, 3):
-          -> [LÁ] Đánh giá Utility = -27
-         + Giả sử Ta đi tới (0, 0):
-          -> [LÁ] Đánh giá Utility = -27
-        [MAX] Ta ở (3, 0) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (3, 2):
-          -> [LÁ] Đánh giá Utility = -19
-         + Giả sử Ta đi tới (0, 0):
-          -> [LÁ] Đánh giá Utility = -24
-        [MAX] Ta ở (3, 0) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (2, 0):
-          -> [LÁ] Đánh giá Utility = -29
-         + Giả sử Ta đi tới (3, 3):
-          -> [LÁ] Đánh giá Utility = -25
-     + Giả sử Ta đi tới (0, 2):
-        [MAX] Ta ở (0, 2) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (0, 0):
-          -> [LÁ] Đánh giá Utility = -27
-         + Giả sử Ta đi tới (1, 2):
-          -> [LÁ] Đánh giá Utility = 9999
-        [MAX] Ta ở (0, 2) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (1, 2):
-          -> [LÁ] Đánh giá Utility = 9999
-         + Giả sử Ta đi tới (0, 0):
-          -> [LÁ] Đánh giá Utility = -24
-        [MAX] Ta ở (0, 2) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (1, 2):
-          -> [LÁ] Đánh giá Utility = 9999
-         + Giả sử Ta đi tới (0, 0):
-          -> [LÁ] Đánh giá Utility = -29
-    [MAX] Ta ở (0, 0) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
-     + Giả sử Ta đi tới (0, 2):
-        [MAX] Ta ở (0, 2) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (1, 2):
-          -> [LÁ] Đánh giá Utility = 9999
-         + Giả sử Ta đi tới (0, 1):
-          -> [LÁ] Đánh giá Utility = -19
-        [MAX] Ta ở (0, 2) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (0, 0):
-          -> [LÁ] Đánh giá Utility = -27
-         + Giả sử Ta đi tới (1, 2):
-          -> [LÁ] Đánh giá Utility = 9999
-        [MAX] Ta ở (0, 2) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (1, 2):
-          -> [LÁ] Đánh giá Utility = 9999
-         + Giả sử Ta đi tới (0, 0):
-          -> [LÁ] Đánh giá Utility = -26
-    [MAX] Ta ở (0, 0) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-     + Giả sử Ta đi tới (3, 0):
-        [MAX] Ta ở (3, 0) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (1, 0):
-          -> [LÁ] Đánh giá Utility = -19
-         + Giả sử Ta đi tới (3, 3):
-          -> [LÁ] Đánh giá Utility = -24
-        [MAX] Ta ở (3, 0) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (0, 0):
-          -> [LÁ] Đánh giá Utility = -27
-         + Giả sử Ta đi tới (3, 3):
-          -> [LÁ] Đánh giá Utility = -27
-     + Giả sử Ta đi tới (0, 1):
-        [MAX] Ta ở (0, 1) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 3 nhánh:
-         + Giả sử Ta đi tới (0, 2):
-          -> [LÁ] Đánh giá Utility = -9
-         + Giả sử Ta đi tới (3, 1):
-          -> [LÁ] Đánh giá Utility = -27
-         + Giả sử Ta đi tới (0, 0):
-          -> [LÁ] Đánh giá Utility = -27
-        -> [LÁ] Đánh giá Utility = -9999
+[MAX] Ta ở (0, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
  + Giả sử Ta đi tới (3, 3):
-    [MAX] Ta ở (3, 3) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-     + Giả sử Ta đi tới (0, 3):
-        [MAX] Ta ở (0, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
-         + Giả sử Ta đi tới (3, 3):
-          -> [LÁ] Đánh giá Utility = -24
-        -> [BẾ TẮC] Utility = -19
-        [MAX] Ta ở (0, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
-         + Giả sử Ta đi tới (3, 3):
-          -> [LÁ] Đánh giá Utility = -27
+    [MAX] Ta ở (3, 3) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
      + Giả sử Ta đi tới (3, 0):
-        -> [LÁ] Đánh giá Utility = -9999
-        [MAX] Ta ở (3, 0) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (1, 0):
-          -> [LÁ] Đánh giá Utility = -19
+        [MAX] Ta ở (3, 0) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
          + Giả sử Ta đi tới (3, 3):
-          -> [LÁ] Đánh giá Utility = -24
+          -> [LÁ] Đánh giá Utility = -26
+         + Giả sử Ta đi tới (0, 0):
+          -> [LÁ] Đánh giá Utility = -28
         [MAX] Ta ở (3, 0) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
          + Giả sử Ta đi tới (0, 0):
           -> [LÁ] Đánh giá Utility = -26
          + Giả sử Ta đi tới (3, 3):
           -> [LÁ] Đánh giá Utility = -28
-    [MAX] Ta ở (3, 3) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-     + Giả sử Ta đi tới (2, 3):
-        [MAX] Ta ở (2, 3) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 3 nhánh:
-         + Giả sử Ta đi tới (2, 0):
-          -> [LÁ] Đánh giá Utility = -25
-         + Giả sử Ta đi tới (3, 3):
-          -> [LÁ] Đánh giá Utility = -27
-         + Giả sử Ta đi tới (1, 3):
-          -> [LÁ] Đánh giá Utility = -9
-        -> [LÁ] Đánh giá Utility = -9999
-        [MAX] Ta ở (2, 3) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 3 nhánh:
-         + Giả sử Ta đi tới (3, 3):
-          -> [LÁ] Đánh giá Utility = -25
-         + Giả sử Ta đi tới (0, 3):
-          -> [LÁ] Đánh giá Utility = -16
-         + Giả sử Ta đi tới (2, 0):
-          -> [LÁ] Đánh giá Utility = -29
-     + Giả sử Ta đi tới (3, 0):
         [MAX] Ta ở (3, 0) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
          + Giả sử Ta đi tới (2, 0):
           -> [LÁ] Đánh giá Utility = -29
          + Giả sử Ta đi tới (3, 3):
           -> [LÁ] Đánh giá Utility = -25
-        [MAX] Ta ở (3, 0) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (0, 0):
-          -> [LÁ] Đánh giá Utility = -27
-         + Giả sử Ta đi tới (3, 3):
-          -> [LÁ] Đánh giá Utility = -27
-        [MAX] Ta ở (3, 0) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (0, 0):
-          -> [LÁ] Đánh giá Utility = -24
-         + Giả sử Ta đi tới (3, 2):
-          -> [LÁ] Đánh giá Utility = -19
-    [MAX] Ta ở (3, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-     + Giả sử Ta đi tới (3, 0):
-        [MAX] Ta ở (3, 0) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (0, 0):
-          -> [LÁ] Đánh giá Utility = -27
-         + Giả sử Ta đi tới (3, 3):
-          -> [LÁ] Đánh giá Utility = -27
-        [MAX] Ta ở (3, 0) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (1, 0):
-          -> [LÁ] Đánh giá Utility = -19
-         + Giả sử Ta đi tới (3, 3):
-          -> [LÁ] Đánh giá Utility = -24
      + Giả sử Ta đi tới (0, 3):
-        [MAX] Ta ở (0, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
+        -> [BẾ TẮC] Utility = -19
+        [MAX] Ta ở (0, 3) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
          + Giả sử Ta đi tới (3, 3):
-          -> [LÁ] Đánh giá Utility = -24
-        [MAX] Ta ở (0, 3) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
+          -> [LÁ] Đánh giá Utility = -25
+        [MAX] Ta ở (0, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
+         + Giả sử Ta đi tới (3, 3):
+          -> [LÁ] Đánh giá Utility = -26
+    [MAX] Ta ở (3, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+     + Giả sử Ta đi tới (0, 3):
+        [MAX] Ta ở (0, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
+         + Giả sử Ta đi tới (3, 3):
+          -> [LÁ] Đánh giá Utility = -26
+        [MAX] Ta ở (0, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
          + Giả sử Ta đi tới (3, 3):
           -> [LÁ] Đánh giá Utility = -27
+     + Giả sử Ta đi tới (3, 0):
+        -> [LÁ] Đánh giá Utility = -9999
+        [MAX] Ta ở (3, 0) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (3, 3):
+          -> [LÁ] Đánh giá Utility = -26
+         + Giả sử Ta đi tới (0, 0):
+          -> [LÁ] Đánh giá Utility = -28
 
 --- LƯỢT CỦA ĐỊCH (MIN) PHẢN CÔNG ---
-  [MAX] Ta ở (0, 0) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
-   + Giả sử Ta đi tới (0, 2):
-      [MAX] Ta ở (0, 2) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+  [MAX] Ta ở (3, 3) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+   + Giả sử Ta đi tới (3, 0):
+      [MAX] Ta ở (3, 0) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
        + Giả sử Ta đi tới (0, 0):
         -> [LÁ] Đánh giá Utility = -26
-       + Giả sử Ta đi tới (1, 2):
-        -> [LÁ] Đánh giá Utility = 9999
-      [MAX] Ta ở (0, 2) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-       + Giả sử Ta đi tới (0, 1):
-        -> [LÁ] Đánh giá Utility = -19
-       + Giả sử Ta đi tới (1, 2):
-        -> [LÁ] Đánh giá Utility = 9999
-      [MAX] Ta ở (0, 2) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-       + Giả sử Ta đi tới (0, 0):
-        -> [LÁ] Đánh giá Utility = -27
-       + Giả sử Ta đi tới (1, 2):
-        -> [LÁ] Đánh giá Utility = 9999
-  [MAX] Ta ở (0, 0) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-   + Giả sử Ta đi tới (3, 0):
+       + Giả sử Ta đi tới (3, 3):
+        -> [LÁ] Đánh giá Utility = -28
       [MAX] Ta ở (3, 0) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
        + Giả sử Ta đi tới (3, 3):
         -> [LÁ] Đánh giá Utility = -25
        + Giả sử Ta đi tới (2, 0):
         -> [LÁ] Đánh giá Utility = -29
-      [MAX] Ta ở (3, 0) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+      [MAX] Ta ở (3, 0) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
        + Giả sử Ta đi tới (0, 0):
-        -> [LÁ] Đánh giá Utility = -27
+        -> [LÁ] Đánh giá Utility = -28
        + Giả sử Ta đi tới (3, 3):
-        -> [LÁ] Đánh giá Utility = -27
-      [MAX] Ta ở (3, 0) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-       + Giả sử Ta đi tới (0, 0):
-        -> [LÁ] Đánh giá Utility = -24
-       + Giả sử Ta đi tới (3, 2):
-        -> [LÁ] Đánh giá Utility = -19
-   + Giả sử Ta đi tới (0, 2):
-      [MAX] Ta ở (0, 2) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-       + Giả sử Ta đi tới (0, 0):
-        -> [LÁ] Đánh giá Utility = -29
-       + Giả sử Ta đi tới (1, 2):
-        -> [LÁ] Đánh giá Utility = 9999
-      [MAX] Ta ở (0, 2) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-       + Giả sử Ta đi tới (0, 0):
-        -> [LÁ] Đánh giá Utility = -24
-       + Giả sử Ta đi tới (1, 2):
-        -> [LÁ] Đánh giá Utility = 9999
-      [MAX] Ta ở (0, 2) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-       + Giả sử Ta đi tới (0, 0):
-        -> [LÁ] Đánh giá Utility = -27
-       + Giả sử Ta đi tới (1, 2):
-        -> [LÁ] Đánh giá Utility = 9999
-  [MAX] Ta ở (0, 0) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+        -> [LÁ] Đánh giá Utility = -26
+   + Giả sử Ta đi tới (0, 3):
+      [MAX] Ta ở (0, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
+       + Giả sử Ta đi tới (3, 3):
+        -> [LÁ] Đánh giá Utility = -26
+      [MAX] Ta ở (0, 3) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
+       + Giả sử Ta đi tới (3, 3):
+        -> [LÁ] Đánh giá Utility = -25
+      -> [BẾ TẮC] Utility = -19
+  [MAX] Ta ở (3, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
    + Giả sử Ta đi tới (3, 0):
-      [MAX] Ta ở (3, 0) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-       + Giả sử Ta đi tới (3, 3):
-        -> [LÁ] Đánh giá Utility = -27
-       + Giả sử Ta đi tới (0, 0):
-        -> [LÁ] Đánh giá Utility = -27
-      [MAX] Ta ở (3, 0) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-       + Giả sử Ta đi tới (1, 0):
-        -> [LÁ] Đánh giá Utility = -19
-       + Giả sử Ta đi tới (3, 3):
-        -> [LÁ] Đánh giá Utility = -24
-   + Giả sử Ta đi tới (0, 1):
-      [MAX] Ta ở (0, 1) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 3 nhánh:
-       + Giả sử Ta đi tới (0, 0):
-        -> [LÁ] Đánh giá Utility = -27
-       + Giả sử Ta đi tới (0, 2):
-        -> [LÁ] Đánh giá Utility = -9
-       + Giả sử Ta đi tới (3, 1):
-        -> [LÁ] Đánh giá Utility = -27
       -> [LÁ] Đánh giá Utility = -9999
+      [MAX] Ta ở (3, 0) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (0, 0):
+        -> [LÁ] Đánh giá Utility = -28
+       + Giả sử Ta đi tới (3, 3):
+        -> [LÁ] Đánh giá Utility = -26
+   + Giả sử Ta đi tới (0, 3):
+      [MAX] Ta ở (0, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
+       + Giả sử Ta đi tới (3, 3):
+        -> [LÁ] Đánh giá Utility = -27
+      [MAX] Ta ở (0, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
+       + Giả sử Ta đi tới (3, 3):
+        -> [LÁ] Đánh giá Utility = -26
 
 ================ LƯỢT 5 ================
-[MAX] Ta ở (0, 0) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+[MAX] Ta ở (3, 3) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
  + Giả sử Ta đi tới (3, 0):
-    [MAX] Ta ở (3, 0) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-     + Giả sử Ta đi tới (0, 0):
-        [MAX] Ta ở (0, 0) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (3, 0):
-          -> [LÁ] Đánh giá Utility = -34
-         + Giả sử Ta đi tới (0, 2):
-          -> [LÁ] Đánh giá Utility = -9
-        [MAX] Ta ở (0, 0) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (0, 2):
-          -> [LÁ] Đánh giá Utility = -5
-         + Giả sử Ta đi tới (2, 0):
-          -> [LÁ] Đánh giá Utility = -29
-     + Giả sử Ta đi tới (3, 2):
-        -> [LÁ] Đánh giá Utility = -9999
-        [MAX] Ta ở (3, 2) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 3 nhánh:
-         + Giả sử Ta đi tới (2, 2):
-          -> [LÁ] Đánh giá Utility = -7
-         + Giả sử Ta đi tới (3, 3):
-          -> [LÁ] Đánh giá Utility = -27
-         + Giả sử Ta đi tới (3, 0):
-          -> [LÁ] Đánh giá Utility = -34
     [MAX] Ta ở (3, 0) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-     + Giả sử Ta đi tới (2, 0):
-        -> [LÁ] Đánh giá Utility = -9999
-        [MAX] Ta ở (2, 0) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 3 nhánh:
+     + Giả sử Ta đi tới (3, 3):
+        [MAX] Ta ở (3, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (3, 1):
+          -> [LÁ] Đánh giá Utility = -29
+         + Giả sử Ta đi tới (0, 3):
+          -> [LÁ] Đánh giá Utility = -14
+        [MAX] Ta ở (3, 3) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (3, 0):
+          -> [LÁ] Đánh giá Utility = -35
          + Giả sử Ta đi tới (2, 3):
-          -> [LÁ] Đánh giá Utility = -15
+          -> [LÁ] Đánh giá Utility = -19
+        [MAX] Ta ở (3, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (0, 3):
+          -> [LÁ] Đánh giá Utility = -17
          + Giả sử Ta đi tới (3, 0):
           -> [LÁ] Đánh giá Utility = -37
+     + Giả sử Ta đi tới (2, 0):
+        [MAX] Ta ở (2, 0) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 3 nhánh:
+         + Giả sử Ta đi tới (3, 0):
+          -> [LÁ] Đánh giá Utility = -37
+         + Giả sử Ta đi tới (2, 3):
+          -> [LÁ] Đánh giá Utility = -15
          + Giả sử Ta đi tới (1, 0):
           -> [LÁ] Đánh giá Utility = -19
+        -> [LÁ] Đánh giá Utility = -9999
         [MAX] Ta ở (2, 0) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 3 nhánh:
          + Giả sử Ta đi tới (0, 0):
           -> [LÁ] Đánh giá Utility = -26
@@ -581,132 +296,393 @@
           -> [LÁ] Đánh giá Utility = -19
          + Giả sử Ta đi tới (3, 0):
           -> [LÁ] Đánh giá Utility = -35
+    [MAX] Ta ở (3, 0) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
      + Giả sử Ta đi tới (3, 3):
         [MAX] Ta ở (3, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
          + Giả sử Ta đi tới (3, 0):
           -> [LÁ] Đánh giá Utility = -37
          + Giả sử Ta đi tới (0, 3):
           -> [LÁ] Đánh giá Utility = -17
-        [MAX] Ta ở (3, 3) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (2, 3):
-          -> [LÁ] Đánh giá Utility = -19
+        [MAX] Ta ở (3, 3) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
          + Giả sử Ta đi tới (3, 0):
-          -> [LÁ] Đánh giá Utility = -35
-        [MAX] Ta ở (3, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+          -> [LÁ] Đánh giá Utility = -36
          + Giả sử Ta đi tới (0, 3):
-          -> [LÁ] Đánh giá Utility = -14
-         + Giả sử Ta đi tới (3, 1):
-          -> [LÁ] Đánh giá Utility = -29
-    [MAX] Ta ở (3, 0) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-     + Giả sử Ta đi tới (3, 3):
-        -> [LÁ] Đánh giá Utility = -9999
+          -> [LÁ] Đánh giá Utility = -18
      + Giả sử Ta đi tới (0, 0):
-        [MAX] Ta ở (0, 0) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (3, 0):
-          -> [LÁ] Đánh giá Utility = -37
+        [MAX] Ta ở (0, 0) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
          + Giả sử Ta đi tới (0, 2):
-          -> [LÁ] Đánh giá Utility = -6
- + Giả sử Ta đi tới (0, 2):
-    [MAX] Ta ở (0, 2) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-     + Giả sử Ta đi tới (1, 2):
-      -> [LÁ] Đánh giá Utility = 9999
+          -> [LÁ] Đánh giá Utility = -9
+         + Giả sử Ta đi tới (3, 0):
+          -> [LÁ] Đánh giá Utility = -36
+        -> [LÁ] Đánh giá Utility = -9999
+    [MAX] Ta ở (3, 0) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
      + Giả sử Ta đi tới (0, 0):
+        [MAX] Ta ở (0, 0) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
+         + Giả sử Ta đi tới (0, 2):
+          -> [LÁ] Đánh giá Utility = -7
         [MAX] Ta ở (0, 0) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
          + Giả sử Ta đi tới (0, 2):
           -> [LÁ] Đánh giá Utility = -9
          + Giả sử Ta đi tới (3, 0):
           -> [LÁ] Đánh giá Utility = -34
-        [MAX] Ta ở (0, 0) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (2, 0):
-          -> [LÁ] Đánh giá Utility = -29
-         + Giả sử Ta đi tới (0, 2):
-          -> [LÁ] Đánh giá Utility = -5
-    [MAX] Ta ở (0, 2) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-     + Giả sử Ta đi tới (0, 0):
-        -> [LÁ] Đánh giá Utility = -9999
-        [MAX] Ta ở (0, 0) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (0, 2):
-          -> [LÁ] Đánh giá Utility = -8
-         + Giả sử Ta đi tới (3, 0):
-          -> [LÁ] Đánh giá Utility = -35
-        [MAX] Ta ở (0, 0) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (0, 2):
-          -> [LÁ] Đánh giá Utility = -5
-         + Giả sử Ta đi tới (2, 0):
-          -> [LÁ] Đánh giá Utility = -29
-     + Giả sử Ta đi tới (1, 2):
-      -> [LÁ] Đánh giá Utility = 9999
-    [MAX] Ta ở (0, 2) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-     + Giả sử Ta đi tới (1, 2):
-      -> [LÁ] Đánh giá Utility = 9999
-     + Giả sử Ta đi tới (0, 0):
         [MAX] Ta ở (0, 0) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
          + Giả sử Ta đi tới (0, 2):
           -> [LÁ] Đánh giá Utility = -6
          + Giả sử Ta đi tới (3, 0):
           -> [LÁ] Đánh giá Utility = -37
+     + Giả sử Ta đi tới (3, 3):
+        [MAX] Ta ở (3, 3) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (0, 3):
+          -> [LÁ] Đánh giá Utility = -16
+         + Giả sử Ta đi tới (3, 0):
+          -> [LÁ] Đánh giá Utility = -38
+        [MAX] Ta ở (3, 3) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (3, 0):
+          -> [LÁ] Đánh giá Utility = -34
+         + Giả sử Ta đi tới (1, 3):
+          -> [LÁ] Đánh giá Utility = -9
+        -> [LÁ] Đánh giá Utility = -9999
+ + Giả sử Ta đi tới (0, 3):
+    [MAX] Ta ở (0, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
+     + Giả sử Ta đi tới (3, 3):
+        [MAX] Ta ở (3, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (3, 0):
+          -> [LÁ] Đánh giá Utility = -37
+         + Giả sử Ta đi tới (0, 3):
+          -> [LÁ] Đánh giá Utility = -17
+        [MAX] Ta ở (3, 3) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (0, 3):
+          -> [LÁ] Đánh giá Utility = -18
+         + Giả sử Ta đi tới (3, 0):
+          -> [LÁ] Đánh giá Utility = -36
+    [MAX] Ta ở (0, 3) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
+     + Giả sử Ta đi tới (3, 3):
+        [MAX] Ta ở (3, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (3, 0):
+          -> [LÁ] Đánh giá Utility = -37
+         + Giả sử Ta đi tới (0, 3):
+          -> [LÁ] Đánh giá Utility = -17
+        [MAX] Ta ở (3, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (3, 1):
+          -> [LÁ] Đánh giá Utility = -29
+         + Giả sử Ta đi tới (0, 3):
+          -> [LÁ] Đánh giá Utility = -14
+        [MAX] Ta ở (3, 3) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (2, 3):
+          -> [LÁ] Đánh giá Utility = -19
+         + Giả sử Ta đi tới (3, 0):
+          -> [LÁ] Đánh giá Utility = -35
+    -> [BẾ TẮC] Utility = -19
 
 --- LƯỢT CỦA ĐỊCH (MIN) PHẢN CÔNG ---
-  [MAX] Ta ở (0, 2) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-   + Giả sử Ta đi tới (0, 0):
-      -> [LÁ] Đánh giá Utility = -9999
-      [MAX] Ta ở (0, 0) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+  [MAX] Ta ở (3, 0) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+   + Giả sử Ta đi tới (2, 0):
+      [MAX] Ta ở (2, 0) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 3 nhánh:
        + Giả sử Ta đi tới (3, 0):
         -> [LÁ] Đánh giá Utility = -35
-       + Giả sử Ta đi tới (0, 2):
-        -> [LÁ] Đánh giá Utility = -8
-      [MAX] Ta ở (0, 0) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-       + Giả sử Ta đi tới (2, 0):
-        -> [LÁ] Đánh giá Utility = -29
-       + Giả sử Ta đi tới (0, 2):
-        -> [LÁ] Đánh giá Utility = -5
-   + Giả sử Ta đi tới (1, 2):
-    -> [LÁ] Đánh giá Utility = 9999
-  [MAX] Ta ở (0, 2) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-   + Giả sử Ta đi tới (1, 2):
-    -> [LÁ] Đánh giá Utility = 9999
-   + Giả sử Ta đi tới (0, 0):
-      [MAX] Ta ở (0, 0) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (0, 0):
+        -> [LÁ] Đánh giá Utility = -26
+       + Giả sử Ta đi tới (2, 3):
+        -> [LÁ] Đánh giá Utility = -19
+      -> [LÁ] Đánh giá Utility = -9999
+      [MAX] Ta ở (2, 0) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 3 nhánh:
        + Giả sử Ta đi tới (3, 0):
         -> [LÁ] Đánh giá Utility = -37
-       + Giả sử Ta đi tới (0, 2):
-        -> [LÁ] Đánh giá Utility = -6
-  [MAX] Ta ở (0, 2) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-   + Giả sử Ta đi tới (1, 2):
-    -> [LÁ] Đánh giá Utility = 9999
-   + Giả sử Ta đi tới (0, 0):
-      [MAX] Ta ở (0, 0) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (2, 3):
+        -> [LÁ] Đánh giá Utility = -15
+       + Giả sử Ta đi tới (1, 0):
+        -> [LÁ] Đánh giá Utility = -19
+   + Giả sử Ta đi tới (3, 3):
+      [MAX] Ta ở (3, 3) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (3, 0):
+        -> [LÁ] Đánh giá Utility = -35
+       + Giả sử Ta đi tới (2, 3):
+        -> [LÁ] Đánh giá Utility = -19
+      [MAX] Ta ở (3, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (0, 3):
+        -> [LÁ] Đánh giá Utility = -14
+       + Giả sử Ta đi tới (3, 1):
+        -> [LÁ] Đánh giá Utility = -29
+      [MAX] Ta ở (3, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (3, 0):
+        -> [LÁ] Đánh giá Utility = -37
+       + Giả sử Ta đi tới (0, 3):
+        -> [LÁ] Đánh giá Utility = -17
+  [MAX] Ta ở (3, 0) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+   + Giả sử Ta đi tới (3, 3):
+      -> [LÁ] Đánh giá Utility = -9999
+      [MAX] Ta ở (3, 3) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (3, 0):
+        -> [LÁ] Đánh giá Utility = -38
+       + Giả sử Ta đi tới (0, 3):
+        -> [LÁ] Đánh giá Utility = -16
+      [MAX] Ta ở (3, 3) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
        + Giả sử Ta đi tới (3, 0):
         -> [LÁ] Đánh giá Utility = -34
+       + Giả sử Ta đi tới (1, 3):
+        -> [LÁ] Đánh giá Utility = -9
+   + Giả sử Ta đi tới (0, 0):
+      [MAX] Ta ở (0, 0) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
        + Giả sử Ta đi tới (0, 2):
         -> [LÁ] Đánh giá Utility = -9
-      [MAX] Ta ở (0, 0) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-       + Giả sử Ta đi tới (2, 0):
-        -> [LÁ] Đánh giá Utility = -29
+       + Giả sử Ta đi tới (3, 0):
+        -> [LÁ] Đánh giá Utility = -34
+      [MAX] Ta ở (0, 0) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
        + Giả sử Ta đi tới (0, 2):
-        -> [LÁ] Đánh giá Utility = -5
+        -> [LÁ] Đánh giá Utility = -7
+      [MAX] Ta ở (0, 0) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (0, 2):
+        -> [LÁ] Đánh giá Utility = -6
+       + Giả sử Ta đi tới (3, 0):
+        -> [LÁ] Đánh giá Utility = -37
+  [MAX] Ta ở (3, 0) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+   + Giả sử Ta đi tới (3, 3):
+      [MAX] Ta ở (3, 3) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (0, 3):
+        -> [LÁ] Đánh giá Utility = -18
+       + Giả sử Ta đi tới (3, 0):
+        -> [LÁ] Đánh giá Utility = -36
+      [MAX] Ta ở (3, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (3, 0):
+        -> [LÁ] Đánh giá Utility = -37
+       + Giả sử Ta đi tới (0, 3):
+        -> [LÁ] Đánh giá Utility = -17
+   + Giả sử Ta đi tới (0, 0):
+      -> [LÁ] Đánh giá Utility = -9999
+      [MAX] Ta ở (0, 0) | Địch ở (1, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (0, 2):
+        -> [LÁ] Đánh giá Utility = -9
+       + Giả sử Ta đi tới (3, 0):
+        -> [LÁ] Đánh giá Utility = -36
 
 ================ LƯỢT 6 ================
-[MAX] Ta ở (0, 2) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
- + Giả sử Ta đi tới (1, 2):
-  -> [LÁ] Đánh giá Utility = 9999
- + Giả sử Ta đi tới (0, 0):
-    [MAX] Ta ở (0, 0) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+[MAX] Ta ở (3, 0) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+ + Giả sử Ta đi tới (3, 3):
+    [MAX] Ta ở (3, 3) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+     + Giả sử Ta đi tới (1, 3):
+        -> [LÁ] Đánh giá Utility = -9999
      + Giả sử Ta đi tới (3, 0):
-        [MAX] Ta ở (3, 0) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+        [MAX] Ta ở (3, 0) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (3, 2):
+          -> [LÁ] Đánh giá Utility = -19
          + Giả sử Ta đi tới (0, 0):
-          -> [LÁ] Đánh giá Utility = -27
+          -> [LÁ] Đánh giá Utility = -24
+    [MAX] Ta ở (3, 3) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+     + Giả sử Ta đi tới (3, 0):
+        [MAX] Ta ở (3, 0) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (3, 3):
+          -> [LÁ] Đánh giá Utility = -28
+         + Giả sử Ta đi tới (0, 0):
+          -> [LÁ] Đánh giá Utility = -26
+        -> [LÁ] Đánh giá Utility = -9999
+        [MAX] Ta ở (3, 0) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (1, 0):
+          -> [LÁ] Đánh giá Utility = -19
+         + Giả sử Ta đi tới (3, 3):
+          -> [LÁ] Đánh giá Utility = -24
+     + Giả sử Ta đi tới (0, 3):
+        -> [BẾ TẮC] Utility = -19
+        [MAX] Ta ở (0, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
+         + Giả sử Ta đi tới (3, 3):
+          -> [LÁ] Đánh giá Utility = -24
+        [MAX] Ta ở (0, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
          + Giả sử Ta đi tới (3, 3):
           -> [LÁ] Đánh giá Utility = -27
-        -> [LÁ] Đánh giá Utility = -9999
+    -> [LÁ] Đánh giá Utility = -9997
+ + Giả sử Ta đi tới (0, 0):
+    [MAX] Ta ở (0, 0) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
      + Giả sử Ta đi tới (0, 2):
         [MAX] Ta ở (0, 2) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
          + Giả sử Ta đi tới (0, 0):
           -> [LÁ] Đánh giá Utility = -27
          + Giả sử Ta đi tới (1, 2):
-          -> [LÁ] Đánh giá Utility = 9999
+          -> [LÁ] Đánh giá Utility = 10000
         [MAX] Ta ở (0, 2) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (1, 2):
+          -> [LÁ] Đánh giá Utility = 10000
          + Giả sử Ta đi tới (0, 0):
           -> [LÁ] Đánh giá Utility = -27
+     + Giả sử Ta đi tới (3, 0):
+        -> [LÁ] Đánh giá Utility = -9999
+        [MAX] Ta ở (3, 0) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (0, 0):
+          -> [LÁ] Đánh giá Utility = -27
+         + Giả sử Ta đi tới (3, 3):
+          -> [LÁ] Đánh giá Utility = -27
+    [MAX] Ta ở (0, 0) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+     + Giả sử Ta đi tới (0, 2):
+        [MAX] Ta ở (0, 2) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
          + Giả sử Ta đi tới (1, 2):
-          -> [LÁ] Đánh giá Utility = 9999
+          -> [LÁ] Đánh giá Utility = 10000
+         + Giả sử Ta đi tới (0, 0):
+          -> [LÁ] Đánh giá Utility = -24
+     + Giả sử Ta đi tới (3, 0):
+        [MAX] Ta ở (3, 0) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (0, 0):
+          -> [LÁ] Đánh giá Utility = -24
+         + Giả sử Ta đi tới (3, 2):
+          -> [LÁ] Đánh giá Utility = -19
+    [MAX] Ta ở (0, 0) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
+     + Giả sử Ta đi tới (0, 2):
+        [MAX] Ta ở (0, 2) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (1, 2):
+          -> [LÁ] Đánh giá Utility = 10000
+         + Giả sử Ta đi tới (0, 1):
+          -> [LÁ] Đánh giá Utility = -19
+        [MAX] Ta ở (0, 2) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (1, 2):
+          -> [LÁ] Đánh giá Utility = 10000
+         + Giả sử Ta đi tới (0, 0):
+          -> [LÁ] Đánh giá Utility = -27
+        [MAX] Ta ở (0, 2) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (1, 2):
+          -> [LÁ] Đánh giá Utility = 10000
+         + Giả sử Ta đi tới (0, 0):
+          -> [LÁ] Đánh giá Utility = -26
+
+--- LƯỢT CỦA ĐỊCH (MIN) PHẢN CÔNG ---
+  [MAX] Ta ở (0, 0) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+   + Giả sử Ta đi tới (3, 0):
+      -> [LÁ] Đánh giá Utility = -9999
+      [MAX] Ta ở (3, 0) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (3, 3):
+        -> [LÁ] Đánh giá Utility = -27
+       + Giả sử Ta đi tới (0, 0):
+        -> [LÁ] Đánh giá Utility = -27
+   + Giả sử Ta đi tới (0, 2):
+      [MAX] Ta ở (0, 2) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (0, 0):
+        -> [LÁ] Đánh giá Utility = -27
+       + Giả sử Ta đi tới (1, 2):
+        -> [LÁ] Đánh giá Utility = 10000
+      [MAX] Ta ở (0, 2) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (0, 0):
+        -> [LÁ] Đánh giá Utility = -27
+       + Giả sử Ta đi tới (1, 2):
+        -> [LÁ] Đánh giá Utility = 10000
+  [MAX] Ta ở (0, 0) | Địch ở (1, 0) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
+   + Giả sử Ta đi tới (0, 2):
+      [MAX] Ta ở (0, 2) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (0, 1):
+        -> [LÁ] Đánh giá Utility = -19
+       + Giả sử Ta đi tới (1, 2):
+        -> [LÁ] Đánh giá Utility = 10000
+      [MAX] Ta ở (0, 2) | Địch ở (1, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (0, 0):
+        -> [LÁ] Đánh giá Utility = -26
+       + Giả sử Ta đi tới (1, 2):
+        -> [LÁ] Đánh giá Utility = 10000
+      [MAX] Ta ở (0, 2) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (1, 2):
+        -> [LÁ] Đánh giá Utility = 10000
+       + Giả sử Ta đi tới (0, 0):
+        -> [LÁ] Đánh giá Utility = -27
+  [MAX] Ta ở (0, 0) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+   + Giả sử Ta đi tới (3, 0):
+      [MAX] Ta ở (3, 0) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (0, 0):
+        -> [LÁ] Đánh giá Utility = -24
+       + Giả sử Ta đi tới (3, 2):
+        -> [LÁ] Đánh giá Utility = -19
+   + Giả sử Ta đi tới (0, 2):
+      [MAX] Ta ở (0, 2) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (0, 0):
+        -> [LÁ] Đánh giá Utility = -24
+       + Giả sử Ta đi tới (1, 2):
+        -> [LÁ] Đánh giá Utility = 10000
+
+================ LƯỢT 7 ================
+[MAX] Ta ở (0, 0) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+ + Giả sử Ta đi tới (3, 0):
+    [MAX] Ta ở (3, 0) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+     + Giả sử Ta đi tới (0, 0):
+        [MAX] Ta ở (0, 0) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (2, 0):
+          -> [LÁ] Đánh giá Utility = -29
+         + Giả sử Ta đi tới (0, 2):
+          -> [LÁ] Đánh giá Utility = -5
+        [MAX] Ta ở (0, 0) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (3, 0):
+          -> [LÁ] Đánh giá Utility = -34
+         + Giả sử Ta đi tới (0, 2):
+          -> [LÁ] Đánh giá Utility = -9
+     + Giả sử Ta đi tới (3, 2):
+        [MAX] Ta ở (3, 2) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 3 nhánh:
+         + Giả sử Ta đi tới (3, 0):
+          -> [LÁ] Đánh giá Utility = -34
+         + Giả sử Ta đi tới (3, 3):
+          -> [LÁ] Đánh giá Utility = -27
+         + Giả sử Ta đi tới (2, 2):
+          -> [LÁ] Đánh giá Utility = -7
+        -> [LÁ] Đánh giá Utility = -9999
+ + Giả sử Ta đi tới (0, 2):
+    [MAX] Ta ở (0, 2) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+     + Giả sử Ta đi tới (1, 2):
+      -> [LÁ] Đánh giá Utility = 10002
+     + Giả sử Ta đi tới (0, 0):
+        [MAX] Ta ở (0, 0) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (2, 0):
+          -> [LÁ] Đánh giá Utility = -29
+         + Giả sử Ta đi tới (0, 2):
+          -> [LÁ] Đánh giá Utility = -5
+        [MAX] Ta ở (0, 0) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (0, 2):
+          -> [LÁ] Đánh giá Utility = -9
+         + Giả sử Ta đi tới (3, 0):
+          -> [LÁ] Đánh giá Utility = -34
+
+--- LƯỢT CỦA ĐỊCH (MIN) PHẢN CÔNG ---
+  [MAX] Ta ở (0, 2) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+   + Giả sử Ta đi tới (0, 0):
+      [MAX] Ta ở (0, 0) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (0, 2):
+        -> [LÁ] Đánh giá Utility = -9
+       + Giả sử Ta đi tới (3, 0):
+        -> [LÁ] Đánh giá Utility = -34
+      [MAX] Ta ở (0, 0) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+       + Giả sử Ta đi tới (2, 0):
+        -> [LÁ] Đánh giá Utility = -29
+       + Giả sử Ta đi tới (0, 2):
+        -> [LÁ] Đánh giá Utility = -5
+   + Giả sử Ta đi tới (1, 2):
+    -> [LÁ] Đánh giá Utility = 10002
+
+================ LƯỢT 8 ================
+[MAX] Ta ở (0, 2) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+ + Giả sử Ta đi tới (1, 2):
+  -> [LÁ] Đánh giá Utility = 10004
+ + Giả sử Ta đi tới (0, 0):
+    [MAX] Ta ở (0, 0) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+     + Giả sử Ta đi tới (2, 0):
+        [MAX] Ta ở (2, 0) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 3 nhánh:
+         + Giả sử Ta đi tới (3, 0):
+          -> [LÁ] Đánh giá Utility = -37
+         + Giả sử Ta đi tới (2, 3):
+          -> [LÁ] Đánh giá Utility = -19
+         + Giả sử Ta đi tới (0, 0):
+          -> [LÁ] Đánh giá Utility = -24
+        -> [LÁ] Đánh giá Utility = -9999
+     + Giả sử Ta đi tới (0, 2):
+        [MAX] Ta ở (0, 2) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (0, 1):
+          -> [LÁ] Đánh giá Utility = -19
+         + Giả sử Ta đi tới (1, 2):
+          -> [LÁ] Đánh giá Utility = 10000
+        [MAX] Ta ở (0, 2) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (1, 2):
+          -> [LÁ] Đánh giá Utility = 10000
+         + Giả sử Ta đi tới (0, 0):
+          -> [LÁ] Đánh giá Utility = -24
+    [MAX] Ta ở (0, 0) | Địch ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+     + Giả sử Ta đi tới (0, 2):
+        [MAX] Ta ở (0, 2) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (0, 0):
+          -> [LÁ] Đánh giá Utility = -24
+         + Giả sử Ta đi tới (1, 2):
+          -> [LÁ] Đánh giá Utility = 10000
+     + Giả sử Ta đi tới (3, 0):
+        [MAX] Ta ở (3, 0) | Địch ở (3, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (3, 2):
+          -> [LÁ] Đánh giá Utility = -19
+         + Giả sử Ta đi tới (0, 0):
+          -> [LÁ] Đánh giá Utility = -24

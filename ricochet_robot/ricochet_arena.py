@@ -1534,11 +1534,16 @@ class RicochetArena:
     # báo hiệu đây là một nhánh chết (thua cuộc) để AI của Ta (MAX) biết đường mà né lệnh di chuyển.
 
     # [MÃ GIẢ]: function UTILITY(state) returns a numeric value
-    # Đánh giá điểm số của trạng thái hiện tại (Càng cao thì MAX/Ta càng có lợi)
-    def heuristic_adv(self, p_pos, e_pos):
-        # [MÃ GIẢ]: if TERMINAL-TEST(state) then return UTILITY(state)
-        if self.is_caught(p_pos, e_pos): return -9999  # Bị tóm: Điểm âm vô cực (Thua)
-        if p_pos == self.target_pos: return 9999  # Tới đích: Điểm dương vô cực (Thắng)
+    def heuristic_adv(self, p_pos, e_pos, current_depth=0):
+        if self.is_caught(p_pos, e_pos): 
+            # THUA: Điểm âm vô cực.
+            # Cộng thêm current_depth để ưu tiên số bước đi ÍT HƠN (chết nhanh hơn)
+            return -10000 + current_depth  
+            
+        if p_pos == self.target_pos: 
+            # THẮNG: Điểm dương vô cực.
+            # Cộng thêm current_depth để ưu tiên thắng cực nhanh (ít bước nhất)
+            return 10000 + current_depth
 
         dist_to_goal = abs(p_pos[0] - self.target_pos[0]) + abs(p_pos[1] - self.target_pos[1])
         dist_to_enemy = abs(p_pos[0] - e_pos[0]) + abs(p_pos[1] - e_pos[1])
@@ -1551,7 +1556,7 @@ class RicochetArena:
         indent = "  " * (max_depth - depth)
         # [MÃ GIẢ]: if TERMINAL-TEST(state) or depth == 0 then return UTILITY(state)
         if depth == 0 or p_pos == self.target_pos or self.is_caught(p_pos, e_pos):
-            val = self.heuristic_adv(p_pos, e_pos)
+            val = self.heuristic_adv(p_pos, e_pos, depth)
             report_lines.append(f"{indent}-> [LÁ] Đánh giá Utility = {val}")
             return val, None
 
@@ -1568,7 +1573,7 @@ class RicochetArena:
             # (Ta coi Địch là Bức tường cứng để sinh trạng thái lân cận)
             valid_moves = self.get_neighbors(p_pos, obstacles={e_pos})
             if not valid_moves:
-                val = self.heuristic_adv(p_pos, e_pos)
+                val = self.heuristic_adv(p_pos, e_pos, depth)
                 report_lines.append(f"{indent}-> [BẾ TẮC] Utility = {val}")
                 return val, None
 
@@ -1579,9 +1584,10 @@ class RicochetArena:
             for nxt_p in valid_moves:
                 report_lines.append(f"{indent} + Giả sử Ta đi tới {nxt_p}:")
                 # [MÃ GIẢ]: v <- MAX(v, MIN-VALUE(RESULT(state, a), alpha, beta))
-                val, _ = self.get_best_adv_move(nxt_p, e_pos, depth - 1, False, alpha, beta, algo, report_lines,
-                                                max_depth)
-                if val > best_val: best_val = val; best_move = nxt_p
+                val, _ = self.get_best_adv_move(nxt_p, e_pos, depth - 1, False, alpha, beta, algo, report_lines, max_depth)
+                if val > best_val: 
+                    best_val = val
+                    best_move = nxt_p
 
                 # CẮT TỈA ALPHA-BETA (Nếu thuật toán là Alpha-Beta)
                 if algo == "alphabeta":
@@ -1602,7 +1608,7 @@ class RicochetArena:
             # ----------------------------------------------------
             valid_moves = self.get_neighbors(e_pos, obstacles=set(), stop_on=p_pos)
             if not valid_moves:
-                val = self.heuristic_adv(p_pos, e_pos)
+                val = self.heuristic_adv(p_pos, e_pos, depth)
                 report_lines.append(f"{indent}-> [BẾ TẮC] Utility = {val}")
                 return val, None
 
@@ -1628,8 +1634,7 @@ class RicochetArena:
                 for nxt_e in valid_moves:
                     report_lines.append(f"{indent} + Giả sử Địch chặn ở {nxt_e}:")
                     # [MÃ GIẢ]: v <- MIN(v, MAX-VALUE(RESULT(state, a), alpha, beta))
-                    val, _ = self.get_best_adv_move(p_pos, nxt_e, depth - 1, True, alpha, beta, algo, report_lines,
-                                                    max_depth)
+                    val, _ = self.get_best_adv_move(p_pos, nxt_e, depth - 1, True, alpha, beta, algo, report_lines, max_depth)
                     if val < best_val: best_val = val; best_move = nxt_e
 
                     # CẮT TỈA ALPHA-BETA (Nếu thuật toán là Alpha-Beta)
@@ -1685,13 +1690,16 @@ class RicochetArena:
 
             if self.is_caught(p_curr, e_curr): break
 
-        if algo == "alphabeta":
-            try:
-                with open(self.get_map_path("BaoCao_AlphaBeta.txt"), "w", encoding="utf-8") as f:
-                    f.write("\n".join(report_lines))
-                self.log_msg("-> Đã xuất Báo cáo: BaoCao_AlphaBeta.txt", (100, 255, 100))
-            except:
-                pass
+        filename = f"BaoCao_{algo.capitalize()}.txt"
+        if algo == "alphabeta": filename = "BaoCao_AlphaBeta.txt"
+        elif algo == "minimax": filename = "BaoCao_Minimax.txt"
+        elif algo == "expectimax": filename = "BaoCao_Expectimax.txt"
+        try:
+            with open(self.get_map_path("BaoCao_AlphaBeta.txt"), "w", encoding="utf-8") as f:
+                f.write("\n".join(report_lines))
+            self.log_msg("-> Đã xuất Báo cáo: BaoCao_AlphaBeta.txt", (100, 255, 100))
+        except:
+            pass
 
         self.enemy.computed_path = e_path
         return p_path

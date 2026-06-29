@@ -3,61 +3,217 @@
 
 
 ================ LƯỢT 1 ================
-[MAX] Ta ở (0, 0) | Địch ở (3, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
- + Giả sử Ta đi tới (0, 3):
-  [MIN] Địch ở (3, 2) | Ta ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-   + Giả sử Địch chặn ở (3, 0):
-    [MAX] Ta ở (0, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-     + Giả sử Ta đi tới (3, 3):
-      -> [LÁ] Đánh giá Utility = 9999
-     + Giả sử Ta đi tới (0, 0):
-      [MIN] Địch ở (3, 0) | Ta ở (0, 0) | Alpha=9999, Beta=inf. Thử 2 nhánh:
-       + Giả sử Địch chặn ở (0, 0):
-        -> [LÁ] Đánh giá Utility = -9999
-         [!] CẮT TỈA ALPHA-BETA: V(-9999) <= Alpha(9999). Dừng xét các nhánh MIN còn lại!
-   + Giả sử Địch chặn ở (0, 2):
-    [MAX] Ta ở (0, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=9999. Thử 1 nhánh:
-     + Giả sử Ta đi tới (3, 3):
-      -> [LÁ] Đánh giá Utility = 9999
-       [!] CẮT TỈA ALPHA-BETA: V(9999) >= Beta(9999). Dừng xét các nhánh MAX còn lại!
+[MAX] Ta ở (3, 3) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
  + Giả sử Ta đi tới (3, 0):
-  [MIN] Địch ở (3, 2) | Ta ở (3, 0) | Alpha=9999, Beta=inf. Thử 2 nhánh:
+  [MIN] Địch ở (0, 0) | Ta ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
    + Giả sử Địch chặn ở (3, 0):
-    -> [LÁ] Đánh giá Utility = -9999
-     [!] CẮT TỈA ALPHA-BETA: V(-9999) <= Alpha(9999). Dừng xét các nhánh MIN còn lại!
+    -> [LÁ] Đánh giá Utility = -9995
+   + Giả sử Địch chặn ở (0, 2):
+    [MAX] Ta ở (3, 0) | Địch ở (0, 2) | Alpha=-inf, Beta=-9995. Thử 2 nhánh:
+     + Giả sử Ta đi tới (0, 0):
+      [MIN] Địch ở (0, 2) | Ta ở (0, 0) | Alpha=-inf, Beta=-9995. Thử 2 nhánh:
+       + Giả sử Địch chặn ở (0, 0):
+        -> [LÁ] Đánh giá Utility = -9997
+       + Giả sử Địch chặn ở (1, 2):
+        [MAX] Ta ở (0, 0) | Địch ở (1, 2) | Alpha=-inf, Beta=-9997. Thử 2 nhánh:
+         + Giả sử Ta đi tới (0, 2):
+          [MIN] Địch ở (1, 2) | Ta ở (0, 2) | Alpha=-inf, Beta=-9997. Thử 3 nhánh:
+           + Giả sử Địch chặn ở (1, 3):
+            [MAX] Ta ở (0, 2) | Địch ở (1, 3) | Alpha=-inf, Beta=-9997. Thử 2 nhánh:
+             + Giả sử Ta đi tới (0, 0):
+              -> [LÁ] Đánh giá Utility = -26
+               [!] CẮT TỈA ALPHA-BETA: V(-26) >= Beta(-9997). Dừng xét các nhánh MAX còn lại!
+           + Giả sử Địch chặn ở (0, 2):
+            -> [LÁ] Đánh giá Utility = -9999
+           + Giả sử Địch chặn ở (1, 0):
+            [MAX] Ta ở (0, 2) | Địch ở (1, 0) | Alpha=-inf, Beta=-9999. Thử 2 nhánh:
+             + Giả sử Ta đi tới (0, 0):
+              -> [LÁ] Đánh giá Utility = -29
+               [!] CẮT TỈA ALPHA-BETA: V(-29) >= Beta(-9999). Dừng xét các nhánh MAX còn lại!
+         + Giả sử Ta đi tới (3, 0):
+          [MIN] Địch ở (1, 2) | Ta ở (3, 0) | Alpha=-9999, Beta=-9997. Thử 3 nhánh:
+           + Giả sử Địch chặn ở (0, 2):
+            [MAX] Ta ở (3, 0) | Địch ở (0, 2) | Alpha=-9999, Beta=-9997. Thử 2 nhánh:
+             + Giả sử Ta đi tới (0, 0):
+              -> [LÁ] Đánh giá Utility = -28
+               [!] CẮT TỈA ALPHA-BETA: V(-28) >= Beta(-9997). Dừng xét các nhánh MAX còn lại!
+           + Giả sử Địch chặn ở (1, 3):
+            [MAX] Ta ở (3, 0) | Địch ở (1, 3) | Alpha=-9999, Beta=-9997. Thử 2 nhánh:
+             + Giả sử Ta đi tới (0, 0):
+              -> [LÁ] Đánh giá Utility = -26
+               [!] CẮT TỈA ALPHA-BETA: V(-26) >= Beta(-9997). Dừng xét các nhánh MAX còn lại!
+           + Giả sử Địch chặn ở (1, 0):
+            [MAX] Ta ở (3, 0) | Địch ở (1, 0) | Alpha=-9999, Beta=-9997. Thử 2 nhánh:
+             + Giả sử Ta đi tới (2, 0):
+              -> [LÁ] Đánh giá Utility = -29
+               [!] CẮT TỈA ALPHA-BETA: V(-29) >= Beta(-9997). Dừng xét các nhánh MAX còn lại!
+           [!] CẮT TỈA ALPHA-BETA: V(-29) >= Beta(-9997). Dừng xét các nhánh MAX còn lại!
+     + Giả sử Ta đi tới (3, 3):
+      [MIN] Địch ở (0, 2) | Ta ở (3, 3) | Alpha=-9997, Beta=-9995. Thử 2 nhánh:
+       + Giả sử Địch chặn ở (0, 0):
+        [MAX] Ta ở (3, 3) | Địch ở (0, 0) | Alpha=-9997, Beta=-9995. Thử 2 nhánh:
+         + Giả sử Ta đi tới (0, 3):
+          [MIN] Địch ở (0, 0) | Ta ở (0, 3) | Alpha=-9997, Beta=-9995. Thử 2 nhánh:
+           + Giả sử Địch chặn ở (3, 0):
+            [MAX] Ta ở (0, 3) | Địch ở (3, 0) | Alpha=-9997, Beta=-9995. Thử 1 nhánh:
+             + Giả sử Ta đi tới (3, 3):
+              -> [LÁ] Đánh giá Utility = -27
+               [!] CẮT TỈA ALPHA-BETA: V(-27) >= Beta(-9995). Dừng xét các nhánh MAX còn lại!
+           + Giả sử Địch chặn ở (0, 2):
+            [MAX] Ta ở (0, 3) | Địch ở (0, 2) | Alpha=-9997, Beta=-9995. Thử 1 nhánh:
+             + Giả sử Ta đi tới (3, 3):
+              -> [LÁ] Đánh giá Utility = -26
+               [!] CẮT TỈA ALPHA-BETA: V(-26) >= Beta(-9995). Dừng xét các nhánh MAX còn lại!
+           [!] CẮT TỈA ALPHA-BETA: V(-27) >= Beta(-9995). Dừng xét các nhánh MAX còn lại!
+       + Giả sử Địch chặn ở (1, 2):
+        [MAX] Ta ở (3, 3) | Địch ở (1, 2) | Alpha=-9997, Beta=-9995. Thử 2 nhánh:
+         + Giả sử Ta đi tới (3, 0):
+          [MIN] Địch ở (1, 2) | Ta ở (3, 0) | Alpha=-9997, Beta=-9995. Thử 3 nhánh:
+           + Giả sử Địch chặn ở (1, 0):
+            [MAX] Ta ở (3, 0) | Địch ở (1, 0) | Alpha=-9997, Beta=-9995. Thử 2 nhánh:
+             + Giả sử Ta đi tới (2, 0):
+              -> [LÁ] Đánh giá Utility = -29
+               [!] CẮT TỈA ALPHA-BETA: V(-29) >= Beta(-9995). Dừng xét các nhánh MAX còn lại!
+           + Giả sử Địch chặn ở (1, 3):
+            [MAX] Ta ở (3, 0) | Địch ở (1, 3) | Alpha=-9997, Beta=-9995. Thử 2 nhánh:
+             + Giả sử Ta đi tới (0, 0):
+              -> [LÁ] Đánh giá Utility = -26
+               [!] CẮT TỈA ALPHA-BETA: V(-26) >= Beta(-9995). Dừng xét các nhánh MAX còn lại!
+           + Giả sử Địch chặn ở (0, 2):
+            [MAX] Ta ở (3, 0) | Địch ở (0, 2) | Alpha=-9997, Beta=-9995. Thử 2 nhánh:
+             + Giả sử Ta đi tới (0, 0):
+              -> [LÁ] Đánh giá Utility = -28
+               [!] CẮT TỈA ALPHA-BETA: V(-28) >= Beta(-9995). Dừng xét các nhánh MAX còn lại!
+           [!] CẮT TỈA ALPHA-BETA: V(-29) >= Beta(-9995). Dừng xét các nhánh MAX còn lại!
+       [!] CẮT TỈA ALPHA-BETA: V(-29) >= Beta(-9995). Dừng xét các nhánh MAX còn lại!
+ + Giả sử Ta đi tới (0, 3):
+  [MIN] Địch ở (0, 0) | Ta ở (0, 3) | Alpha=-9995, Beta=inf. Thử 2 nhánh:
+   + Giả sử Địch chặn ở (0, 2):
+    [MAX] Ta ở (0, 3) | Địch ở (0, 2) | Alpha=-9995, Beta=inf. Thử 1 nhánh:
+     + Giả sử Ta đi tới (3, 3):
+      [MIN] Địch ở (0, 2) | Ta ở (3, 3) | Alpha=-9995, Beta=inf. Thử 2 nhánh:
+       + Giả sử Địch chặn ở (0, 0):
+        [MAX] Ta ở (3, 3) | Địch ở (0, 0) | Alpha=-9995, Beta=inf. Thử 2 nhánh:
+         + Giả sử Ta đi tới (0, 3):
+          [MIN] Địch ở (0, 0) | Ta ở (0, 3) | Alpha=-9995, Beta=inf. Thử 2 nhánh:
+           + Giả sử Địch chặn ở (0, 2):
+            [MAX] Ta ở (0, 3) | Địch ở (0, 2) | Alpha=-9995, Beta=inf. Thử 1 nhánh:
+             + Giả sử Ta đi tới (3, 3):
+              -> [LÁ] Đánh giá Utility = -26
+           + Giả sử Địch chặn ở (3, 0):
+            [MAX] Ta ở (0, 3) | Địch ở (3, 0) | Alpha=-9995, Beta=-26. Thử 1 nhánh:
+             + Giả sử Ta đi tới (3, 3):
+              -> [LÁ] Đánh giá Utility = -27
+         + Giả sử Ta đi tới (3, 0):
+          [MIN] Địch ở (0, 0) | Ta ở (3, 0) | Alpha=-27, Beta=inf. Thử 2 nhánh:
+           + Giả sử Địch chặn ở (3, 0):
+            -> [LÁ] Đánh giá Utility = -9999
+             [!] CẮT TỈA ALPHA-BETA: V(-9999) <= Alpha(-27). Dừng xét các nhánh MIN còn lại!
+       + Giả sử Địch chặn ở (1, 2):
+        [MAX] Ta ở (3, 3) | Địch ở (1, 2) | Alpha=-9995, Beta=-27. Thử 2 nhánh:
+         + Giả sử Ta đi tới (0, 3):
+          [MIN] Địch ở (1, 2) | Ta ở (0, 3) | Alpha=-9995, Beta=-27. Thử 3 nhánh:
+           + Giả sử Địch chặn ở (1, 0):
+            [MAX] Ta ở (0, 3) | Địch ở (1, 0) | Alpha=-9995, Beta=-27. Thử 1 nhánh:
+             + Giả sử Ta đi tới (3, 3):
+              -> [LÁ] Đánh giá Utility = -25
+               [!] CẮT TỈA ALPHA-BETA: V(-25) >= Beta(-27). Dừng xét các nhánh MAX còn lại!
+           + Giả sử Địch chặn ở (0, 2):
+            [MAX] Ta ở (0, 3) | Địch ở (0, 2) | Alpha=-9995, Beta=-27. Thử 1 nhánh:
+             + Giả sử Ta đi tới (3, 3):
+              -> [LÁ] Đánh giá Utility = -26
+               [!] CẮT TỈA ALPHA-BETA: V(-26) >= Beta(-27). Dừng xét các nhánh MAX còn lại!
+           + Giả sử Địch chặn ở (1, 3):
+            -> [BẾ TẮC] Utility = -19
+           [!] CẮT TỈA ALPHA-BETA: V(-26) >= Beta(-27). Dừng xét các nhánh MAX còn lại!
+   + Giả sử Địch chặn ở (3, 0):
+    [MAX] Ta ở (0, 3) | Địch ở (3, 0) | Alpha=-9995, Beta=-27. Thử 1 nhánh:
+     + Giả sử Ta đi tới (3, 3):
+      [MIN] Địch ở (3, 0) | Ta ở (3, 3) | Alpha=-9995, Beta=-27. Thử 2 nhánh:
+       + Giả sử Địch chặn ở (3, 3):
+        -> [LÁ] Đánh giá Utility = -9997
+         [!] CẮT TỈA ALPHA-BETA: V(-9997) <= Alpha(-9995). Dừng xét các nhánh MIN còn lại!
+     [!] CẮT TỈA ALPHA-BETA: V(-9997) <= Alpha(-9995). Dừng xét các nhánh MIN còn lại!
 
 --- LƯỢT CỦA ĐỊCH (MIN) PHẢN CÔNG ---
-[MIN] Địch ở (3, 2) | Ta ở (0, 3) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
- + Giả sử Địch chặn ở (0, 2):
-  [MAX] Ta ở (0, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
-   + Giả sử Ta đi tới (3, 3):
-    -> [LÁ] Đánh giá Utility = 9999
+[MIN] Địch ở (0, 0) | Ta ở (3, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
  + Giả sử Địch chặn ở (3, 0):
-  [MAX] Ta ở (0, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=9999. Thử 2 nhánh:
+  -> [LÁ] Đánh giá Utility = -9995
+ + Giả sử Địch chặn ở (0, 2):
+  [MAX] Ta ở (3, 0) | Địch ở (0, 2) | Alpha=-inf, Beta=-9995. Thử 2 nhánh:
    + Giả sử Ta đi tới (0, 0):
-    [MIN] Địch ở (3, 0) | Ta ở (0, 0) | Alpha=-inf, Beta=9999. Thử 2 nhánh:
+    [MIN] Địch ở (0, 2) | Ta ở (0, 0) | Alpha=-inf, Beta=-9995. Thử 2 nhánh:
      + Giả sử Địch chặn ở (0, 0):
-      -> [LÁ] Đánh giá Utility = -9999
-     + Giả sử Địch chặn ở (3, 2):
-      [MAX] Ta ở (0, 0) | Địch ở (3, 2) | Alpha=-inf, Beta=-9999. Thử 2 nhánh:
-       + Giả sử Ta đi tới (0, 3):
-        [MIN] Địch ở (3, 2) | Ta ở (0, 3) | Alpha=-inf, Beta=-9999. Thử 2 nhánh:
-         + Giả sử Địch chặn ở (0, 2):
-          [MAX] Ta ở (0, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=-9999. Thử 1 nhánh:
-           + Giả sử Ta đi tới (3, 3):
-            -> [LÁ] Đánh giá Utility = 9999
-             [!] CẮT TỈA ALPHA-BETA: V(9999) >= Beta(-9999). Dừng xét các nhánh MAX còn lại!
-         + Giả sử Địch chặn ở (3, 0):
-          [MAX] Ta ở (0, 3) | Địch ở (3, 0) | Alpha=-inf, Beta=-9999. Thử 2 nhánh:
+      -> [LÁ] Đánh giá Utility = -9997
+     + Giả sử Địch chặn ở (1, 2):
+      [MAX] Ta ở (0, 0) | Địch ở (1, 2) | Alpha=-inf, Beta=-9997. Thử 2 nhánh:
+       + Giả sử Ta đi tới (0, 2):
+        [MIN] Địch ở (1, 2) | Ta ở (0, 2) | Alpha=-inf, Beta=-9997. Thử 3 nhánh:
+         + Giả sử Địch chặn ở (1, 3):
+          [MAX] Ta ở (0, 2) | Địch ở (1, 3) | Alpha=-inf, Beta=-9997. Thử 2 nhánh:
            + Giả sử Ta đi tới (0, 0):
-            -> [LÁ] Đánh giá Utility = -57
-             [!] CẮT TỈA ALPHA-BETA: V(-57) >= Beta(-9999). Dừng xét các nhánh MAX còn lại!
-         [!] CẮT TỈA ALPHA-BETA: V(-57) >= Beta(-9999). Dừng xét các nhánh MAX còn lại!
+            -> [LÁ] Đánh giá Utility = -26
+             [!] CẮT TỈA ALPHA-BETA: V(-26) >= Beta(-9997). Dừng xét các nhánh MAX còn lại!
+         + Giả sử Địch chặn ở (0, 2):
+          -> [LÁ] Đánh giá Utility = -9999
+         + Giả sử Địch chặn ở (1, 0):
+          [MAX] Ta ở (0, 2) | Địch ở (1, 0) | Alpha=-inf, Beta=-9999. Thử 2 nhánh:
+           + Giả sử Ta đi tới (1, 2):
+            -> [LÁ] Đánh giá Utility = 10000
+             [!] CẮT TỈA ALPHA-BETA: V(10000) >= Beta(-9999). Dừng xét các nhánh MAX còn lại!
+       + Giả sử Ta đi tới (3, 0):
+        [MIN] Địch ở (1, 2) | Ta ở (3, 0) | Alpha=-9999, Beta=-9997. Thử 3 nhánh:
+         + Giả sử Địch chặn ở (0, 2):
+          [MAX] Ta ở (3, 0) | Địch ở (0, 2) | Alpha=-9999, Beta=-9997. Thử 2 nhánh:
+           + Giả sử Ta đi tới (0, 0):
+            -> [LÁ] Đánh giá Utility = -28
+             [!] CẮT TỈA ALPHA-BETA: V(-28) >= Beta(-9997). Dừng xét các nhánh MAX còn lại!
+         + Giả sử Địch chặn ở (1, 3):
+          [MAX] Ta ở (3, 0) | Địch ở (1, 3) | Alpha=-9999, Beta=-9997. Thử 2 nhánh:
+           + Giả sử Ta đi tới (0, 0):
+            -> [LÁ] Đánh giá Utility = -26
+             [!] CẮT TỈA ALPHA-BETA: V(-26) >= Beta(-9997). Dừng xét các nhánh MAX còn lại!
+         + Giả sử Địch chặn ở (1, 0):
+          [MAX] Ta ở (3, 0) | Địch ở (1, 0) | Alpha=-9999, Beta=-9997. Thử 2 nhánh:
+           + Giả sử Ta đi tới (3, 3):
+            -> [LÁ] Đánh giá Utility = -25
+             [!] CẮT TỈA ALPHA-BETA: V(-25) >= Beta(-9997). Dừng xét các nhánh MAX còn lại!
+         [!] CẮT TỈA ALPHA-BETA: V(-28) >= Beta(-9997). Dừng xét các nhánh MAX còn lại!
    + Giả sử Ta đi tới (3, 3):
-    -> [LÁ] Đánh giá Utility = 9999
-     [!] CẮT TỈA ALPHA-BETA: V(9999) >= Beta(9999). Dừng xét các nhánh MAX còn lại!
-
-================ LƯỢT 2 ================
-[MAX] Ta ở (0, 3) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 1 nhánh:
- + Giả sử Ta đi tới (3, 3):
-  -> [LÁ] Đánh giá Utility = 9999
+    [MIN] Địch ở (0, 2) | Ta ở (3, 3) | Alpha=-9997, Beta=-9995. Thử 2 nhánh:
+     + Giả sử Địch chặn ở (0, 0):
+      [MAX] Ta ở (3, 3) | Địch ở (0, 0) | Alpha=-9997, Beta=-9995. Thử 2 nhánh:
+       + Giả sử Ta đi tới (0, 3):
+        [MIN] Địch ở (0, 0) | Ta ở (0, 3) | Alpha=-9997, Beta=-9995. Thử 2 nhánh:
+         + Giả sử Địch chặn ở (3, 0):
+          [MAX] Ta ở (0, 3) | Địch ở (3, 0) | Alpha=-9997, Beta=-9995. Thử 1 nhánh:
+           + Giả sử Ta đi tới (3, 3):
+            -> [LÁ] Đánh giá Utility = -27
+             [!] CẮT TỈA ALPHA-BETA: V(-27) >= Beta(-9995). Dừng xét các nhánh MAX còn lại!
+         + Giả sử Địch chặn ở (0, 2):
+          [MAX] Ta ở (0, 3) | Địch ở (0, 2) | Alpha=-9997, Beta=-9995. Thử 1 nhánh:
+           + Giả sử Ta đi tới (3, 3):
+            -> [LÁ] Đánh giá Utility = -26
+             [!] CẮT TỈA ALPHA-BETA: V(-26) >= Beta(-9995). Dừng xét các nhánh MAX còn lại!
+         [!] CẮT TỈA ALPHA-BETA: V(-27) >= Beta(-9995). Dừng xét các nhánh MAX còn lại!
+     + Giả sử Địch chặn ở (1, 2):
+      [MAX] Ta ở (3, 3) | Địch ở (1, 2) | Alpha=-9997, Beta=-9995. Thử 2 nhánh:
+       + Giả sử Ta đi tới (3, 0):
+        [MIN] Địch ở (1, 2) | Ta ở (3, 0) | Alpha=-9997, Beta=-9995. Thử 3 nhánh:
+         + Giả sử Địch chặn ở (0, 2):
+          [MAX] Ta ở (3, 0) | Địch ở (0, 2) | Alpha=-9997, Beta=-9995. Thử 2 nhánh:
+           + Giả sử Ta đi tới (3, 3):
+            -> [LÁ] Đánh giá Utility = -26
+             [!] CẮT TỈA ALPHA-BETA: V(-26) >= Beta(-9995). Dừng xét các nhánh MAX còn lại!
+         + Giả sử Địch chặn ở (1, 0):
+          [MAX] Ta ở (3, 0) | Địch ở (1, 0) | Alpha=-9997, Beta=-9995. Thử 2 nhánh:
+           + Giả sử Ta đi tới (2, 0):
+            -> [LÁ] Đánh giá Utility = -29
+             [!] CẮT TỈA ALPHA-BETA: V(-29) >= Beta(-9995). Dừng xét các nhánh MAX còn lại!
+         + Giả sử Địch chặn ở (1, 3):
+          [MAX] Ta ở (3, 0) | Địch ở (1, 3) | Alpha=-9997, Beta=-9995. Thử 2 nhánh:
+           + Giả sử Ta đi tới (3, 3):
+            -> [LÁ] Đánh giá Utility = -28
+             [!] CẮT TỈA ALPHA-BETA: V(-28) >= Beta(-9995). Dừng xét các nhánh MAX còn lại!
+         [!] CẮT TỈA ALPHA-BETA: V(-29) >= Beta(-9995). Dừng xét các nhánh MAX còn lại!
+     [!] CẮT TỈA ALPHA-BETA: V(-29) >= Beta(-9995). Dừng xét các nhánh MAX còn lại!
