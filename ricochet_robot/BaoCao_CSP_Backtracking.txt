@@ -1,0 +1,24 @@
+=== BÁO CÁO CHI TIẾT THUẬT TOÁN BACKTRACKING (CSP) ===
+Trạng thái xuất phát (Start): (4, 4)
+
+
+--- Thử nghiệm bộ Cột (X): (0, 2, 3) ---
+Miền giá trị Hàng (Y) tương ứng: [[0, 1, 2, 3, 4], [0, 1, 3, 4], [0, 1, 2, 3, 4]]
+  [Bước 1] Đang thử gán: Y = []
+  [Bước 2] Đang thử gán: Y = [0]
+  [Bước 3] Đang thử gán: Y = [0, 0]
+  [Bước 4] Đang thử gán: Y = [0, 0, 0]
+  [Bước 5] Đang thử gán: Y = [0, 0, 1]
+  [Bước 6] Đang thử gán: Y = [0, 0, 2]
+  [Bước 7] Đang thử gán: Y = [0, 0, 3]
+  [Bước 8] Đang thử gán: Y = [0, 0, 4]
+    -> Hết giá trị hợp lệ cho biến thứ 3, quay lui.
+  [Bước 9] Đang thử gán: Y = [0, 1]
+  [Bước 10] Đang thử gán: Y = [0, 1, 0]
+  [Bước 11] Đang thử gán: Y = [0, 1, 1]
+  [Bước 12] Đang thử gán: Y = [0, 1, 2]
+  [Bước 13] Đang thử gán: Y = [0, 1, 3]
+  [Bước 14] Đang thử gán: Y = [0, 1, 4]
+    -> THÀNH CÔNG! Gán đủ 3 trợ thủ, 0 xung đột.
+
+=> [THÀNH CÔNG TỔNG THỂ] Tìm thấy đáp án tại Cột X = (0, 2, 3), Hàng Y = [0, 1, 4]

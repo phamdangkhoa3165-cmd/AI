@@ -7,6 +7,6 @@ Mục tiêu (Goal): (3, 2)
 --- Đang duyệt với độ sâu giới hạn Limit = 1 ---
   + Số nút duyệt ở Limit 1: 5. Tổng nút từ đầu: 6
 --- Đang duyệt với độ sâu giới hạn Limit = 2 ---
-  + Số nút duyệt ở Limit 2: 8. Tổng nút từ đầu: 14
+  + Số nút duyệt ở Limit 2: 3. Tổng nút từ đầu: 9
 
-=> [THÀNH CÔNG] Đã đạt đích ở độ sâu Limit = 2. Tổng nút đã duyệt (cộng dồn các lần): 14
+=> [THÀNH CÔNG] Đã đạt đích ở độ sâu Limit = 2. Tổng nút đã duyệt (cộng dồn các lần): 9
