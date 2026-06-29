@@ -307,6 +307,7 @@ class RicochetArena:
     # ================= NHÓM 1: TÌM KIẾM MÙ (UNINFORMED SEARCH) =================
     def run_bfs(self, start, obs):
         self.log_msg("--- BẮT ĐẦU BFS (Duyệt theo chiều rộng) ---", COLORS["BFS"])
+        report_lines = ["=== BÁO CÁO CHI TIẾT THUẬT TOÁN BFS ===", f"Trạng thái xuất phát: {start}", f"Mục tiêu (Goal): {self.target_pos}", ""]
         
         # [MÃ GIẢ]: node <- NODE(problem.INITIAL)
         # [MÃ GIẢ]: if problem.IS-GOAL(node.STATE) then return node
@@ -325,6 +326,8 @@ class RicochetArena:
             current_node, path = frontier.popleft()
 
             steps += 1
+            report_lines.append(f"Bước {steps}: Lấy {current_node} khỏi Frontier. Độ dài đường đi hiện tại: {len(path)}")
+
             if steps <= 15 or steps % 50 == 0: 
                 self.log_msg(f"[{steps}] BFS mở rộng: {current_node}, Hàng đợi còn: {len(frontier)}", (150, 180, 255))
 
@@ -334,6 +337,14 @@ class RicochetArena:
                 # [MÃ GIẢ]: if problem.IS-GOAL(s) then return child
                 if neighbor == self.target_pos: 
                     self.log_msg(f"-> TÌM THẤY ĐÍCH! Tổng số nút đã duyệt: {steps}", (0, 255, 0))
+
+                    report_lines.append(f"  => [THÀNH CÔNG] Lân cận {neighbor} là Đích! Dừng thuật toán.")
+                    report_lines.append(f"Tổng số nút đã duyệt: {steps}")
+                    try:
+                        with open(self.get_map_path("BaoCao_BFS.txt"), "w", encoding="utf-8") as f: f.write("\n".join(report_lines))
+                        self.log_msg("-> Đã xuất Báo cáo: BaoCao_BFS.txt", (100, 255, 100))
+                    except: pass
+
                     return path + [neighbor] 
                 
                 # [MÃ GIẢ]: if s is not in reached then
@@ -341,9 +352,17 @@ class RicochetArena:
                     # [MÃ GIẢ]: add s to reached
                     reached.add(neighbor)
                     # [MÃ GIẢ]: add child to frontier
-                    frontier.append((neighbor, path+[neighbor])) 
+                    frontier.append((neighbor, path+[neighbor]))
 
-        self.log_msg("-> Bế tắc, không tìm thấy đường!", (255, 50, 50))            
+                    report_lines.append(f"  + Lân cận {neighbor} chưa được duyệt -> Thêm vào Reached và Frontier.")
+
+        self.log_msg("-> Bế tắc, không tìm thấy đường!", (255, 50, 50))
+
+        report_lines.append("\n=> [THẤT BẠI] Frontier rỗng, không tìm thấy đường đi.")
+        try:
+            with open(self.get_map_path("BaoCao_BFS.txt"), "w", encoding="utf-8") as f: f.write("\n".join(report_lines))
+        except: pass
+
         # [MÃ GIẢ]: return failure
         return []
     
@@ -432,7 +451,7 @@ class RicochetArena:
     # Sử dụng Khoảng cách Manhattan (Tổng trị tuyệt đối hiệu tọa độ x và y).
     def heuristic(self, pos): 
         return abs(pos[0] - self.target_pos[0]) + abs(pos[1] - self.target_pos[1])
-        
+    
     def run_ucs(self, start, obs):
         self.log_msg("--- BẮT ĐẦU UCS (Tìm kiếm chi phí đồng nhất) ---", (200, 150, 255))
         
@@ -541,6 +560,8 @@ class RicochetArena:
 
     def run_astar(self, start, obs):
         self.log_msg("--- A* (f = g + h) ---", COLORS["A*"])
+        report_lines = ["=== BÁO CÁO CHI TIẾT THUẬT TOÁN A* ===", f"Trạng thái xuất phát: {start}", f"Mục tiêu: {self.target_pos}", "Công thức: f(n) = g(n) + h(n) (g: chi phí thực tế, h: Khoảng cách Manhattan)", ""]
+
         # [MÃ GIẢ]: 1. Khởi tạo tập FRONTIER = {Start} với f(Start) = g(Start) + h(Start)
         g_costs = {start: 0}
         f_start = 0 + self.heuristic(start)
@@ -559,12 +580,22 @@ class RicochetArena:
             else: continue
 
             steps += 1
+
+            report_lines.append(f"\n[Bước {steps}] Chọn duyệt nút tốt nhất: {n} | g={g_costs[n]}, h={self.heuristic(n)} => f={f_n}")
+
             if steps <= 15 or steps % 20 == 0:
                 self.log_msg(f"[{steps}] A* xét {n} | g={g_costs[n]}, h={self.heuristic(n)} -> f={f_n}", (255, 255, 150))
                 
             # [MÃ GIẢ]: b. NẾU n == Goal: TRẢ VỀ "Thành công"
             if n == self.target_pos:
                 self.log_msg(f"-> TỐI ƯU! Đã tới đích sau khi duyệt {steps} nút.", (0, 255, 0))
+
+                report_lines.append(f"\n=> [THÀNH CÔNG] Đã đạt đích {n} với tổng chi phí tối ưu g={g_costs[n]}. Số nút đã duyệt: {steps}")
+                try:
+                    with open(self.get_map_path("BaoCao_AStar.txt"), "w", encoding="utf-8") as f: f.write("\n".join(report_lines))
+                    self.log_msg("-> Đã xuất Báo cáo: BaoCao_AStar.txt", (100, 255, 100))
+                except: pass
+
                 return p
 
             # [MÃ GIẢ]: c. Loại bỏ n khỏi FRONTIER và thêm n vào REACHED.
@@ -578,7 +609,9 @@ class RicochetArena:
                 # [MÃ GIẢ]: ii. NẾU m đã nằm trong REACHED:
                 if m in reached:
                     # NẾU g_new(m) >= g(m) hiện tại: Bỏ qua trạng thái m
-                    if g_new >= g_costs.get(m, float('inf')): continue 
+                    if g_new >= g_costs.get(m, float('inf')):
+                        report_lines.append(f"  [-] Lân cận {m}: Đã nằm trong Reached với g nhỏ hơn. Bỏ qua.")
+                        continue
                     else:
                         # NGƯỢC LẠI: Xóa m khỏi REACHED và cập nhật lại g(m)
                         reached.remove(m)
@@ -586,6 +619,7 @@ class RicochetArena:
                         f_m = g_new + self.heuristic(m)
                         heapq.heappush(frontier, (f_m, next(self.counter), m, p + [m]))
                         frontier_set.add(m)
+                        report_lines.append(f"  [+] Lân cận {m}: Tìm thấy đường MỚI RẺ HƠN. Cập nhật g={g_new}, h={self.heuristic(m)} => f={f_m}. Đẩy lại vào Frontier.")
                         
                 # [MÃ GIẢ]: iii. NẾU m đã nằm trong FRONTIER:
                 elif m in frontier_set:
@@ -594,13 +628,15 @@ class RicochetArena:
                         g_costs[m] = g_new
                         f_m = g_new + self.heuristic(m)
                         heapq.heappush(frontier, (f_m, next(self.counter), m, p + [m]))
-                        
+                        report_lines.append(f"  [+] Lân cận {m}: Đang ở Frontier, đường mới rẻ hơn. Cập nhật g={g_new}, h={self.heuristic(m)} => f={f_m}.")
+        
                 # [MÃ GIẢ]: iv. NẾU m chưa có mặt trong FRONTIER và REACHED:
                 else:
                     g_costs[m] = g_new
                     f_m = g_new + self.heuristic(m)
                     heapq.heappush(frontier, (f_m, next(self.counter), m, p + [m]))
                     frontier_set.add(m)
+                    report_lines.append(f"  [+] Lân cận {m}: Nút mới. Tính g={g_new}, h={self.heuristic(m)} => f={f_m}. Thêm vào Frontier.")
                     
         # [MÃ GIẢ]: 4. TRẢ VỀ "Thất bại"
         return []
@@ -698,6 +734,8 @@ class RicochetArena:
 
     def run_simulated_annealing(self, start, obs):
         self.log_msg("--- SIMULATED ANNEALING (Luyện kim) ---", COLORS["Simulated Annealing"])
+        report_lines = ["=== BÁO CÁO THUẬT TOÁN LẠNH ĐÔNG (SIMULATED ANNEALING) ===", "Quy tắc: Luôn chọn trạng thái tốt hơn (Delta < 0). Nếu tệ hơn, chấp nhận rủi ro dựa trên xác suất p = e^(-Delta/T).", ""]
+
         # [MÃ GIẢ]: current state = start
         current_state = start
         path = []
@@ -706,39 +744,67 @@ class RicochetArena:
         T = 1000.0
         T_min = 0.01
         alpha = 0.95
+        step = 0
         
         # [MÃ GIẢ]: while T > Tmin:
         while T > T_min:
+            step += 1
             # [MÃ GIẢ]: if current state == goal: return current state
-            if current_state == self.target_pos: return path
+            if current_state == self.target_pos: 
+
+                report_lines.append(f"\n=> [THÀNH CÔNG] Đã đạt cực đại toàn cục tại {current_state} sau {step} bước.")
+                try:
+                    with open(self.get_map_path("BaoCao_LuyenKim.txt"), "w", encoding="utf-8") as f: f.write("\n".join(report_lines))
+                    self.log_msg("-> Đã xuất Báo cáo: BaoCao_LuyenKim.txt", (100, 255, 100))
+                except: pass
+
+                return path
                 
             neighbors = self.get_neighbors(current_state, obs)
-            if not neighbors: break 
+            if not neighbors: 
+                report_lines.append("\n=> [BẾ TẮC] Không còn trạng thái lân cận để đi tiếp.")
+                break 
                 
             # [MÃ GIẢ]: next state = RandomNeighbor(current state)
             next_state = random.choice(neighbors)
             
             # [MÃ GIẢ]: Δ = h(next state) - h(current state)
             delta = self.heuristic(next_state) - self.heuristic(current_state)
+
+            report_lines.append(f"\n[Bước {step}] T = {T:.2f} | Đang đứng ở {current_state} (h={self.heuristic(current_state)})")
+            report_lines.append(f" -> Lân cận ngẫu nhiên: {next_state} (h={self.heuristic(next_state)})")
+            report_lines.append(f" -> Delta (E) = {delta}")
             
             # [MÃ GIẢ]: if Δ < 0:
             if delta < 0:
                 # [MÃ GIẢ]: current state = next state
                 current_state = next_state
                 path.append(current_state)
+                report_lines.append(" -> Đánh giá: Delta < 0 (Tốt hơn) => CHẤP NHẬN DI CHUYỂN.")
+            
             # [MÃ GIẢ]: else:
             else:
                 # [MÃ GIẢ]: p = exp(-Δ / T)
                 p = math.exp(-delta / T)
+                rand_val = random.random()
+                report_lines.append(f" -> Đánh giá: Delta >= 0 (Tệ hơn). Xác suất rủi ro p = {p:.4f}. Quay ngẫu nhiên r = {rand_val:.4f}")
                 
                 # [MÃ GIẢ]: if Random(0,1) < p:
-                if random.random() < p:
+                if rand_val < p:
                     # [MÃ GIẢ]: current state = next state
                     current_state = next_state
                     path.append(current_state)
+                    report_lines.append(" -> R < p => VƯỢT RÀO THÀNH CÔNG. Chấp nhận rủi ro di chuyển!")
+                else:
+                    report_lines.append(" -> R >= p => TỪ CHỐI RỦI RO. Giữ nguyên vị trí.")
                     
             # [MÃ GIẢ]: T = α * T
             T = alpha * T
+            
+        report_lines.append(f"\n=> [KẾT THÚC] Nhiệt độ đã đóng băng (T <= {T_min}). Dừng thuật toán tại {current_state}.")
+        try:
+            with open(self.get_map_path("BaoCao_LuyenKim.txt"), "w", encoding="utf-8") as f: f.write("\n".join(report_lines))
+        except: pass
 
         # [MÃ GIẢ]: return current state
         return path if current_state == self.target_pos else []
@@ -750,11 +816,18 @@ class RicochetArena:
         start_1 = tuple(start)
         start_2 = tuple(self.sensorless_ghost.start_pos)
 
-        report_lines = []
-        report_lines.append("=== BÁO CÁO TÌM KIẾM KHÔNG CẢM BIẾN (CONFORMANT PLANNING) ===")
-        report_lines.append(f"Mục tiêu: Tìm 1 chuỗi hành động chung đưa hệ thống về Đích {self.target_pos}.")
-        report_lines.append("Cơ chế: Nếu một Trạng thái (State) chạm đích trước, nó sẽ chuyển sang trạng thái dừng (Sink State).")
-        
+        report_lines = [
+            "=== BÁO CÁO TÌM KIẾM KHÔNG CẢM BIẾN (CONFORMANT PLANNING) ===",
+            f"Mục tiêu: Tìm 1 chuỗi hành động chung đưa hệ thống về Đích {self.target_pos}.",
+            "Cơ chế: Dùng BFS duyệt trên không gian Niềm tin (Belief Space).",
+            "Luật Sink State: Nếu một Trạng thái (State) chạm đích trước, nó sẽ khóa chết tại đó và chờ State còn lại.",
+            "",
+            "[Tập Niềm tin ban đầu - Belief Start]",
+            f" - State 1: {start_1}",
+            f" - State 2: {start_2}",
+            ""
+        ]
+
         # [MÃ GIẢ]: b_start = {s | s in INITIAL_STATE_SET}
         belief_start = tuple(sorted([start_1, start_2]))
 
@@ -781,6 +854,10 @@ class RicochetArena:
             current_belief, current_1, path_1, current_2, path_2, action_history = frontier.popleft()
             steps_explored += 1
             
+            # Ghi log chi tiết bước hiện tại vào file báo cáo
+            report_lines.append(f"\n[Bước {steps_explored}] Lấy tập Niềm tin (Belief) ra xét: {current_belief}")
+            report_lines.append(f" - Chuỗi lệnh đang có: {' -> '.join(action_history) if action_history else '(Chưa di chuyển)'}")
+
             if len(path_1) > 20: continue # Cắt tỉa chống treo máy
                 
             # [MÃ GIẢ]: if b is a subset of GOAL then return SOLUTION(b)
@@ -789,14 +866,13 @@ class RicochetArena:
                 self.log_msg(f"-> Hội tụ thành công! Cả 2 State đều đã vào Đích sau {len(path_1)} bước.", (0, 255, 255))
                 
                 report_lines.append("\n=======================================================")
-                report_lines.append(f"=> TỔNG KẾT: TÌM THẤY KẾ HOẠCH HỘI TỤ (CONFORMANT PLAN)!")
+                report_lines.append(f"=> [THÀNH CÔNG] ĐÃ TÌM THẤY KẾ HOẠCH HỘI TỤ (CONFORMANT PLAN)!")
                 report_lines.append(f"Tổng số trạng thái đã duyệt: {steps_explored}")
-                report_lines.append(f"Chuỗi hành động chung ({len(action_history)} bước): {' -> '.join(action_history)}")
+                report_lines.append(f"Chuỗi hành động vạn năng ({len(action_history)} bước): {' -> '.join(action_history)}")
                 
                 try:
-                    filename = self.get_map_path("BaoCao_ConformantPlanning.txt")
-                    with open(filename, "w", encoding="utf-8") as f: f.write("\n".join(report_lines))
-                    self.log_msg(f"-> Đã xuất Báo cáo học thuật: {os.path.basename(filename)}", (100, 255, 100))
+                    with open(self.get_map_path("BaoCao_ConformantPlanning.txt"), "w", encoding="utf-8") as f: f.write("\n".join(report_lines))
+                    self.log_msg("-> Đã xuất Báo cáo học thuật: BaoCao_ConformantPlanning.txt", (100, 255, 100))
                 except Exception as e: pass
 
                 self.sensorless_ghost.computed_path = path_2 
@@ -816,18 +892,27 @@ class RicochetArena:
                     # [MÃ GIẢ]: explored.ADD(b_prime)
                     reached.add(next_belief)
                     
+                    report_lines.append(f"  + Phát lệnh {action_name}: State 1 tới {next_1}, State 2 tới {next_2} -> Sinh ra Belief mới: {next_belief}")
+
                     # Log báo cáo...
                     if current_1 != self.target_pos and next_1 == self.target_pos:
-                        report_lines.append(f" [*] State 1 đã chạm đích {self.target_pos} và chuyển sang dừng (Sink State).")
+                        report_lines.append(f"    [*] LƯU Ý: State 1 đã chạm đích {self.target_pos} -> Chuyển sang dừng (Sink State).")
                     elif current_2 != self.target_pos and next_2 == self.target_pos:
-                        report_lines.append(f" [*] State 2 đã chạm đích {self.target_pos} và chuyển sang dừng (Sink State).")
+                        report_lines.append(f"    [*] LƯU Ý: State 2 đã chạm đích {self.target_pos} -> Chuyển sang dừng (Sink State).")
                     elif len(next_belief) < len(current_belief):
-                        report_lines.append(f"\n[!] BƯỚC HỘI TỤ (State Convergence): Trượt {action_name} -> {next_belief[0]}")
+                        report_lines.append(f"    [!] BƯỚC ĐỘT PHÁ (State Convergence): 2 State đã sáp nhập làm 1 tại {next_belief[0]}!")
 
                     # [MÃ GIẢ]: frontier.INSERT(b_prime)
                     frontier.append((next_belief, next_1, path_1 + [next_1], next_2, path_2 + [next_2], action_history + [action_name]))
-                    
+                else:
+                    report_lines.append(f"  - Phát lệnh {action_name}: Sinh ra Belief {next_belief} (Đã có trong Reached -> Bỏ qua).")
+
         self.log_msg("-> Bế tắc! Không tồn tại Kế hoạch hội tụ.", (255, 100, 100))
+        report_lines.append("\n=======================================================")
+        report_lines.append("=> [THẤT BẠI] Đã duyệt hết không gian nhưng không thể đồng bộ 2 State do Map không có kiến trúc hội tụ.")
+        try:
+            with open(self.get_map_path("BaoCao_ConformantPlanning.txt"), "w", encoding="utf-8") as f: f.write("\n".join(report_lines))
+        except: pass
         return []
 
     def run_partial_observable(self, start, obs):
@@ -1059,8 +1144,11 @@ class RicochetArena:
 
     def run_ac3(self, start, obs):
         self.log_msg("--- AC-3 (Arc Consistency) ---", (147, 112, 219))
+        report_lines = ["=== BÁO CÁO RÚT GỌN MIỀN GIÁ TRỊ (AC-3) ===", "Mục tiêu: Đảm bảo tính nhất quán cung (Arc Consistency) trước khi chạy Backtracking để tiết kiệm thời gian.", ""]
+
         domains = { 0: self.get_valid_y_domain(1, start), 1: self.get_valid_y_domain(2, start), 2: self.get_valid_y_domain(3, start) }
-        
+        report_lines.append(f"Miền giá trị ban đầu: {domains}\n")
+
         # Vẽ Bóng ma trước khi cắt
         self.csp_domains = [[(i+1, y) for y in domains[i]] for i in range(3)]
         self.draw_simulation(); pygame.display.flip(); pygame.time.delay(1000)
@@ -1081,6 +1169,7 @@ class RicochetArena:
                     # [MÃ GIẢ]: then delete x from DOMAIN[Xi]; removed <- true
                     domains[xi].remove(x)
                     removed = True
+                    report_lines.append(f"  [-] Loại bỏ giá trị Y={x} khỏi Trợ thủ {xi+1} vì không có giá trị nào của Trợ thủ {xj+1} khớp ràng buộc.")
                     self.csp_domains[xi].remove((xi+1, x)) # Xoá bóng ma trên hình
                     self.draw_simulation(); pygame.display.flip(); pygame.time.delay(150)
             # [MÃ GIẢ]: return removed
@@ -1094,14 +1183,24 @@ class RicochetArena:
         while queue:
             # [MÃ GIẢ]: (Xi, Xj) <- REMOVE-FIRST(queue)
             xi, xj = queue.popleft()
+            report_lines.append(f"Kiểm tra cung (Trợ thủ {xi+1}, Trợ thủ {xj+1}):")
             # [MÃ GIẢ]: if RM-INCONSISTENT-VALUES(Xi, Xj) then
             if rm_inconsistent_values(xi, xj):
+                report_lines.append(f"  => Miền giá trị của Trợ thủ {xi+1} đã thay đổi. Cập nhật lại các cung liên quan vào hàng đợi.")
                 # [MÃ GIẢ]: for each Xk in NEIGHBORS[Xi] do add (Xk, Xi) to queue
                 neighbors = [k for k in range(3) if k != xi and k != xj and ((xi==0) or (k==0))] 
                 for xk in neighbors: queue.append((xk, xi))
+            else:
+                report_lines.append("  => Đã nhất quán. Không có giá trị nào bị loại.")
                     
         self.log_msg(f"-> Đã tỉa miền giá trị thành: {domains}", (0, 255, 255))
+        report_lines.append(f"\n=> [KẾT LUẬN] Miền giá trị sau khi cắt tỉa AC-3: {domains}")
         self.csp_domains = None 
+
+        try:
+            with open(self.get_map_path("BaoCao_AC3.txt"), "w", encoding="utf-8") as f: f.write("\n".join(report_lines))
+            self.log_msg("-> Đã xuất Báo cáo: BaoCao_AC3.txt", (100, 255, 100))
+        except: pass
             
         def backtrack(assignment):
             col_idx = len(assignment)
@@ -1187,10 +1286,13 @@ class RicochetArena:
         return -dist_to_goal * 10 + dist_to_enemy
 
     # Hàm đệ quy này gộp chung cả 3 thuật toán: Minimax, Alpha-Beta và Expectimax
-    def get_best_adv_move(self, p_pos, e_pos, depth, is_max, alpha, beta, algo):
+    def get_best_adv_move(self, p_pos, e_pos, depth, is_max, alpha, beta, algo, report_lines, max_depth):
+        indent = "  " * (max_depth - depth)
         # [MÃ GIẢ]: if TERMINAL-TEST(state) or depth == 0 then return UTILITY(state)
         if depth == 0 or p_pos == self.target_pos or self.is_caught(p_pos, e_pos):
-            return self.heuristic_adv(p_pos, e_pos), None
+            val = self.heuristic_adv(p_pos, e_pos)
+            report_lines.append(f"{indent}-> [LÁ] Đánh giá Utility = {val}")
+            return val, None
 
         if is_max: 
             # ----------------------------------------------------
@@ -1203,18 +1305,26 @@ class RicochetArena:
             
             # (Ta coi Địch là Bức tường cứng để sinh trạng thái lân cận)
             valid_moves = self.get_neighbors(p_pos, obstacles={e_pos})
-            if not valid_moves: return self.heuristic_adv(p_pos, e_pos), None
+            if not valid_moves:
+                val = self.heuristic_adv(p_pos, e_pos)
+                report_lines.append(f"{indent}-> [BẾ TẮC] Utility = {val}")
+                return val, None
+
+            report_lines.append(f"{indent}[MAX] Ta ở {p_pos} | Địch ở {e_pos} | Alpha={alpha}, Beta={beta}. Thử {len(valid_moves)} nhánh:")
             
             # [MÃ GIẢ]: for each a in ACTIONS(state) do
             for nxt_p in valid_moves:
+                report_lines.append(f"{indent} + Giả sử Ta đi tới {nxt_p}:")
                 # [MÃ GIẢ]: v <- MAX(v, MIN-VALUE(RESULT(state, a), alpha, beta))
-                val, _ = self.get_best_adv_move(nxt_p, e_pos, depth-1, False, alpha, beta, algo)
+                val, _ = self.get_best_adv_move(nxt_p, e_pos, depth-1, False, alpha, beta, algo, report_lines, max_depth)
                 if val > best_val: best_val = val; best_move = nxt_p
                 
                 # CẮT TỈA ALPHA-BETA (Nếu thuật toán là Alpha-Beta)
                 if algo == "alphabeta": 
                     # [MÃ GIẢ]: if v >= beta then return v
-                    if best_val >= beta: break # Cắt tỉa (Pruning) nhánh phía sau
+                    if best_val >= beta: 
+                        report_lines.append(f"{indent}   [!] CẮT TỈA ALPHA-BETA: V({best_val}) >= Beta({beta}). Dừng xét các nhánh MAX còn lại!")
+                        break # Cắt tỉa (Pruning) nhánh phía sau
                     # [MÃ GIẢ]: alpha <- MAX(alpha, v)
                     alpha = max(alpha, best_val)
                     
@@ -1226,14 +1336,17 @@ class RicochetArena:
             # Lượt của MIN / CHANCE (Robot Địch)
             # ----------------------------------------------------
             valid_moves = self.get_neighbors(e_pos, obstacles=set(), stop_on=p_pos)
-            if not valid_moves: return self.heuristic_adv(p_pos, e_pos), None
+            if not valid_moves: 
+                val = self.heuristic_adv(p_pos, e_pos)
+                report_lines.append(f"{indent}-> [BẾ TẮC] Utility = {val}")
+                return val, None
             
             # 1. TRƯỜNG HỢP EXPECTIMAX (Môi trường ngẫu nhiên - Chance Node)
             if algo == "expectimax": 
                 # [MÃ GIẢ]: function EXP-VALUE(state)
                 # [MÃ GIẢ]: v <- 0; for each a in ACTIONS(state) do v += P(a) * MAX-VALUE(RESULT(state, a))
                 # (Với P(a) là xác suất đồng đều chia cho tổng số nước đi hợp lệ)
-                avg_val = sum(self.get_best_adv_move(p_pos, nxt_e, depth-1, True, alpha, beta, algo)[0] for nxt_e in valid_moves) / len(valid_moves)
+                avg_val = sum(self.get_best_adv_move(p_pos, nxt_e, depth-1, True, alpha, beta, algo, report_lines, max_depth)[0] for nxt_e in valid_moves) / len(valid_moves)
                 return avg_val, random.choice(valid_moves)
             
             # 2. TRƯỜNG HỢP MINIMAX / ALPHA-BETA (Đối thủ hoàn hảo - Min Node)
@@ -1241,17 +1354,20 @@ class RicochetArena:
                 # [MÃ GIẢ]: function MIN-VALUE(state, alpha, beta)
                 # [MÃ GIẢ]: v <- +∞
                 best_val = float('inf'); best_move = None
-                
+                report_lines.append(f"{indent}[MIN] Địch ở {e_pos} | Ta ở {p_pos} | Alpha={alpha}, Beta={beta}. Thử {len(valid_moves)} nhánh:")
                 # [MÃ GIẢ]: for each a in ACTIONS(state) do
                 for nxt_e in valid_moves:
+                    report_lines.append(f"{indent} + Giả sử Địch chặn ở {nxt_e}:")
                     # [MÃ GIẢ]: v <- MIN(v, MAX-VALUE(RESULT(state, a), alpha, beta))
-                    val, _ = self.get_best_adv_move(p_pos, nxt_e, depth-1, True, alpha, beta, algo)
+                    val, _ = self.get_best_adv_move(p_pos, nxt_e, depth-1, True, alpha, beta, algo, report_lines, max_depth)
                     if val < best_val: best_val = val; best_move = nxt_e
                     
                     # CẮT TỈA ALPHA-BETA (Nếu thuật toán là Alpha-Beta)
                     if algo == "alphabeta": 
                         # [MÃ GIẢ]: if v <= alpha then return v
-                        if best_val <= alpha: break # Cắt tỉa (Pruning) nhánh phía sau
+                        if best_val <= alpha: 
+                            report_lines.append(f"{indent}   [!] CẮT TỈA ALPHA-BETA: V({best_val}) <= Alpha({alpha}). Dừng xét các nhánh MIN còn lại!")
+                            break # Cắt tỉa (Pruning) nhánh phía sau
                         # [MÃ GIẢ]: beta <- MIN(beta, v)
                         beta = min(beta, best_val)
                         
@@ -1266,12 +1382,15 @@ class RicochetArena:
         # Tầm nhìn (Depth) - Expectimax duyệt rộng hơn nên giảm depth để tránh treo máy
         search_depth = 7 if algo != "expectimax" else 5
         
+        report_lines = [f"=== BÁO CÁO CÂY TÌM KIẾM ĐỐI KHÁNG ({algo.upper()}) ===", f"Độ sâu tìm kiếm (Depth): {search_depth} lớp.", ""]
+
         for step in range(1, 15): 
             self.log_msg(f"\n--- LƯỢT {step} ---", (255, 255, 0))
-            
+            report_lines.append(f"\n================ LƯỢT {step} ================")
+
             # 1. LƯỢT CỦA TA (MAX)
             self.log_msg(f"1. Lượt của TA (Đang tính toán trước {search_depth} bước)...", (100, 255, 100))
-            _, nxt_p = self.get_best_adv_move(p_curr, e_curr, depth=search_depth, is_max=True, alpha=float('-inf'), beta=float('inf'), algo=algo)
+            _, nxt_p = self.get_best_adv_move(p_curr, e_curr, search_depth, True, float('-inf'), float('inf'), algo, report_lines, search_depth)
             if nxt_p is None: nxt_p = p_curr 
             self.log_msg(f"-> TA quyết định di chuyển tới: {nxt_p}", (100, 255, 100))
             p_curr = nxt_p
@@ -1281,13 +1400,20 @@ class RicochetArena:
                 
             # 2. LƯỢT CỦA ĐỊCH (MIN / CHANCE)
             self.log_msg(f"2. Lượt của ĐỊCH (Đang tìm cách chặn đường)...", (255, 100, 100))
-            _, nxt_e = self.get_best_adv_move(p_curr, e_curr, depth=search_depth-1, is_max=False, alpha=float('-inf'), beta=float('inf'), algo=algo)
+            report_lines.append("\n--- LƯỢT CỦA ĐỊCH (MIN) PHẢN CÔNG ---")
+            _, nxt_e = self.get_best_adv_move(p_curr, e_curr, search_depth-1, False, float('-inf'), float('inf'), algo, report_lines, search_depth-1)
             if nxt_e is None: nxt_e = e_curr
             self.log_msg(f"-> ĐỊCH quyết định chặn tại: {nxt_e}", (255, 100, 100))
             e_curr = nxt_e
             e_path.append(e_curr)
             
             if self.is_caught(p_curr, e_curr): break
+
+        if algo == "alphabeta":
+            try:
+                with open(self.get_map_path("BaoCao_AlphaBeta.txt"), "w", encoding="utf-8") as f: f.write("\n".join(report_lines))
+                self.log_msg("-> Đã xuất Báo cáo: BaoCao_AlphaBeta.txt", (100, 255, 100))
+            except: pass
 
         self.enemy.computed_path = e_path 
         return p_path

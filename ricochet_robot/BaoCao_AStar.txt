@@ -1,0 +1,31 @@
+=== BÁO CÁO CHI TIẾT THUẬT TOÁN A* ===
+Trạng thái xuất phát: (2, 5)
+Mục tiêu: (6, 9)
+Công thức: f(n) = g(n) + h(n) (g: chi phí thực tế, h: Khoảng cách Manhattan)
+
+
+[Bước 1] Chọn duyệt nút tốt nhất: (2, 5) | g=0, h=8 => f=8
+  [+] Lân cận (14, 5): Nút mới. Tính g=1, h=12 => f=13. Thêm vào Frontier.
+  [+] Lân cận (2, 9): Nút mới. Tính g=1, h=4 => f=5. Thêm vào Frontier.
+  [+] Lân cận (2, 0): Nút mới. Tính g=1, h=13 => f=14. Thêm vào Frontier.
+  [+] Lân cận (0, 5): Nút mới. Tính g=1, h=10 => f=11. Thêm vào Frontier.
+
+[Bước 2] Chọn duyệt nút tốt nhất: (2, 9) | g=1, h=4 => f=5
+  [+] Lân cận (3, 9): Nút mới. Tính g=2, h=3 => f=5. Thêm vào Frontier.
+
+[Bước 3] Chọn duyệt nút tốt nhất: (3, 9) | g=2, h=3 => f=5
+  [+] Lân cận (3, 14): Nút mới. Tính g=3, h=8 => f=11. Thêm vào Frontier.
+  [-] Lân cận (2, 9): Đã nằm trong Reached với g nhỏ hơn. Bỏ qua.
+  [+] Lân cận (3, 8): Nút mới. Tính g=3, h=4 => f=7. Thêm vào Frontier.
+
+[Bước 4] Chọn duyệt nút tốt nhất: (3, 8) | g=3, h=4 => f=7
+  [+] Lân cận (6, 8): Nút mới. Tính g=4, h=1 => f=5. Thêm vào Frontier.
+  [+] Lân cận (0, 8): Nút mới. Tính g=4, h=7 => f=11. Thêm vào Frontier.
+
+[Bước 5] Chọn duyệt nút tốt nhất: (6, 8) | g=4, h=1 => f=5
+  [+] Lân cận (6, 9): Nút mới. Tính g=5, h=0 => f=5. Thêm vào Frontier.
+  [+] Lân cận (6, 0): Nút mới. Tính g=5, h=9 => f=14. Thêm vào Frontier.
+
+[Bước 6] Chọn duyệt nút tốt nhất: (6, 9) | g=5, h=0 => f=5
+
+=> [THÀNH CÔNG] Đã đạt đích (6, 9) với tổng chi phí tối ưu g=5. Số nút đã duyệt: 6

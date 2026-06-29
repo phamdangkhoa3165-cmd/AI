@@ -1,0 +1,53 @@
+=== BÁO CÁO THUẬT TOÁN LẠNH ĐÔNG (SIMULATED ANNEALING) ===
+Quy tắc: Luôn chọn trạng thái tốt hơn (Delta < 0). Nếu tệ hơn, chấp nhận rủi ro dựa trên xác suất p = e^(-Delta/T).
+
+
+[Bước 1] T = 1000.00 | Đang đứng ở (7, 14) (h=15)
+ -> Lân cận ngẫu nhiên: (7, 15) (h=16)
+ -> Delta (E) = 1
+ -> Đánh giá: Delta >= 0 (Tệ hơn). Xác suất rủi ro p = 0.9990. Quay ngẫu nhiên r = 0.4057
+ -> R < p => VƯỢT RÀO THÀNH CÔNG. Chấp nhận rủi ro di chuyển!
+
+[Bước 2] T = 950.00 | Đang đứng ở (7, 15) (h=16)
+ -> Lân cận ngẫu nhiên: (7, 12) (h=13)
+ -> Delta (E) = -3
+ -> Đánh giá: Delta < 0 (Tốt hơn) => CHẤP NHẬN DI CHUYỂN.
+
+[Bước 3] T = 902.50 | Đang đứng ở (7, 12) (h=13)
+ -> Lân cận ngẫu nhiên: (7, 15) (h=16)
+ -> Delta (E) = 3
+ -> Đánh giá: Delta >= 0 (Tệ hơn). Xác suất rủi ro p = 0.9967. Quay ngẫu nhiên r = 0.9166
+ -> R < p => VƯỢT RÀO THÀNH CÔNG. Chấp nhận rủi ro di chuyển!
+
+[Bước 4] T = 857.38 | Đang đứng ở (7, 15) (h=16)
+ -> Lân cận ngẫu nhiên: (7, 12) (h=13)
+ -> Delta (E) = -3
+ -> Đánh giá: Delta < 0 (Tốt hơn) => CHẤP NHẬN DI CHUYỂN.
+
+[Bước 5] T = 814.51 | Đang đứng ở (7, 12) (h=13)
+ -> Lân cận ngẫu nhiên: (2, 12) (h=8)
+ -> Delta (E) = -5
+ -> Đánh giá: Delta < 0 (Tốt hơn) => CHẤP NHẬN DI CHUYỂN.
+
+[Bước 6] T = 773.78 | Đang đứng ở (2, 12) (h=8)
+ -> Lân cận ngẫu nhiên: (2, 14) (h=10)
+ -> Delta (E) = 2
+ -> Đánh giá: Delta >= 0 (Tệ hơn). Xác suất rủi ro p = 0.9974. Quay ngẫu nhiên r = 0.0213
+ -> R < p => VƯỢT RÀO THÀNH CÔNG. Chấp nhận rủi ro di chuyển!
+
+[Bước 7] T = 735.09 | Đang đứng ở (2, 14) (h=10)
+ -> Lân cận ngẫu nhiên: (2, 9) (h=5)
+ -> Delta (E) = -5
+ -> Đánh giá: Delta < 0 (Tốt hơn) => CHẤP NHẬN DI CHUYỂN.
+
+[Bước 8] T = 698.34 | Đang đứng ở (2, 9) (h=5)
+ -> Lân cận ngẫu nhiên: (1, 9) (h=4)
+ -> Delta (E) = -1
+ -> Đánh giá: Delta < 0 (Tốt hơn) => CHẤP NHẬN DI CHUYỂN.
+
+[Bước 9] T = 663.42 | Đang đứng ở (1, 9) (h=4)
+ -> Lân cận ngẫu nhiên: (1, 5) (h=0)
+ -> Delta (E) = -4
+ -> Đánh giá: Delta < 0 (Tốt hơn) => CHẤP NHẬN DI CHUYỂN.
+
+=> [THÀNH CÔNG] Đã đạt cực đại toàn cục tại (1, 5) sau 10 bước.
