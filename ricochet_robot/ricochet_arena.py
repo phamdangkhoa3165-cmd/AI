@@ -75,7 +75,7 @@ class Robot:
         self.name = name
         self.logic_pos = list(pos)
         self.start_pos = list(pos)
-        # Sửa lại dòng này: Khởi tạo mặc định bằng 0, Arena sẽ tự tính toán lại sau
+        # Khởi tạo mặc định bằng 0, Arena sẽ tự tính toán lại sau
         self.visual_pos = [0, 0]
         self.color = COLORS.get(name, (255, 255, 255))
         self.path = []
@@ -329,7 +329,7 @@ class RicochetArena:
         self.csp_domains = None  # Dọn dẹp bóng ma AC-3
         self.belief_history = []  # Dọn dẹp bóng ma Partial-Observable
 
-        # --- FIX: Nạp thêm 3 Trợ thủ vào danh sách Reset ---
+        # Nạp 3 Trợ thủ vào danh sách Reset
         enemy_list = [self.enemy] if hasattr(self, 'enemy') else []
         ghost_list = [self.sensorless_ghost] if hasattr(self, 'sensorless_ghost') else []
         aux_list = getattr(self, 'aux_robots', [])
@@ -2088,7 +2088,7 @@ class RicochetArena:
         self.draw_text(title_str, self.font_title, TARGET_COLOR, (OFFSET_X, 20))
         pygame.draw.line(self.screen, BORDER_GLOW, (OFFSET_X, 70), (OFFSET_X + actual_board_size, 70), 2)
 
-        # --- FIX LỖI: Dời r_active lên đầu để tất cả các giao diện đều gọi được ---
+        # Dời r_active lên đầu để tất cả các giao diện đều gọi được
         r_active = self.get_robot_by_name(self.current_ai) if self.current_ai else self.player
         # --------------------------------------------------------------------------
 
@@ -2563,7 +2563,7 @@ class RicochetArena:
                     if self.sim_status in ["Đang chạy"] or self.sim_status.startswith("Chờ bước tiếp"):
                         self.log_msg("ĐÃ TỚI ĐÍCH!", (0, 255, 0))
                         self.sim_status = "Ta Thắng!"
-                # --- FIX: Đổi điều kiện thua thành trùng ô (0) ---
+                # Đổi điều kiện thua thành trùng ô (0)
                 elif self.current_group_id == 6 and hasattr(self, 'enemy') and tuple(r.logic_pos) == tuple(
                         self.enemy.logic_pos):
                     if self.sim_status in ["Đang chạy"] or self.sim_status.startswith("Chờ bước tiếp"):
@@ -2574,7 +2574,7 @@ class RicochetArena:
                         self.sim_status = "Dừng lại"
 
     def trigger_next_step(self):
-        # --- FIX: MỞ KHÓA CHO NHÓM CSP NẾU ĐANG NGỦ ĐÔNG CHỜ LỆNH ---
+        # MỞ KHÓA CHO NHÓM CSP NẾU ĐANG NGỦ ĐÔNG CHỜ LỆNH ---
         if getattr(self, 'csp_waiting', False):
             self.csp_waiting = False
             self.sim_status = "Đang tính toán..."
@@ -2859,7 +2859,7 @@ class RicochetArena:
                                          (255, 255, 100))
 
                     elif event.key == pygame.K_RIGHTBRACKET:  # Bấm ']' để Tăng map
-                        if self.grid_size < 16:  # <--- SỬA SỐ 32 THÀNH SỐ 16 Ở ĐÂY
+                        if self.grid_size < 16: 
                             self.grid_size += 1
                             self.cell_size = self.board_size // self.grid_size
                             self.walls.clear()
