@@ -4,31 +4,31 @@
 
 ================ LƯỢT 1 ================
 [MAX] Ta ở (2, 2) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
- + Giả sử Ta đi tới (0, 2):
-    -> [LÁ] Đánh giá Utility = -9997
  + Giả sử Ta đi tới (2, 1):
     [MAX] Ta ở (2, 1) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-     + Giả sử Ta đi tới (0, 1):
-      -> [LÁ] Đánh giá Utility = 10002
      + Giả sử Ta đi tới (2, 2):
+        -> [LÁ] Đánh giá Utility = -9999
         [MAX] Ta ở (2, 2) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (2, 1):
-          -> [LÁ] Đánh giá Utility = -17
          + Giả sử Ta đi tới (0, 2):
           -> [LÁ] Đánh giá Utility = -8
-        -> [LÁ] Đánh giá Utility = -9999
+         + Giả sử Ta đi tới (2, 1):
+          -> [LÁ] Đánh giá Utility = -17
+     + Giả sử Ta đi tới (0, 1):
+      -> [LÁ] Đánh giá Utility = 10002
+ + Giả sử Ta đi tới (0, 2):
+    -> [LÁ] Đánh giá Utility = -9997
 
 --- LƯỢT CỦA ĐỊCH (MIN) PHẢN CÔNG ---
   [MAX] Ta ở (2, 1) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-   + Giả sử Ta đi tới (0, 1):
-    -> [LÁ] Đánh giá Utility = 10002
    + Giả sử Ta đi tới (2, 2):
       [MAX] Ta ở (2, 2) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-       + Giả sử Ta đi tới (2, 1):
-        -> [LÁ] Đánh giá Utility = -17
        + Giả sử Ta đi tới (0, 2):
         -> [LÁ] Đánh giá Utility = -8
+       + Giả sử Ta đi tới (2, 1):
+        -> [LÁ] Đánh giá Utility = -17
       -> [LÁ] Đánh giá Utility = -9999
+   + Giả sử Ta đi tới (0, 1):
+    -> [LÁ] Đánh giá Utility = 10002
 
 ================ LƯỢT 2 ================
 [MAX] Ta ở (2, 1) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
@@ -39,9 +39,9 @@
     [MAX] Ta ở (2, 2) | Địch ở (0, 0) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
      + Giả sử Ta đi tới (2, 1):
         [MAX] Ta ở (2, 1) | Địch ở (0, 2) | Alpha=-inf, Beta=inf. Thử 2 nhánh:
-         + Giả sử Ta đi tới (2, 2):
-          -> [LÁ] Đánh giá Utility = -28
          + Giả sử Ta đi tới (0, 1):
           -> [LÁ] Đánh giá Utility = 10000
+         + Giả sử Ta đi tới (2, 2):
+          -> [LÁ] Đánh giá Utility = -28
      + Giả sử Ta đi tới (0, 2):
         -> [LÁ] Đánh giá Utility = -9999

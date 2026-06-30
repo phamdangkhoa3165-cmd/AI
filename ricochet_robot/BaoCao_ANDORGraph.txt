@@ -1,20 +1,26 @@
 === BÁO CÁO CHI TIẾT THUẬT TOÁN AND-OR GRAPH ===
-Trạng thái xuất phát: (1, 4)
-Mục tiêu (Goal): (2, 2)
+Trạng thái xuất phát: (1, 2)
+Mục tiêu (Goal): (2, 1)
 
-[OR] Đang xét trạng thái (1, 4)
-  [AND] Phân nhánh sau hành động LÊN: Các hệ quả [(1, 2), (1, 3)]
-    [OR] Đang xét trạng thái (1, 2)
-      [AND] Phân nhánh sau hành động XUỐNG: Các hệ quả [(1, 4), (1, 3)]
-        [OR] Bế tắc do chu trình tại (1, 4)
-      [AND] Phân nhánh sau hành động PHẢI: Các hệ quả [(2, 2)]
-        [OR] Đã tới đích tại (2, 2)
-    [OR] Đang xét trạng thái (1, 3)
-      [AND] Phân nhánh sau hành động LÊN: Các hệ quả [(1, 2)]
-        [OR] Đang xét trạng thái (1, 2)
-          [AND] Phân nhánh sau hành động XUỐNG: Các hệ quả [(1, 4), (1, 3)]
-            [OR] Bế tắc do chu trình tại (1, 4)
-          [AND] Phân nhánh sau hành động PHẢI: Các hệ quả [(2, 2)]
-            [OR] Đã tới đích tại (2, 2)
+[OR] Đang xét trạng thái (1, 2)
+  [AND] Phân nhánh sau hành động LÊN: Các hệ quả [(1, 1)]
+    [OR] Đang xét trạng thái (1, 1)
+      [AND] Phân nhánh sau hành động XUỐNG: Các hệ quả [(1, 2)]
+        [OR] Bế tắc do chu trình tại (1, 2)
+      [AND] Phân nhánh sau hành động TRÁI: Các hệ quả [(0, 1)]
+        [OR] Đang xét trạng thái (0, 1)
+          [AND] Phân nhánh sau hành động LÊN: Các hệ quả [(0, 0)]
+            [OR] Đang xét trạng thái (0, 0)
+              [AND] Phân nhánh sau hành động XUỐNG: Các hệ quả [(0, 1)]
+                [OR] Bế tắc do chu trình tại (0, 1)
+              [AND] Phân nhánh sau hành động PHẢI: Các hệ quả [(2, 0), (1, 0)]
+                [OR] Đang xét trạng thái (2, 0)
+                  [AND] Phân nhánh sau hành động TRÁI: Các hệ quả [(0, 0), (1, 0)]
+                    [OR] Bế tắc do chu trình tại (0, 0)
+          [AND] Phân nhánh sau hành động PHẢI: Các hệ quả [(2, 1), (1, 1)]
+            [OR] Đã tới đích tại (2, 1)
+            [OR] Bế tắc do chu trình tại (1, 1)
+      [AND] Phân nhánh sau hành động PHẢI: Các hệ quả [(2, 1)]
+        [OR] Đã tới đích tại (2, 1)
 
 => [THÀNH CÔNG] Đã tìm thấy kế hoạch dự phòng an toàn tuyệt đối.

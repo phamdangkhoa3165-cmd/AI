@@ -1,18 +1,11 @@
 === BÁO CÁO QUÁ TRÌNH LỌC NIỀM TIN (BELIEF STATE UPDATE) ===
-1. Niềm tin ban đầu (Belief Start): Gồm 5 vị trí có thể: [(4, 4), (2, 0), (1, 4), (5, 3), (3, 2)]
+1. Niềm tin ban đầu (Belief Start): Gồm 4 vị trí có thể: [(3, 2), (1, 2), (3, 3), (2, 2)]
 
 --- BƯỚC 1 ---
-Hành động: Trượt PHẢI | Cảm biến đo được: (True, True, True, False)
-  [+] Nếu ở (4, 4) -> trượt đến (5, 4). Cảm biến dự kiến (True, True, True, False) KHỚP THỰC TẾ -> Giữ lại.
-  [-] Nếu ở (2, 0) -> trượt đến (4, 0). Cảm biến dự kiến (False, True, True, False) SAI LỆCH -> Loại bỏ.
-  [+] Nếu ở (1, 4) -> trượt đến (5, 4). Cảm biến dự kiến (True, True, True, False) KHỚP THỰC TẾ -> Giữ lại.
-  [+] Nếu ở (5, 3) -> trượt đến (5, 3). Cảm biến dự kiến (True, True, True, False) KHỚP THỰC TẾ -> Giữ lại.
-  [+] Nếu ở (3, 2) -> trượt đến (5, 2). Cảm biến dự kiến (True, True, True, False) KHỚP THỰC TẾ -> Giữ lại.
+Hành động: Trượt LÊN | Cảm biến đo được: (False, True, True, True)
+  [-] Nếu ở (3, 2) -> trượt đến (3, 0). Cảm biến dự kiến (False, True, False, False) SAI LỆCH -> Loại bỏ.
+  [+] Nếu ở (1, 2) -> trượt đến (1, 1). Cảm biến dự kiến (False, True, True, True) KHỚP THỰC TẾ -> Giữ lại.
+  [-] Nếu ở (3, 3) -> trượt đến (3, 0). Cảm biến dự kiến (False, True, False, False) SAI LỆCH -> Loại bỏ.
+  [-] Nếu ở (2, 2) -> trượt đến (2, 1). Cảm biến dự kiến (False, True, True, False) SAI LỆCH -> Loại bỏ.
 
---- BƯỚC 2 ---
-Hành động: Trượt XUỐNG | Cảm biến đo được: (True, False, True, False)
-  [+] Nếu ở (5, 3) -> trượt đến (5, 5). Cảm biến dự kiến (True, False, True, False) KHỚP THỰC TẾ -> Giữ lại.
-  [+] Nếu ở (5, 4) -> trượt đến (5, 5). Cảm biến dự kiến (True, False, True, False) KHỚP THỰC TẾ -> Giữ lại.
-  [+] Nếu ở (5, 2) -> trượt đến (5, 5). Cảm biến dự kiến (True, False, True, False) KHỚP THỰC TẾ -> Giữ lại.
-
-=> KẾT LUẬN: Đã định vị thành công vị trí (5, 5) sau 2 bước.
+=> KẾT LUẬN: Đã định vị thành công vị trí (1, 1) sau 1 bước.
