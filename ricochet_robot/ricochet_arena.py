@@ -226,7 +226,7 @@ class RicochetArena:
     def load_map(self, group_id=None):
         if group_id is not None: self.current_group_id = group_id
         self.target_pos_2 = None
-        filename = self.get_map_path(f"ricochet_map_group_{self.current_group_id}.json")
+        filename = self.get_map_path(f"Map/ricochet_map_group_{self.current_group_id}.json")
 
         self.board_size = min(HEIGHT - 100, WIDTH - 680)
 
@@ -405,7 +405,7 @@ class RicochetArena:
                     report_lines.append(f"  => [THÀNH CÔNG] Lân cận {neighbor} là Đích! Dừng thuật toán.")
                     report_lines.append(f"Tổng số nút đã duyệt: {steps}")
                     try:
-                        with open(self.get_map_path("BaoCao_BFS.txt"), "w", encoding="utf-8") as f:
+                        with open(self.get_map_path("BaoCao/BaoCao_BFS.txt"), "w", encoding="utf-8") as f:
                             f.write("\n".join(report_lines))
                         self.log_msg("-> Đã xuất Báo cáo: BaoCao_BFS.txt", (100, 255, 100))
                     except:
@@ -426,7 +426,7 @@ class RicochetArena:
 
         report_lines.append("\n=> [THẤT BẠI] Frontier rỗng, không tìm thấy đường đi.")
         try:
-            with open(self.get_map_path("BaoCao_BFS.txt"), "w", encoding="utf-8") as f:
+            with open(self.get_map_path("BaoCao/BaoCao_BFS.txt"), "w", encoding="utf-8") as f:
                 f.write("\n".join(report_lines))
         except:
             pass
@@ -466,7 +466,7 @@ class RicochetArena:
                     report_lines.append(f"  => [THÀNH CÔNG] Lân cận {n} là Đích! Dừng thuật toán.")
                     report_lines.append(f"Tổng số nút đã lấy ra khỏi ngăn xếp: {steps}")
                     try:
-                        with open(self.get_map_path("BaoCao_DFS.txt"), "w", encoding="utf-8") as f:
+                        with open(self.get_map_path("BaoCao/BaoCao_DFS.txt"), "w", encoding="utf-8") as f:
                             f.write("\n".join(report_lines))
                     except:
                         pass
@@ -483,7 +483,7 @@ class RicochetArena:
 
         report_lines.append("\n=> [THẤT BẠI] Stack rỗng, không tìm thấy đường đi.")
         try:
-            with open(self.get_map_path("BaoCao_DFS.txt"), "w", encoding="utf-8") as f:
+            with open(self.get_map_path("BaoCao/BaoCao_DFS.txt"), "w", encoding="utf-8") as f:
                 f.write("\n".join(report_lines))
         except:
             pass
@@ -548,7 +548,7 @@ class RicochetArena:
                 report_lines.append(
                     f"\n=> [THÀNH CÔNG] Đã đạt đích ở độ sâu Limit = {depth}. Tổng nút đã duyệt (cộng dồn các lần): {total_nodes}")
                 try:
-                    with open(self.get_map_path("BaoCao_IDS.txt"), "w", encoding="utf-8") as f:
+                    with open(self.get_map_path("BaoCao/BaoCao_IDS.txt"), "w", encoding="utf-8") as f:
                         f.write("\n".join(report_lines))
                 except:
                     pass
@@ -556,7 +556,7 @@ class RicochetArena:
 
         report_lines.append("\n=> [THẤT BẠI] Vượt quá giới hạn độ sâu tối đa (45) hoặc không có đường đi.")
         try:
-            with open(self.get_map_path("BaoCao_IDS.txt"), "w", encoding="utf-8") as f:
+            with open(self.get_map_path("BaoCao/BaoCao_IDS.txt"), "w", encoding="utf-8") as f:
                 f.write("\n".join(report_lines))
         except:
             pass
@@ -605,7 +605,7 @@ class RicochetArena:
                 self.log_msg(f"-> TÌM THẤY ĐÍCH! Chi phí tối ưu g(n) = {g_n}", (0, 255, 0))
                 report_lines.append(f"\n=> [THÀNH CÔNG] Đã đạt đích {n} với tổng chi phí tối ưu g={g_n}. Số nút đã duyệt: {steps}")
                 try:
-                    with open(self.get_map_path("BaoCao_UCS.txt"), "w", encoding="utf-8") as f:
+                    with open(self.get_map_path("BaoCao/BaoCao_UCS.txt"), "w", encoding="utf-8") as f:
                         f.write("\n".join(report_lines))
                 except:
                     pass
@@ -652,7 +652,7 @@ class RicochetArena:
         self.log_msg("-> Bế tắc, không tìm thấy đường!", (255, 50, 50))
         report_lines.append("\n=> [THẤT BẠI] Frontier rỗng, không tìm thấy đường đi.")
         try:
-            with open(self.get_map_path("BaoCao_UCS.txt"), "w", encoding="utf-8") as f:
+            with open(self.get_map_path("BaoCao/BaoCao_UCS.txt"), "w", encoding="utf-8") as f:
                 f.write("\n".join(report_lines))
         except:
             pass
@@ -685,7 +685,7 @@ class RicochetArena:
             if n == self.target_pos:
                 report_lines.append(f"\n=> [THÀNH CÔNG] Đã đạt đích {n} sau {steps} bước duyệt.")
                 try:
-                    with open(self.get_map_path("BaoCao_Greedy.txt"), "w", encoding="utf-8") as f:
+                    with open(self.get_map_path("BaoCao/BaoCao_Greedy.txt"), "w", encoding="utf-8") as f:
                         f.write("\n".join(report_lines))
                 except:
                     pass
@@ -708,7 +708,7 @@ class RicochetArena:
         # [MÃ GIẢ]: 4. TRẢ VỀ "Thất bại"
         report_lines.append("\n=> [THẤT BẠI] Frontier rỗng.")
         try:
-            with open(self.get_map_path("BaoCao_Greedy.txt"), "w", encoding="utf-8") as f:
+            with open(self.get_map_path("BaoCao/BaoCao_Greedy.txt"), "w", encoding="utf-8") as f:
                 f.write("\n".join(report_lines))
         except:
             pass
@@ -755,7 +755,7 @@ class RicochetArena:
                 report_lines.append(
                     f"\n=> [THÀNH CÔNG] Đã đạt đích {n} với tổng chi phí tối ưu g={g_costs[n]}. Số nút đã duyệt: {steps}")
                 try:
-                    with open(self.get_map_path("BaoCao_AStar.txt"), "w", encoding="utf-8") as f:
+                    with open(self.get_map_path("BaoCao/BaoCao_AStar.txt"), "w", encoding="utf-8") as f:
                         f.write("\n".join(report_lines))
                     self.log_msg("-> Đã xuất Báo cáo: BaoCao_AStar.txt", (100, 255, 100))
                 except:
@@ -857,7 +857,7 @@ class RicochetArena:
                 break
 
         try:
-            with open(self.get_map_path("BaoCao_SimpleHC.txt"), "w", encoding="utf-8") as f:
+            with open(self.get_map_path("BaoCao/BaoCao_SimpleHC.txt"), "w", encoding="utf-8") as f:
                 f.write("\n".join(report_lines))
         except: pass
 
@@ -899,7 +899,7 @@ class RicochetArena:
                 # [MÃ GIẢ]: Sắp xếp Current_State_set theo h tốt dần
                 current_state_set.sort(key=lambda item: self.heuristic(item[0]))
                 try:
-                    with open(self.get_map_path("BaoCao_BeamSearch.txt"), "w", encoding="utf-8") as f:
+                    with open(self.get_map_path("BaoCao/BaoCao_BeamSearch.txt"), "w", encoding="utf-8") as f:
                         f.write("\n".join(report_lines))
                 except: pass
                 # [MÃ GIẢ]: TRẢ VỀ trạng thái tốt nhất trong Current_State_set
@@ -912,7 +912,7 @@ class RicochetArena:
                 if neighbor == self.target_pos:
                     report_lines.append(f"=> [THÀNH CÔNG] Đã tìm thấy đích {neighbor}!")
                     try:
-                        with open(self.get_map_path("BaoCao_BeamSearch.txt"), "w", encoding="utf-8") as f:
+                        with open(self.get_map_path("BaoCao/BaoCao_BeamSearch.txt"), "w", encoding="utf-8") as f:
                             f.write("\n".join(report_lines))
                     except: pass
                     return path_history
@@ -930,7 +930,7 @@ class RicochetArena:
         current_state_set.sort(key=lambda item: self.heuristic(item[0]))
         report_lines.append(f"=> [DỪNG] Hết số vòng lặp tối đa (50). Trả về kết quả tốt nhất {current_state_set[0][0]}")
         try:
-            with open(self.get_map_path("BaoCao_BeamSearch.txt"), "w", encoding="utf-8") as f:
+            with open(self.get_map_path("BaoCao/BaoCao_BeamSearch.txt"), "w", encoding="utf-8") as f:
                 f.write("\n".join(report_lines))
         except: pass
         return current_state_set[0][1]
@@ -959,7 +959,7 @@ class RicochetArena:
 
                 report_lines.append(f"\n=> [THÀNH CÔNG] Đã đạt cực đại toàn cục tại {current_state} sau {step} bước.")
                 try:
-                    with open(self.get_map_path("BaoCao_LuyenKim.txt"), "w", encoding="utf-8") as f:
+                    with open(self.get_map_path("BaoCao/BaoCao_LuyenKim.txt"), "w", encoding="utf-8") as f:
                         f.write("\n".join(report_lines))
                     self.log_msg("-> Đã xuất Báo cáo: BaoCao_LuyenKim.txt", (100, 255, 100))
                 except:
@@ -1013,7 +1013,7 @@ class RicochetArena:
         report_lines.append(
             f"\n=> [KẾT THÚC] Nhiệt độ đã đóng băng (T <= {T_min}). Dừng thuật toán tại {current_state}.")
         try:
-            with open(self.get_map_path("BaoCao_LuyenKim.txt"), "w", encoding="utf-8") as f:
+            with open(self.get_map_path("BaoCao/BaoCao_LuyenKim.txt"), "w", encoding="utf-8") as f:
                 f.write("\n".join(report_lines))
         except:
             pass
@@ -1085,7 +1085,7 @@ class RicochetArena:
                     f"Chuỗi hành động vạn năng ({len(action_history)} bước): {' -> '.join(action_history)}")
 
                 try:
-                    with open(self.get_map_path("BaoCao_Sensorless.txt"), "w", encoding="utf-8") as f:
+                    with open(self.get_map_path("BaoCao/BaoCao_Sensorless.txt"), "w", encoding="utf-8") as f:
                         f.write("\n".join(report_lines))
                     self.log_msg("-> Đã xuất Báo cáo học thuật: BaoCao_Sensorless.txt", (100, 255, 100))
                 except Exception as e:
@@ -1134,7 +1134,7 @@ class RicochetArena:
         report_lines.append(
             "=> [THẤT BẠI] Đã duyệt hết không gian nhưng không thể đồng bộ 2 State do Map không có kiến trúc hội tụ.")
         try:
-            with open(self.get_map_path("BaoCao_Sensorless.txt"), "w", encoding="utf-8") as f:
+            with open(self.get_map_path("BaoCao/BaoCao_Sensorless.txt"), "w", encoding="utf-8") as f:
                 f.write("\n".join(report_lines))
         except:
             pass
@@ -1174,7 +1174,7 @@ class RicochetArena:
                 report_lines.append(f"\n=> KẾT LUẬN: Đã định vị thành công vị trí {localized_pos} sau {step} bước.")
 
                 try:
-                    filename = self.get_map_path("BaoCao_PartialObservable.txt")
+                    filename = self.get_map_path("BaoCao/BaoCao_PartialObservable.txt")
                     with open(filename, "w", encoding="utf-8") as f:
                         f.write("\n".join(report_lines))
                 except Exception:
@@ -1296,7 +1296,7 @@ class RicochetArena:
             report_lines.append("\n=> [THẤT BẠI] Không có kế hoạch an toàn tuyệt đối nào khả thi trong giới hạn độ sâu.")
             
         try:
-            with open(self.get_map_path("BaoCao_ANDORGraph.txt"), "w", encoding="utf-8") as f:
+            with open(self.get_map_path("BaoCao/BaoCao_ANDORGraph.txt"), "w", encoding="utf-8") as f:
                 f.write("\n".join(report_lines))
         except: pass
 
@@ -1495,7 +1495,7 @@ class RicochetArena:
 
                 report_lines.append(f"\n=> [THÀNH CÔNG TỔNG THỂ] Tìm thấy đáp án tại Cột X = {cols}, Hàng Y = {res}")
                 try:
-                    with open(self.get_map_path("BaoCao_CSP_Backtracking.txt"), "w", encoding="utf-8") as f:
+                    with open(self.get_map_path("BaoCao/BaoCao_CSP_Backtracking.txt"), "w", encoding="utf-8") as f:
                         f.write("\n".join(report_lines))
                     self.log_msg("-> Đã xuất Báo cáo: BaoCao_CSP_Backtracking.txt", (100, 255, 100))
                 except: pass
@@ -1512,7 +1512,7 @@ class RicochetArena:
 
         report_lines.append("\n=> [THẤT BẠI] Đã vét cạn toàn bộ không gian biến nhưng không có tổ hợp nào giúp Robot đến đích.")
         try:
-            with open(self.get_map_path("BaoCao_CSP_Backtracking.txt"), "w", encoding="utf-8") as f:
+            with open(self.get_map_path("BaoCao/BaoCao_CSP_Backtracking.txt"), "w", encoding="utf-8") as f:
                 f.write("\n".join(report_lines))
         except: pass
 
@@ -1586,7 +1586,7 @@ class RicochetArena:
                 
                 report_lines.append(f"\n=> [THÀNH CÔNG TỔNG THỂ] Tìm thấy đáp án tại Cột X = {cols}, Hàng Y = {res}")
                 try:
-                    with open(self.get_map_path("BaoCao_CSP_AC3.txt"), "w", encoding="utf-8") as f:
+                    with open(self.get_map_path("BaoCao/BaoCao_CSP_AC3.txt"), "w", encoding="utf-8") as f:
                         f.write("\n".join(report_lines))
                     self.log_msg("-> Đã xuất Báo cáo: BaoCao_CSP_AC3.txt", (100, 255, 100))
                 except: pass
@@ -1603,7 +1603,7 @@ class RicochetArena:
         
         report_lines.append("\n=> [THẤT BẠI] Đã vét cạn toàn bộ không gian biến nhưng không có giải pháp.")
         try:
-            with open(self.get_map_path("BaoCao_CSP_AC3.txt"), "w", encoding="utf-8") as f:
+            with open(self.get_map_path("BaoCao/BaoCao_CSP_AC3.txt"), "w", encoding="utf-8") as f:
                 f.write("\n".join(report_lines))
         except: pass
         
@@ -1654,7 +1654,7 @@ class RicochetArena:
                     
                     report_lines.append(f"\n=> [THÀNH CÔNG TỔNG THỂ] Tìm thấy đáp án tại Cột X = {cols}, Hàng Y = {current} sau {step+1} lần đổi giá trị.")
                     try:
-                        with open(self.get_map_path("BaoCao_CSP_MinConflicts.txt"), "w", encoding="utf-8") as f:
+                        with open(self.get_map_path("BaoCao/BaoCao_CSP_MinConflicts.txt"), "w", encoding="utf-8") as f:
                             f.write("\n".join(report_lines))
                         self.log_msg("-> Đã xuất Báo cáo: BaoCao_CSP_MinConflicts.txt", (100, 255, 100))
                     except: pass
@@ -1690,7 +1690,7 @@ class RicochetArena:
         
         report_lines.append("\n=> [THẤT BẠI] Quá giới hạn vòng lặp ở tất cả các tổ hợp cột nhưng vẫn còn xung đột.")
         try:
-            with open(self.get_map_path("BaoCao_CSP_MinConflicts.txt"), "w", encoding="utf-8") as f:
+            with open(self.get_map_path("BaoCao/BaoCao_CSP_MinConflicts.txt"), "w", encoding="utf-8") as f:
                 f.write("\n".join(report_lines))
         except: pass
         
