@@ -1,6 +1,6 @@
 # 🧩 8-Puzzle Solver & AI Search Algorithms Simulation
 
-Đồ án/Bài tập môn **Trí tuệ Nhân tạo (Artificial Intelligence)**.
+Bài tập môn **Trí tuệ Nhân tạo (Artificial Intelligence)**.
 Chương trình mô phỏng trực quan toàn diện các thuật toán tìm kiếm cốt lõi trong Trí tuệ Nhân tạo, từ không gian trạng thái cơ bản đến các môi trường phức tạp và bài toán thỏa mãn ràng buộc. 
 
 Đặc biệt, công cụ này được thiết kế như một phần mềm hỗ trợ học tập, có khả năng tự động sinh **Bảng vết (Trace Table)** với các bước xử lý (Node, Frontier, Reached) chuẩn xác tuyệt đối theo cách ghi chép trong giáo trình Đại học.

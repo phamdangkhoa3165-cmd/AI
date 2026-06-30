@@ -1,11 +1,10 @@
 === BÁO CÁO QUÁ TRÌNH LỌC NIỀM TIN (BELIEF STATE UPDATE) ===
-1. Niềm tin ban đầu (Belief Start): Gồm 4 vị trí có thể: [(3, 2), (1, 2), (3, 3), (2, 2)]
+1. Niềm tin ban đầu (Belief Start): Gồm 3 vị trí có thể: [(2, 3), (1, 2), (3, 3)]
 
 --- BƯỚC 1 ---
 Hành động: Trượt LÊN | Cảm biến đo được: (False, True, True, True)
-  [-] Nếu ở (3, 2) -> trượt đến (3, 0). Cảm biến dự kiến (False, True, False, False) SAI LỆCH -> Loại bỏ.
+  [-] Nếu ở (2, 3) -> trượt đến (2, 1). Cảm biến dự kiến (False, True, True, False) SAI LỆCH -> Loại bỏ.
   [+] Nếu ở (1, 2) -> trượt đến (1, 1). Cảm biến dự kiến (False, True, True, True) KHỚP THỰC TẾ -> Giữ lại.
   [-] Nếu ở (3, 3) -> trượt đến (3, 0). Cảm biến dự kiến (False, True, False, False) SAI LỆCH -> Loại bỏ.
-  [-] Nếu ở (2, 2) -> trượt đến (2, 1). Cảm biến dự kiến (False, True, True, False) SAI LỆCH -> Loại bỏ.
 
 => KẾT LUẬN: Đã định vị thành công vị trí (1, 1) sau 1 bước.

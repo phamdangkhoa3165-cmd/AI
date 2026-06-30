@@ -5,9 +5,9 @@ Công thức: f(n) = g(n) + h(n) (g: chi phí thực tế, h: Khoảng cách Man
 
 
 [Bước 1] Chọn duyệt nút tốt nhất: (1, 1) | g=0, h=1 => f=1
-  [+] Lân cận (2, 1): Nút mới. Tính g=1, h=0 => f=1. Thêm vào Frontier.
-  [+] Lân cận (0, 1): Nút mới. Tính g=1, h=2 => f=3. Thêm vào Frontier.
   [+] Lân cận (1, 2): Nút mới. Tính g=1, h=2 => f=3. Thêm vào Frontier.
+  [+] Lân cận (0, 1): Nút mới. Tính g=1, h=2 => f=3. Thêm vào Frontier.
+  [+] Lân cận (2, 1): Nút mới. Tính g=1, h=0 => f=1. Thêm vào Frontier.
 
 [Bước 2] Chọn duyệt nút tốt nhất: (2, 1) | g=1, h=0 => f=1
 

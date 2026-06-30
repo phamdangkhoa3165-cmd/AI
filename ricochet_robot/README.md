@@ -47,8 +47,6 @@ Yêu cầu máy tính đã cài đặt sẵn Python 3.x.
 1. **Clone repository về máy:**
    ```bash
    git clone [https://github.com/Ten-Cua-Ban/Ten-Repo.git](https://github.com/Ten-Cua-Ban/Ten-Repo.git)
-   cd Ten-Repo
-   Cài đặt thư viện Pygame:
 
 1. Cài đặt thư viện Pygame:
     pip install pygame
