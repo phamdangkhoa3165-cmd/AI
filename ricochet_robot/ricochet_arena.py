@@ -162,7 +162,7 @@ class RicochetArena:
     # ================= QUẢN LÝ MAP =================
     def save_custom_map(self):
         # Tên file vẫn tự động phân tách theo từng nhóm: group_1.json, group_5.json...
-        filename = self.get_map_path(f"ricochet_map_group_{self.current_group_id}.json")
+        filename = self.get_map_path(f"Map/ricochet_map_group_{self.current_group_id}.json")
         walls_list = [[list(p1), list(p2)] for p1, p2 in self.walls]
 
         # 1. Khởi tạo những thông tin chung mà nhóm nào cũng phải có
@@ -1868,7 +1868,7 @@ class RicochetArena:
         }
         
         try:
-            filename = filename_map.get(algo, f"BaoCao_{algo}.txt")
+            filename = filename_map.get(algo, f"BaoCao/BaoCao_{algo}.txt")
             with open(self.get_map_path(filename), "w", encoding="utf-8") as f:
                 f.write("\n".join(report_lines))
             self.log_msg(f"-> Đã xuất Báo cáo: {filename}", (100, 255, 100))
