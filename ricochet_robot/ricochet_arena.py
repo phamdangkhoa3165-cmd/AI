@@ -1862,9 +1862,9 @@ class RicochetArena:
             if self.is_caught(p_curr, e_curr): break
 
         filename_map = {
-            "minimax": "BaoCao_Minimax.txt",
-            "alphabeta": "BaoCao_AlphaBeta.txt",
-            "expectimax": "BaoCao_Expectimax.txt"
+            "minimax": "BaoCao/BaoCao_Minimax.txt",
+            "alphabeta": "BaoCao/BaoCao_AlphaBeta.txt",
+            "expectimax": "BaoCao/BaoCao_Expectimax.txt"
         }
         
         try:
